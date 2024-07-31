@@ -1,0 +1,349 @@
+substitutions:
+  node_name: 'fph-satellite-07-08'
+  friendly_name: 'FPH Sat1 07 08'
+  area: 'Media Room'
+  wake_word_model: hey_jarvis
+  # Phases of the Voice Assistant
+  # IDLE: The voice assistant is ready to be triggered by a wake-word
+  voice_assist_idle_phase_id: '1'
+  # LISTENING: The voice assistant is ready to listen to a voice command (after being triggered by the wake word)
+  voice_assist_listening_phase_id: '2'
+  # THINKING: The voice assistant is currently processing the command
+  voice_assist_thinking_phase_id: '3'
+  # REPLYING: The voice assistant is replying to the command
+  voice_assist_replying_phase_id: '4'
+  # NOT_READY: The voice assistant is not ready
+  voice_assist_not_ready_phase_id: '10'
+  # ERROR: The voice assistant encountered an error
+  voice_assist_error_phase_id: '11'
+  # MUTED: The voice assistant is muted and will not reply to a wake-word
+  voice_assist_muted_phase_id: '12'
+
+globals:
+  # Global initialisation variable. Initialized to true and set to false once everything is connected. Only used to have a smooth "plugging" experience
+  - id: init_in_progress
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+  # Global variable tracking the phase of the voice assistant (defined above). Initialized to not_ready
+  - id: voice_assistant_phase
+    type: int
+    restore_value: no
+    initial_value: ${voice_assist_not_ready_phase_id}
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/gnumpi/esphome_audio
+      ref: allow_external_clk_mode
+    components: [ adf_pipeline, i2s_audio ]
+
+
+esphome:
+  name: ${node_name}
+  min_version: 2024.2.0
+  platformio_options:
+    board_build.flash_mode: dio
+    board_upload.maximum_size: 16777216
+    #board_build.partitions: "../../../esp32-s3/custom_partitions_16MB.csv"
+  on_boot:
+    priority: 600
+    then:
+      # Run the script to refresh the LED status
+      # If after 30 seconds, the device is still initializing (It did not yet connect to Home Assistant), turn off the init_in_progress variable and run the script to refresh the LED status
+      - delay: 30s
+      - if:
+          condition:
+            lambda: return id(init_in_progress);
+          then:
+            - lambda: id(init_in_progress) = false;
+
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: ESP32S3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      # need to set a s3 compatible board for the adf-sdk to compile
+      # board specific code is not used though
+      CONFIG_ESP32_S3_BOX_BOARD: "y"
+      CONFIG_ESP32_WIFI_STATIC_RX_BUFFER_NUM: "16"
+      CONFIG_ESP32_WIFI_DYNAMIC_RX_BUFFER_NUM: "512"
+      CONFIG_TCPIP_RECVMBOX_SIZE: "512"
+
+      CONFIG_TCP_SND_BUF_DEFAULT: "65535"
+      CONFIG_TCP_WND_DEFAULT: "512000"
+      CONFIG_TCP_RECVMBOX_SIZE: "512"
+
+      #CONFIG_LOG_DEFAULT_LEVEL_DEBUG: "y"
+      #CONFIG_LOG_DEFAULT_LEVEL: "4"
+
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "pWsfLLM73scSXtGWe4izqTwKzsFhMwG6ESj+xUIeLT0="
+
+
+# Enable logging
+logger:
+
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+ota:
+  platform: esphome
+
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "FPH Sat1 Fallback Hotspot"
+    password: "NDarYztmiMGL"
+
+captive_portal:
+
+
+i2s_audio:
+  - id: i2s_shared
+    i2s_lrclk_pin: GPIO45
+    i2s_bclk_pin: GPIO17
+    i2s_mclk_pin: GPIO02
+    access_mode: duplex
+
+
+adf_pipeline:
+  - platform: i2s_audio
+    type: audio_out
+    id: adf_i2s_out
+    i2s_audio_id: i2s_shared
+    i2s_clock_mode: external
+    i2s_dout_pin: GPIO16
+    adf_alc: true
+    alc_max: .5
+    channel: right_left
+    sample_rate: 16000
+    bits_per_sample: 32bit
+    fixed_settings: true
+
+  - platform: i2s_audio
+    type: audio_in
+    id: adf_i2s_in
+    i2s_audio_id: i2s_shared
+    i2s_clock_mode: external
+    i2s_din_pin: GPIO15
+    pdm: false
+    channel: right_left
+    sample_rate: 16000
+    bits_per_sample: 32bit
+    fixed_settings: true
+
+
+microphone:
+  - platform: adf_pipeline
+    id: adf_microphone
+    gain_log2: 3
+    keep_pipeline_alive: false
+    pipeline:
+      - adf_i2s_in
+      - resampler
+      - self
+
+media_player:
+  - platform: adf_pipeline
+    id: adf_media_player
+    codec: auto
+    name: ${node_name} Sat1 Media Player
+    keep_pipeline_alive: false
+    internal: false
+    pipeline:
+      - self
+      - resampler
+      - adf_i2s_out
+
+
+micro_wake_word:
+  model: hey_jarvis
+  on_wake_word_detected:
+      - media_player.stop:
+      # - light.turn_on:
+      #     id: led
+      #     effect: "Slow Pulse"
+      - voice_assistant.start:
+      # - media_player.play_media: http://homeassistant.local:8123/local/vad.mp3
+
+
+voice_assistant:
+  microphone: adf_microphone
+  media_player: adf_media_player
+
+  use_wake_word: false
+  #vad_threshold: 3
+
+  noise_suppression_level: 4
+  auto_gain: 31dBFS
+  volume_multiplier: 4.0
+
+  on_client_connected:
+    - lambda: id(init_in_progress) = false;
+    - if:
+        condition:
+          switch.is_on: use_wake_word
+        then:
+          - micro_wake_word.start:
+          - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+        else:
+          - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
+
+  on_client_disconnected:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_not_ready_phase_id};
+    - voice_assistant.stop
+    - micro_wake_word.stop
+
+  on_end:
+      then:
+        # - light.turn_off:
+        #     id: led
+        - voice_assistant.stop
+        - wait_until:
+            not:
+              voice_assistant.is_running:
+        - if:
+            condition:
+              switch.is_on: use_wake_word
+            then:
+              - micro_wake_word.start:
+  on_error:
+      then:
+        - voice_assistant.stop
+        - wait_until:
+            not:
+              voice_assistant.is_running:
+        - if:
+            condition:
+              switch.is_on: use_wake_word
+            then:
+              - micro_wake_word.start:
+
+
+switch:
+  - platform: template
+    name: Enable Voice Assistant
+    id: use_wake_word
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    icon: mdi:assistant
+    # When the switch is turned on (on Home Assistant):
+    # Start the voice assistant component
+    # Set the correct phase and run the script to refresh the LED status
+    on_turn_on:
+      - logger.log: "switch on"
+      - if:
+          condition:
+            lambda: return !id(init_in_progress);
+          then:
+            - logger.log: "condition 1"
+            - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+            - voice_assistant.stop
+            - delay: 1s
+            - if:
+                condition:
+                  not:
+                    - voice_assistant.is_running
+                then:
+                  - logger.log: "Starting MWW"
+                  #- voice_assistant.start_continuous
+                  - micro_wake_word.start:
+    on_turn_off:
+      - if:
+          condition:
+            lambda: return !id(init_in_progress);
+          then:
+            - voice_assistant.stop
+            - micro_wake_word.stop
+            - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
+
+  - platform: template
+    name: Pipeline
+    id: pipeline_switch
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_off:
+      - media_player.stop
+    on_turn_on:
+      - media_player.play_media: "https://dl.espressif.com/dl/audio/ff-16b-2c-44100hz.mp3"
+
+  - platform: template
+    name: Stream Mic To VA
+    id: stream_to_va
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    icon: mdi:assistant
+    # When the switch is turned on (on Home Assistant):
+    # Start the voice assistant component
+    on_turn_on:
+      - if:
+          condition:
+            lambda: return !id(init_in_progress);
+          then:
+            - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+            - if:
+                condition:
+                  not:
+                    - voice_assistant.is_running
+                then:
+                   - voice_assistant.start_continuous
+    on_turn_off:
+      - if:
+          condition:
+            lambda: return !id(init_in_progress);
+          then:
+            - voice_assistant.stop
+            - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
+
+
+#Creates a global hub so that you can track bluetooth low energy devices using your ESP32 node: https://esphome.io/components/esp32_ble_tracker
+#We we specify which device to track by using Bermuda in Home Assistant: https://github.com/agittins/bermuda 
+esp32_ble_tracker:
+  # scan_parameters:
+  #   active: true
+  #   interval: 1000ms # default 320ms. Time spent per adv channel
+  #   window: 900ms # default 30ms. Time spent listening during interval.
+
+bluetooth_proxy:
+  active: true
+
+i2c:
+  - id: bus_a
+    sda: GPIO8
+    scl: GPIO18
+    frequency: 100kHz
+    scan: true
+
+
+sensor:
+  - platform: aht10
+    variant: AHT20
+    temperature:
+      name: "Room Temperature"
+    humidity:
+      name: "Room Humidity"
+    update_interval: 60s
+
+  - platform: veml7700
+    address: 0x10
+    update_interval: 60s
+
+    # short variant of sensor definition:
+    ambient_light: "Ambient light"
+    # longer variant of sensor definition:
+    actual_gain:
+      name: "Actual gain"
