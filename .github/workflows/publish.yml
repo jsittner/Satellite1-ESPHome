@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    uses: esphome/workflows/.github/workflows/publish.yml@main
+    uses: FutureProofHomes/workflows/.github/workflows/build.yml@main
     with:
       files: config/satellite_mic_test.yaml #,esp8266.yml
       name: Satellite Mic test
