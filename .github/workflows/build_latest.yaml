@@ -45,7 +45,8 @@ jobs:
       - name: Split files input into JSON array
         id: files-array
         run: |
-          files=$(echo "${{ steps.changed-satellite-files.outputs.all_changed_files }}" | jq -RcSn '[inputs | select(length>0)]')
+          changed=$(${{ steps.changed-satellite-files.outputs.all_changed_files }})
+          files=$(echo $changed | jq -RcSn '[inputs | select(length>0)]')
           echo files=$files >> $GITHUB_OUTPUT
   
   build-firmware-changed:
