@@ -46,11 +46,13 @@ jobs:
         env:
           CHANGED_FILES: ${{ steps.changed-satellite-files.outputs.all_changed_files }}
         run: |
-          run: |
+          ARR=()
           for file in ${CHANGED_FILES}; do
             echo "$file was changed"
+            ARR+=($file)
           done
-          printf -v JOINED '%s\n' "${CHANGED_FILES[@]}"
+          printf -v JOINED '%s\n' "${ARR[@]}"
+          echo $ARR
           echo "$JOINED"
           echo files="$JOINED" >> $GITHUB_OUTPUT
   
