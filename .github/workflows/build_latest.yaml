@@ -31,6 +31,7 @@ jobs:
   build-list:    
     runs-on: ubuntu-latest
     outputs:
+      matrix: ${{ steps.changed-files.outputs.all_changed_files }}
       any_changed: ${{ steps.changed-satellite-files.outputs.any_changed }}
     steps:  
       - name: Get all changed satellite files
@@ -40,15 +41,18 @@ jobs:
           # Avoid using single or double quotes for multiline patterns
           files: |
              config/satellite*.yaml
+     
+  
+  build-firmware-changed:
+    
+    name: Build Firmware
+    needs:
+      - build-list
+    uses: esphome/workflows/.github/workflows/build.yml@main
+    with:
+      files: ${{ join(needs.build-list.outputs.matrix, "\n") }}
+      esphome-version: 2024.6.0
+      release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
+      release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
+      release-version: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
       
-      - uses: esphome/workflows/.github/workflows/build.yml@main
-        if:  steps.changed-satellite-files.outputs.any_changed == 'true'
-        with:
-          files: ${{ steps.changed-files.outputs.all_changed_files }}
-          esphome-version: 2024.6.0
-          release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
-          release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
-          release-version: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
-        
-  
-  
