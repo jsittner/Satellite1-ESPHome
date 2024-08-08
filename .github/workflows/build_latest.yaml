@@ -51,8 +51,8 @@ jobs:
             echo "$file was changed"
           done
           printf -v JOINED '%s\n' "${CHANGED_FILES[@]}"
-          echo $JOINED
-          echo files=$JOINED >> $GITHUB_OUTPUT
+          echo "$JOINED"
+          echo files="$JOINED" >> $GITHUB_OUTPUT
   
   build-firmware-changed:
     if: needs.build-list.outputs.any_changed == 'true'
