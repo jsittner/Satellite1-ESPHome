@@ -53,7 +53,7 @@ jobs:
       files: |
         config/satellite_va_core_r1.yaml
         config/satellite_va_core_r2.yaml
-      esphome-version: 2024.7.3
+      esphome-version: 2024.6.0
       release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
       release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
       release-version: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
