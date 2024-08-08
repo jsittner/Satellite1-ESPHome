@@ -41,10 +41,8 @@ jobs:
           files: |
              config/satellite*.yaml
       
-      - name: Build Firmware
+      - uses: esphome/workflows/.github/workflows/build.yml@main
         if:  steps.changed-satellite-files.outputs.any_changed == 'true'
-        id: build_firmware
-        uses: esphome/workflows/.github/workflows/build.yml@main
         with:
           files: ${{ steps.changed-files.outputs.all_changed_files }}
           esphome-version: 2024.6.0
