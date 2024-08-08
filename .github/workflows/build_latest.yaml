@@ -31,7 +31,7 @@ jobs:
   build-list:    
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.changed-satellite-files.outputs.all_changed_files }}
+      matrix: ${{ steps.files-array.outputs.files }}
       any_changed: ${{ steps.changed-satellite-files.outputs.any_changed }}
     steps:  
       - name: Get all changed satellite files
@@ -41,6 +41,12 @@ jobs:
           # Avoid using single or double quotes for multiline patterns
           files: |
              config/satellite*.yaml
+      
+      - name: Split files input into JSON array
+        id: files-array
+        run: |
+          files=$(echo "${{ steps.changed-satellite-files.outputs.all_changed_files }}" | jq -RcSn '[inputs | select(length>0)]')
+          echo files=$files >> $GITHUB_OUTPUT
   
   build-firmware-changed:
     if: needs.build-list.outputs.any_changed == 'true'
@@ -49,10 +55,7 @@ jobs:
       - build-list
     uses: esphome/workflows/.github/workflows/build.yml@main
     with:
-      #${{ needs.build-list.outputs.matrix }}
-      files: |
-        config/satellite_va_core_r1.yaml
-        config/satellite_va_core_r2.yaml
+      files: ${{ needs.build-list.outputs.matrix }}
       esphome-version: 2024.6.0
       release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
       release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
