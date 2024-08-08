@@ -1,13 +1,17 @@
 name: ESPHome-latest
 
 on:
-  - push
-  - pull_request
-  - workflow_dispatch
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+  workflow_dispatch:
+  release:
+    types: [published]
 
 env:
   DEFAULT_PYTHON: "3.9"
-
 
 jobs:
   common:
@@ -64,6 +68,7 @@ jobs:
       max-parallel: 2
       matrix:
         file: ${{ fromJson(needs.build-list.outputs.matrix) }}
+    
     steps:
       - name: Check out code from GitHub
         uses: actions/checkout@v4.1.6
@@ -98,3 +103,17 @@ jobs:
           name: ${{ steps.get_node_name.outputs.result }}.firmware.bin
           path: config/.esphome/build/${{ steps.get_node_name.outputs.result }}/.pioenvs/${{ steps.get_node_name.outputs.result }}/firmware.bin
           retention-days: 30
+      
+      #- name: Upload Release Asset - Squeezelite binary file
+      #  if: ${{ needs.bootstrap.outputs.release_flag == 1 && needs.bootstrap.outputs.mock == 0 }}
+      #  id: upload-release-asset 
+      #  uses: actions/upload-release-asset@v1
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #  with:
+      #    upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more #info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+      #    asset_path: build/squeezelite.bin
+      #    asset_name: ${{ env.artifact_bin_file_name }}
+      #    asset_content_type: application/octet-stream        
+      
+      
