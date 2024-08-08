@@ -41,13 +41,20 @@ jobs:
           # Avoid using single or double quotes for multiline patterns
           files: |
              config/satellite*.yaml
-     
+      - name: convert to new line separated string
+        id: convert_to_list
+        env:
+          CHANGED_FILES: ${{ steps.changed-satellite-files.outputs.all_changed_files }}
+        run: |
+          printf -v JOINED '%s\n' "${CHANGED_FILES[@]}"
+          echo files=$JOINED >> $GITHUB_OUTPUT
   
   build-firmware-changed:
     if: needs.build-list.outputs.any_changed == 'true'
     name: Build Firmware
     needs:
       - build-list
+
     uses: esphome/workflows/.github/workflows/build.yml@main
     with:
       files: ${{ join(needs.build-list.outputs.matrix, '\\n') }}
