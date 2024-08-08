@@ -46,8 +46,8 @@ jobs:
         id: files-array
         run: |
           changed=(${{ steps.changed-satellite-files.outputs.all_changed_files }})
-          files=$(echo $changed | jq -RcSn '[inputs | select(length>0)]')
-          echo files=$files >> $GITHUB_OUTPUT
+          #files=$(echo $changed | jq -RcSn '[inputs | select(length>0)]')
+          echo files=(${{ steps.changed-satellite-files.outputs.all_changed_files }}) >> $GITHUB_OUTPUT
   
   build-firmware-changed:
     if: needs.build-list.outputs.any_changed == 'true'
