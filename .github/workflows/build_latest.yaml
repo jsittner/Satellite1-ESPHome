@@ -50,7 +50,7 @@ jobs:
       - build-list
     uses: esphome/workflows/.github/workflows/build.yml@main
     with:
-      files: ${{ join(needs.build-list.outputs.matrix, "\n") }}
+      files: ${{ join(needs.build-list.outputs.matrix, '\\n') }}
       esphome-version: 2024.6.0
       release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
       release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
