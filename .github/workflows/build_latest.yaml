@@ -49,7 +49,10 @@ jobs:
       - build-list
     uses: esphome/workflows/.github/workflows/build.yml@main
     with:
-      files: ${{ needs.build-list.outputs.matrix }}
+      #${{ needs.build-list.outputs.matrix }}
+      files: |
+        config/satellite_va_core_r1.yaml
+        config/satellite_va_core_r2.yaml
       esphome-version: 2024.7.3
       release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
       release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
