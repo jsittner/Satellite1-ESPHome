@@ -31,7 +31,6 @@ jobs:
   build-list:    
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.files-array.outputs.files }}
       any_changed: ${{ steps.changed-satellite-files.outputs.any_changed }}
     steps:  
       - name: Get all changed satellite files
@@ -42,23 +41,16 @@ jobs:
           files: |
              config/satellite*.yaml
       
-      - name: Split files input into JSON array
-        id: files-array
-        run: |
-          changed=(${{ steps.changed-satellite-files.outputs.all_changed_files }})
-          #files=$(echo $changed | jq -RcSn '[inputs | select(length>0)]')
-          echo files=$changed >> $GITHUB_OUTPUT
+      - name: Build Firmware
+        if:  steps.changed-satellite-files.outputs.any_changed == 'true'
+        id: build_firmware
+        uses: esphome/workflows/.github/workflows/build.yml@main
+        with:
+          files: ${{ steps.changed-files.outputs.all_changed_files }}
+          esphome-version: 2024.6.0
+          release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
+          release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
+          release-version: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
+        
   
-  build-firmware-changed:
-    if: needs.build-list.outputs.any_changed == 'true'
-    name: Build Firmware
-    needs:
-      - build-list
-    uses: esphome/workflows/.github/workflows/build.yml@main
-    with:
-      files: ${{ needs.build-list.outputs.matrix }}
-      esphome-version: 2024.6.0
-      release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
-      release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
-      release-version: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
-      
+  
