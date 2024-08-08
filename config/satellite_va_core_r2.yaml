@@ -1,20 +1,19 @@
 substitutions:
   node_name: satellite-va
+  core_revision: "2"
 
 packages:
   device_base: !include common/board.yaml
   wifi: !include common/wifi_improv.yaml
-  adf: !include common/adf_pipeline.yaml
+  adf: !include common/adf_pipeline_rev2.yaml
   local: !include common/local_components.yaml
   #sensors: !include common/hat_sensors.yaml
   va: !include common/va.yaml
-  led: !include common/neopixels.yaml
 
 esphome:
   project:
-    name: satellite1.voice_assistant
+    name: satellite1.voice_assistant_r${core_revision}
     version: dev
-
 
 logger:
   deassert_rts_dtr: true
@@ -106,7 +105,7 @@ switch:
     name: Enable Voice Assistant
     id: use_wake_word
     optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: RESTORE_DEFAULT_ON
     icon: mdi:assistant
     # When the switch is turned on (on Home Assistant):
     # Start the voice assistant component

@@ -1,10 +1,13 @@
-name: ESPHome-latest
+name: Build-Satellite-Firmware
 
 on:
   push:
     branches:
       - main
       - develop
+    paths:
+      - '.github/**'
+      - 'config/satellite*'
   pull_request:
   workflow_dispatch:
   release:
@@ -14,38 +17,7 @@ env:
   DEFAULT_PYTHON: "3.9"
 
 jobs:
-  common:
-    name: Create common environment
-    runs-on: ubuntu-latest
-    outputs:
-      cache-key: ${{ steps.cache-key.outputs.key }}
-    steps:
-      - name: Check out code from GitHub
-        uses: actions/checkout@v4.1.6
-      - name: Generate cache-key
-        id: cache-key
-        run: echo key="${{ hashFiles('requirements.txt') }}" >> $GITHUB_OUTPUT
-      - name: Set up Python ${{ env.DEFAULT_PYTHON }}
-        id: python
-        uses: actions/setup-python@v5.1.0
-        with:
-          python-version: ${{ env.DEFAULT_PYTHON }}
-      - name: Restore Python virtual environment
-        id: cache-venv
-        uses: actions/cache@v4.0.2
-        with:
-          path: venv
-          # yamllint disable-line rule:line-length
-          key: ${{ runner.os }}-${{ steps.python.outputs.python-version }}-venv-${{ steps.cache-key.outputs.key }}
-      - name: Create Python virtual environment
-        if: steps.cache-venv.outputs.cache-hit != 'true'
-        run: |
-          python -m venv venv
-          . venv/bin/activate
-          python --version
-          pip install -r requirements.txt
-  
-  build-list:
+  build-list-all:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -56,64 +28,28 @@ jobs:
         id: set-matrix
         run: echo "matrix=$(ls config/satellite*.yaml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
   
-  
-  build:
-    name: Build YAML config ${{ matrix.file }}
+  build-list-changed:    
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.changed-satellite-files.outputs.all_changed_files }}
+    steps:  
+      - name: Get all changed satellite files
+        id: changed-satellite-files
+        uses: tj-actions/changed-files@v44
+        with:
+          # Avoid using single or double quotes for multiline patterns
+          files: |
+             config/satellite*.yaml
+  
+  build-firmware-changed:
+    name: Build Firmware
     needs:
-      - common
-      - build-list
-    strategy:
-      fail-fast: false
-      max-parallel: 2
-      matrix:
-        file: ${{ fromJson(needs.build-list.outputs.matrix) }}
-    
-    steps:
-      - name: Check out code from GitHub
-        uses: actions/checkout@v4.1.6
-      - name: Restore Python
-        uses: ./.github/actions/restore-python
-        with:
-          python-version: ${{ env.DEFAULT_PYTHON }}
-          cache-key: ${{ needs.common.outputs.cache-key }}
-      
-      - name: Run esphome compile ${{ matrix.file }}
-        run: |
-          . venv/bin/activate
-          esphome compile ${{ matrix.file }}
-          esphome config ${{ matrix.file }} >> ${{ matrix.file }}.cmpl.yaml 
-      
-      - name: Parse name
-        id: get_node_name
-        uses: mikefarah/yq@master
-        with:
-          cmd: yq '.esphome.name' ${{ matrix.file }}.cmpl.yaml
-      
-      - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.get_node_name.outputs.result }}.firmware.factory.bin
-          path: config/.esphome/build/${{ steps.get_node_name.outputs.result }}/.pioenvs/${{ steps.get_node_name.outputs.result }}/firmware.factory.bin
-          retention-days: 30
-      
-      - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.get_node_name.outputs.result }}.firmware.bin
-          path: config/.esphome/build/${{ steps.get_node_name.outputs.result }}/.pioenvs/${{ steps.get_node_name.outputs.result }}/firmware.bin
-          retention-days: 30
-      
-      #- name: Upload Release Asset - Squeezelite binary file
-      #  if: ${{ needs.bootstrap.outputs.release_flag == 1 && needs.bootstrap.outputs.mock == 0 }}
-      #  id: upload-release-asset 
-      #  uses: actions/upload-release-asset@v1
-      #  env:
-      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #  with:
-      #    upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more #info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-      #    asset_path: build/squeezelite.bin
-      #    asset_name: ${{ env.artifact_bin_file_name }}
-      #    asset_content_type: application/octet-stream        
-      
+      - build-list-changed
+    uses: esphome/workflows/.github/workflows/build.yml@main
+    with:
+      files: ${{ steps.changed-markdown-files.outputs.all_changed_files }}
+      esphome-version: 2024.7.3
+      release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
+      release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
+      release-version: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
       

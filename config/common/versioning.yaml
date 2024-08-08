@@ -1,0 +1,12 @@
+
+text_sensor:
+  - platform: version
+    name: ${node_name}-firmware
+    hide_timestamp: true
+
+  - platform: template
+    name: HW Revision
+    entity_category: "diagnostic"
+    lambda: |-
+      return { "Core: Rev${core_revision}" };
+     

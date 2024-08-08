@@ -1,17 +1,20 @@
 substitutions:
-  node_name: satellite-va
+  node_name: "satellite-va"
+  core_revision: "1"
 
 packages:
   device_base: !include common/board.yaml
   wifi: !include common/wifi_improv.yaml
-  adf: !include common/adf_pipeline_rev2.yaml
+  adf: !include common/adf_pipeline.yaml
   local: !include common/local_components.yaml
   #sensors: !include common/hat_sensors.yaml
   va: !include common/va.yaml
+  led: !include common/neopixels.yaml
+  versioning: !include common/versioning.yaml
 
 esphome:
   project:
-    name: satellite1.voice_assistant
+    name: satellite1.voice_assistant_r${core_revision}
     version: dev
 
 
@@ -35,7 +38,7 @@ microphone:
 media_player:
   - platform: adf_pipeline
     id: adf_media_player
-    name: cosmic_player
+    name: cosmic_player_r${core_revision}
     keep_pipeline_alive: false
     internal: false
     pipeline:
@@ -105,7 +108,7 @@ switch:
     name: Enable Voice Assistant
     id: use_wake_word
     optimistic: true
-    restore_mode: RESTORE_DEFAULT_ON
+    restore_mode: RESTORE_DEFAULT_OFF
     icon: mdi:assistant
     # When the switch is turned on (on Home Assistant):
     # Start the voice assistant component

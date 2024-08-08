@@ -1,3 +1,19 @@
+## Variants
+#### Full-feature Voice Assistant
+`satellite_va_core_r2.yaml`
+
+`satellite_va_core_r1.yaml`
+
+(right now it is not necessary to have separate variants for hat rev.1/rev.2 )
+
+#### Testing / Debugging 
+These configs don't get build automatically by GH-Actions.
+
+
+`test_core_boards.yaml`
+
+`test_stream_mics_udp.yaml`
+
 ## Flashing the ESP32
 
 Create/activate environment by running from project root:
