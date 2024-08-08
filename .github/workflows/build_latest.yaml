@@ -28,10 +28,11 @@ jobs:
         id: set-matrix
         run: echo "matrix=$(ls config/satellite*.yaml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
   
-  build-list-changed:    
+  build-list:    
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.changed-satellite-files.outputs.all_changed_files }}
+      any_changed: ${{ steps.changed-satellite-files.outputs.any_changed }}
     steps:  
       - name: Get all changed satellite files
         id: changed-satellite-files
@@ -42,12 +43,13 @@ jobs:
              config/satellite*.yaml
   
   build-firmware-changed:
+    if: needs.build-list.outputs.any_changed == 'true'
     name: Build Firmware
     needs:
-      - build-list-changed
+      - build-list
     uses: esphome/workflows/.github/workflows/build.yml@main
     with:
-      files: ${{ needs.build-list-changed.changed-satellite-files.outputs.all_changed_files }}
+      files: ${{ needs.build-list.outputs.matrix }}
       esphome-version: 2024.7.3
       release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
       release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
