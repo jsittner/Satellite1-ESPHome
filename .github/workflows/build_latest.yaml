@@ -52,7 +52,7 @@ jobs:
             echo "build_firmware=true" >> $GITHUB_OUTPUT
             echo "matrix=$(ls config/satellite*.yaml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
             echo "files=$(ls config/satellite*.yaml | jq --slurp --raw-input )" >> $GITHUB_OUTPUT
-          elif [[ ${CORE_HAS_CHANGED} == "true" ]]
+          elif [[ ${CORE_HAS_CHANGED} == "true" ]]; then
             ARR=()
             for file in ${CHANGED_CORE_FILES}; do
               echo "$file was changed"
