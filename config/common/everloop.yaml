@@ -1,7 +1,7 @@
 light:
   - platform: esp32_rmt_led_strip
     rgb_order: GRB
-    pin: GPIO5
+    pin: ${LED_PIN}
     num_leds: 12
     rmt_channel: 0
     chipset: WS2812

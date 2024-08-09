@@ -1,6 +1,7 @@
 substitutions:
   node_name: "satellite-va"
   core_revision: "1"
+  LED_PIN: "GPIO5"
 
 packages:
   device_base: !include common/board.yaml
