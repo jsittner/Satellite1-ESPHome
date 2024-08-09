@@ -118,6 +118,13 @@ jobs:
       matrix:
         file: ${{fromJSON(needs.create_artifact_matrix.outputs.matrix) }}
     steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4.1.8
+        with:
+          path: files
+      
+      - run: tree
+      
       - name: debug 
         id: debug_matrix
         run: |
@@ -127,6 +134,8 @@ jobs:
         run: |
           zip --junk-paths ${{matrix.file}} files/${{matrix.file}}/**
       
+      - run: tree
+
       - name: Upload Release Asset - Zip file
         id: upload-release-asset-zip
         uses: actions/upload-release-asset@v1
