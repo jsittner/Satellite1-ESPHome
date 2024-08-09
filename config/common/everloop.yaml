@@ -1,0 +1,169 @@
+light:
+  - platform: esp32_rmt_led_strip
+    rgb_order: GRB
+    pin: ${LED_PIN}
+    num_leds: 12
+    rmt_channel: 0
+    chipset: WS2812
+    name: "everloop"
+    id: everloop
+    disabled_by_default: false
+    #entity_category: diagnostic
+    icon: mdi:led-on
+    default_transition_length: 0s
+    effects:
+      - pulse:
+          name: "Slow Pulse"
+          transition_length: 250ms
+          update_interval: 250ms
+          min_brightness: 50%
+          max_brightness: 100%
+      - pulse:
+          name: "Fast Pulse"
+          transition_length: 100ms
+          update_interval: 100ms
+          min_brightness: 50%
+          max_brightness: 100%
+
+
+script:
+  # Script controlling the LED, based on different conditions: 
+  #  - initialization in progress, 
+  #  - wifi and API connected
+  #  - and the current voice assistant phase.
+  # For the sake of simplicity and re-usability, the script calls child scripts defined below.
+  # This script will be called every time one of these conditions is changing.
+  - id: control_led
+    then:
+      - if:
+          condition:
+            lambda: return !id(init_in_progress);
+          then:
+            - if:
+                condition:
+                  wifi.connected:
+                then:
+                  - if:
+                      condition:
+                        api.connected:
+                      then:
+                        - lambda: |
+                            switch(id(voice_assistant_phase)) {
+                              case ${voice_assist_listening_phase_id}:
+                                id(control_led_voice_assist_listening_phase).execute();
+                                break;
+                              case ${voice_assist_thinking_phase_id}:
+                                id(control_led_voice_assist_thinking_phase).execute();
+                                break;
+                              case ${voice_assist_replying_phase_id}:
+                                id(control_led_voice_assist_replying_phase).execute();
+                                break;
+                              case ${voice_assist_error_phase_id}:
+                                id(control_led_voice_assist_error_phase).execute();
+                                break;
+                              case ${voice_assist_muted_phase_id}:
+                                id(control_led_voice_assist_muted_phase).execute();
+                                break;
+                              case ${voice_assist_not_ready_phase_id}:
+                                id(control_led_voice_assist_not_ready_phase).execute();
+                                break;
+                              default:
+                                id(control_led_voice_assist_idle_phase).execute();
+                                break;
+                            }
+                      else:
+                        - script.execute: control_led_no_ha_connection_state
+                else:
+                  - script.execute: control_led_no_ha_connection_state
+          else:
+            - script.execute: control_led_init_state
+
+
+  # Script executed during initialisation: In this example: Turn the LED in green with a slow pulse
+  - id: control_led_init_state
+    then:
+      - light.turn_on:
+          id: everloop
+          blue: 0%
+          red: 0%
+          green: 100%
+          effect: "Fast Pulse"
+  
+
+  # Script executed when the device has no connection to Home Assistant: In this example: Turn off the LED 
+  - id: control_led_no_ha_connection_state
+    then:
+      - light.turn_off:
+          id: everloop  
+
+
+  # Script executed when the voice assistant is idle (waiting for a wake word): In this example: Turn the LED in white with 20% of brightness
+  - id: control_led_voice_assist_idle_phase
+    then:
+      - light.turn_on:
+          id: everloop
+          blue: 100%
+          red: 100%
+          green: 100%
+          brightness: 20%
+          effect: "none"
+
+
+  # Script executed when the voice assistant is listening to a command: In this example: Turn the LED in blue with a slow pulse
+  - id: control_led_voice_assist_listening_phase
+    then:
+      - light.turn_on:
+          id: everloop
+          blue: 100%
+          red: 0%
+          green: 0%
+          effect: "Slow Pulse"
+
+
+  # Script executed when the voice assistant is processing the command: In this example: Turn the LED in blue with a fast pulse      
+  - id: control_led_voice_assist_thinking_phase
+    then:
+      - light.turn_on:
+          id: everloop
+          blue: 100%
+          red: 0%
+          green: 0%
+          effect: "Fast Pulse"
+
+
+  # Script executed when the voice assistant is replying to a command: In this example: Turn the LED in blue, solid (no pulse)       
+  - id: control_led_voice_assist_replying_phase
+    then:
+      - light.turn_on:
+          id: everloop
+          blue: 100%
+          red: 0%
+          green: 0%
+          brightness: 100%
+          effect: "none"
+
+
+  # Script executed when the voice assistant encounters an error: In this example: Turn the LED in red, solid (no pulse)       
+  - id: control_led_voice_assist_error_phase
+    then:
+      - light.turn_on:
+          id: everloop
+          blue: 0%
+          red: 100%
+          green: 0%
+          brightness: 100%
+          effect: "none"
+
+
+  # Script executed when the voice assistant is muted: In this example: Turn off the LED 
+  - id: control_led_voice_assist_muted_phase
+    then:
+      - light.turn_off:
+          id: everloop
+
+
+  # Script executed when the voice assistant is not ready: In this example: Turn off the LED 
+  - id: control_led_voice_assist_not_ready_phase
+    then:
+      - light.turn_off:
+          id: everloop
