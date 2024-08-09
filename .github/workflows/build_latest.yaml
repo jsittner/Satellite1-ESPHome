@@ -5,9 +5,6 @@ on:
     branches:
       - main
       - develop
-    paths:
-      - '.github/**'
-      - 'config/satellite*'
   pull_request:
   workflow_dispatch:
   release:
@@ -17,54 +14,70 @@ env:
   DEFAULT_PYTHON: "3.9"
 
 jobs:
-  build-list-all:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - name: Check out code from GitHub
-        uses: actions/checkout@v4.1.6
-      - name: Find all YAML satellite files
-        id: set-matrix
-        run: echo "matrix=$(ls config/satellite*.yaml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
-  
   build-list:    
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.convert_to_list.outputs.matrix }}
-      any_changed: ${{ steps.changed-satellite-files.outputs.any_changed }}
-      files: ${{ steps.changed-satellite-files.outputs.all_changed_files }}
-    steps:  
-      - name: Get all changed satellite files
-        id: changed-satellite-files
+      build_firmware:  ${{ steps.final_list.outputs.build_firmware }} 
+      build_cfg_files: ${{ steps.final_list.outputs.files }}
+    steps:
+      - name: Check out code from GitHub
+        uses: actions/checkout@v4.1.6  
+      
+      - name: Find all YAML satellite files
+        id: all-satellite-files
+        run: |
+          echo "matrix=$(ls config/satellite*.yaml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+          echo "all_files=$(ls config/satellite*.yaml | jq --slurp --raw-input )" >> $GITHUB_OUTPUT
+      
+      - name: Get changed files
+        id: changed-files
         uses: tj-actions/changed-files@v44
         with:
           # Avoid using single or double quotes for multiline patterns
-          files: |
-             config/satellite*.yaml
-      - name: convert to new line separated string
-        id: convert_to_list
-        env:
-          CHANGED_FILES: ${{ steps.changed-satellite-files.outputs.all_changed_files }}
-        run: |
-          ARR=()
-          for file in ${CHANGED_FILES}; do
-            echo "$file was changed"
-            ARR+=($file)
-          done
-          echo "matrix=$( printf '%s\n' "${ARR[@]}" | jq --slurp --raw-input)" >> $GITHUB_OUTPUT
+          files_yaml: |
+            core:
+             - config/satellite*.yaml
+            includes:
+              - config/common/*.yaml
 
-  build-firmware-changed:
-    if: needs.build-list.outputs.any_changed == 'True'
+      - name: create actual list
+        id: final_list
+        env:
+          INCLUDES_CHANGED: ${{ steps.changed-files.outputs.includes_any_changed }}
+          CORE_HAS_CHANGED:   ${{ steps.changed-files.outputs.core_any_changed }}
+          CHANGED_CORE_FILES: ${{ steps.changed-files.outputs.core_all_changed_files }}
+          
+        run: |
+          if [[ ${INCLUDES_CHANGED} == "true" ]]; then
+            echo "build_firmware=true" >> $GITHUB_OUTPUT
+            echo "matrix=$(ls config/satellite*.yaml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+            echo "files=$(ls config/satellite*.yaml | jq --slurp --raw-input )" >> $GITHUB_OUTPUT
+          elif [[ ${CORE_HAS_CHANGED} == "true" ]]
+            ARR=()
+            for file in ${CHANGED_CORE_FILES}; do
+              echo "$file was changed"
+              ARR+=($file)
+            done
+            echo "build_firmware=true" >> $GITHUB_OUTPUT
+            echo "matrix=$( printf '%s\n' "${ARR[@]}" | jq --slurp --raw-input)" >> $GITHUB_OUTPUT
+            echo "files=$( printf '%s\n' "${ARR[@]}" | jq --slurp --raw-input)" >> $GITHUB_OUTPUT
+          else
+            echo "build_firmware=false" >> $GITHUB_OUTPUT
+            echo "matrix=''" >> $GITHUB_OUTPUT
+            echo "files=''" >> $GITHUB_OUTPUT
+          fi
+ 
+  build-firmware:
+    if: needs.build-list.outputs.build_firmware == 'true'
     name: Build Firmware
     needs:
       - build-list
-
     uses: esphome/workflows/.github/workflows/build.yml@main
     with:
-      files: ${{ fromJSON(needs.build-list.outputs.matrix) }}
+      files: ${{ fromJSON(needs.build-list.outputs.build_cfg_files) }}
       esphome-version: 2024.6.0
       release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
       release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
       release-version: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
-      
+  
+  
