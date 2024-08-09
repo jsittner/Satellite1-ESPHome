@@ -52,36 +52,8 @@ jobs:
             echo "$file was changed"
             ARR+=($file)
           done
-          echo ""
           echo "matrix=$( printf '%s\n' "${ARR[@]}" | jq --slurp --raw-input)" >> $GITHUB_OUTPUT
 
-  debug-list:
-    runs-on: ubuntu-latest
-    needs:
-      - build-list
-    steps:  
-      - name: echo out
-        id: echo_out
-        env:
-          CHANGED_FILES: ${{ needs.build-list.outputs.files }}
-        run: |
-          ARR=()
-          for file in ${CHANGED_FILES}; do
-            echo "$file was changed"
-            ARR+=($file)
-          done
-          printf -v JOINED '%s\n' "${ARR[@]}"
-          echo $ARR
-          echo "$JOINED"
-          
-      
-      - name: echo out matrix
-        id: echo_out_matrix
-        env:
-          CHANGED_FILES: ${{ fromJSON(needs.build-list.outputs.matrix) }}
-        run: |
-          echo $CHANGED_FILES
-  
   build-firmware-changed:
     if: needs.build-list.outputs.any_changed == 'True'
     name: Build Firmware
