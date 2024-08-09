@@ -9,6 +9,8 @@ packages:
   local: !include common/local_components.yaml
   #sensors: !include common/hat_sensors.yaml
   va: !include common/va.yaml
+  led: !include common/everloop.yaml
+  versioning: !include common/versioning.yaml
 
 esphome:
   project:
