@@ -78,7 +78,7 @@ jobs:
       - name: echo out matrix
         id: echo_out_matrix
         env:
-          CHANGED_FILES: ${{ needs.build-list.outputs.matrix }}
+          CHANGED_FILES: ${{ fromJSON(needs.build-list.outputs.matrix) }}
         run: |
           echo $CHANGED_FILES
   
@@ -90,7 +90,7 @@ jobs:
 
     uses: esphome/workflows/.github/workflows/build.yml@main
     with:
-      files: ${{ needs.build-list.outputs.matrix }}
+      files: ${{ fromJSON(needs.build-list.outputs.matrix) }}
       esphome-version: 2024.6.0
       release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
       release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
