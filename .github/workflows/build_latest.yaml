@@ -52,11 +52,8 @@ jobs:
             echo "$file was changed"
             ARR+=($file)
           done
-          printf -v JOINED '%s\n' "${ARR[@]}"
-          echo $ARR
-          echo "$JOINED"
           echo ""
-          echo "matrix=$(echo $JOINED | jq --slurp --raw-input)" >> $GITHUB_OUTPUT
+          echo "matrix=$( printf '%s\n' "${ARR[@]}" | jq --slurp --raw-input)" >> $GITHUB_OUTPUT
 
   debug-list:
     runs-on: ubuntu-latest
