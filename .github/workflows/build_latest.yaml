@@ -45,7 +45,7 @@ jobs:
       - name: convert to new line separated string
         id: convert_to_list
         env:
-          CHANGED_FILES: ${{ toJSON(steps.changed-satellite-files.outputs.all_changed_files) }}
+          CHANGED_FILES: ${{ steps.changed-satellite-files.outputs.all_changed_files }}
         run: |
           ARR=()
           for file in ${CHANGED_FILES}; do
