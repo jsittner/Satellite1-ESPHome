@@ -46,9 +46,9 @@ jobs:
           INCLUDES_CHANGED: ${{ steps.changed-files.outputs.includes_any_changed }}
           CORE_HAS_CHANGED:   ${{ steps.changed-files.outputs.core_any_changed }}
           CHANGED_CORE_FILES: ${{ steps.changed-files.outputs.core_all_changed_files }}
-          
+          EVENT: ${{github.event_name}}
         run: |
-          if [[ ${INCLUDES_CHANGED} == "true" ]]; then
+          if [[ ${INCLUDES_CHANGED} == "true" || $EVENT == "release" ]]; then
             echo "build_firmware=true" >> $GITHUB_OUTPUT
             echo "matrix=$(ls config/satellite*.yaml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
             echo "files=$(ls config/satellite*.yaml | jq --slurp --raw-input )" >> $GITHUB_OUTPUT
@@ -107,7 +107,7 @@ jobs:
   
   
   upload_release_asset:
-    #if: github.event_name == 'release'
+    if: github.event_name == 'release'
     name: Upload as release asset
     needs:
       - create_artifact_matrix
@@ -123,14 +123,18 @@ jobs:
         run: |
           echo ${{matrix.file}}
       
-      #- name: Upload Release Asset - Zip file
-      #  id: upload-release-asset-zip
-      #  uses: actions/upload-release-asset@v1
-      #  env:
-      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #  with:
-      #    upload_url: ${{ github.event.release.upload_url }}
-      #    asset_path: build/${{ env.artifact_file_name }}
-      #    asset_name: ${{ env.artifact_file_name }}
-      #    asset_content_type: application/octet-stream  
+      - name: zip it # This would actually build your project, using zip for an example artifact
+        run: |
+          zip --junk-paths ${{matrix.file}} files/${{matrix.file}}/**
+      
+      - name: Upload Release Asset - Zip file
+        id: upload-release-asset-zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ matrix.file }}.zip
+          asset_name: ${{ matrix.file }}
+          asset_content_type: application/octet-stream  
         
