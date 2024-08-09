@@ -9,7 +9,7 @@ packages:
   local: !include common/local_components.yaml
   #sensors: !include common/hat_sensors.yaml
   va: !include common/va.yaml
-  led: !include common/neopixels.yaml
+  led: !include common/everloop.yaml
   versioning: !include common/versioning.yaml
 
 esphome:
@@ -73,11 +73,27 @@ voice_assistant:
           - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
         else:
           - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
+    - script.execute: control_led
 
   on_client_disconnected:
     - lambda: id(voice_assistant_phase) = ${voice_assist_not_ready_phase_id};
     - voice_assistant.stop
     - micro_wake_word.stop
+    - script.execute: control_led
+  
+  on_listening:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
+    - script.execute: control_led
+
+  # When the voice assistant starts to think: Set the correct phase and run the script to refresh the LED status
+  on_stt_vad_end:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_thinking_phase_id};
+    - script.execute: control_led
+
+  # When the voice assistant starts to reply: Set the correct phase and run the script to refresh the LED status
+  on_tts_start:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_replying_phase_id};
+    - script.execute: control_led
 
   on_end:
       then:
@@ -90,17 +106,33 @@ voice_assistant:
               switch.is_on: use_wake_word
             then:
               - micro_wake_word.start:
+        - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+        - script.execute: control_led
+  
   on_error:
-      then:
-        - voice_assistant.stop
-        - wait_until:
-            not:
-              voice_assistant.is_running:
-        - if:
-            condition:
-              switch.is_on: use_wake_word
-            then:
-              - micro_wake_word.start:
+    - if:
+        condition:
+          lambda: return !id(init_in_progress);
+        then:
+          - lambda: id(voice_assistant_phase) = ${voice_assist_error_phase_id};  
+          - script.execute: control_led
+          - delay: 1s
+          - voice_assistant.stop
+          - wait_until:
+              not:
+                voice_assistant.is_running:
+          - if:
+              condition:
+                switch.is_on: use_wake_word
+              then:
+                - micro_wake_word.start:
+                - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+              else:
+                - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
+          
+          - script.execute: control_led
+
+
 
 
 switch:
