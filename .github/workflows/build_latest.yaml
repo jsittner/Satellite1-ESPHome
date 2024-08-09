@@ -86,7 +86,7 @@ jobs:
     needs:
       - build-firmware
     outputs:
-      matrix: ${{ toJSON(steps.artifacts.outputs.artifacts) }}
+      matrix: ${{ steps.artifacts.outputs.matrix }}
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
@@ -103,6 +103,7 @@ jobs:
           echo "artifacts<<EOF" >> $GITHUB_OUTPUT
           echo "$artifacts" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT 
+          echo "matrix=$(ls files | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
   
   
   upload_release_asset:
@@ -115,7 +116,7 @@ jobs:
       fail-fast: false
       max-parallel: 3
       matrix:
-        file: ${{ fromJSON(needs.create_artifact_matrix.outputs.matrix) }}
+        file: ${{ needs.create_artifact_matrix.outputs.matrix }}
     steps:
       - name: debug 
         id: debug_matrix
