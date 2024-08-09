@@ -31,7 +31,7 @@ jobs:
   build-list:    
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.convert_to_list.outputs.files }}
+      matrix: ${{ steps.convert_to_list.outputs.matrix }}
       any_changed: ${{ steps.changed-satellite-files.outputs.any_changed }}
       files: ${{ steps.changed-satellite-files.outputs.all_changed_files }}
     steps:  
