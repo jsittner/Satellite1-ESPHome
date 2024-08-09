@@ -26,7 +26,6 @@ light:
           max_brightness: 100%
 
 
-
 script:
   # Script controlling the LED, based on different conditions: 
   #  - initialization in progress, 
