@@ -56,7 +56,7 @@ jobs:
           echo $ARR
           echo "$JOINED"
           echo ""
-          echo "matrix=$(echo '$JOINED' | jq --slurp --raw-input)" >> $GITHUB_OUTPUT
+          echo "matrix=$(echo $JOINED | jq --slurp --raw-input)" >> $GITHUB_OUTPUT
 
   debug-list:
     runs-on: ubuntu-latest
