@@ -44,7 +44,7 @@ jobs:
       - name: convert to new line separated string
         id: convert_to_list
         env:
-          CHANGED_FILES: ${{ steps.changed-satellite-files.outputs.all_changed_files }}
+          CHANGED_FILES: ${{ toJSON(steps.changed-satellite-files.outputs.all_changed_files) }}
         run: |
           ARR=()
           for file in ${CHANGED_FILES}; do
@@ -54,10 +54,10 @@ jobs:
           printf -v JOINED '%s\n' "${ARR[@]}"
           echo $ARR
           echo "$JOINED"
-          echo "files=$JOINED" >> $GITHUB_OUTPUT
+          
   
   build-firmware-changed:
-    if: needs.build-list.outputs.any_changed == 'true'
+    if: needs.build-list.outputs.any_changed == 'NA'
     name: Build Firmware
     needs:
       - build-list
