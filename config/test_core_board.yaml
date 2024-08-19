@@ -1,10 +1,12 @@
 substitutions:
   node_name: plain-core-board
+  core_revision: "1"
 
 packages:
   device_base: !include common/board.yaml
   wifi: !include common/wifi_improv.yaml
   local: !include common/local_components.yaml
+  adf: !include common/adf_pipeline_pifi.yaml
 
 logger:
   deassert_rts_dtr: true
@@ -13,3 +15,21 @@ logger:
 
 api:
 
+media_player:
+  - platform: adf_pipeline
+    id: adf_media_player
+    name: cosmic_player_r${core_revision}
+    keep_pipeline_alive: false
+    internal: false
+    pipeline:
+      - self
+      - resampler
+      - adf_i2s_out
+
+
+i2c:
+  - id: bus_a
+    sda: GPIO8
+    scl: GPIO18
+    frequency: 100kHz
+    scan: True
