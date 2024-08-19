@@ -7,7 +7,7 @@ substitutions:
 packages:
   device_base: !include common/board.yaml
   wifi: !include common/wifi_improv.yaml
-  adf: !include common/adf_pipeline.yaml
+  adf: !include common/adf_pipeline_48k.yaml
   local: !include common/local_components.yaml
   #sensors: !include common/hat_sensors.yaml
   va: !include common/va.yaml
@@ -49,6 +49,7 @@ media_player:
       - adf_i2s_out
 
 micro_wake_word:
+  #model: github://esphome/micro-wake-word-models/models/v2/okay_nabu.json 
   model: okay_nabu
   on_wake_word_detected:
       - media_player.stop:
