@@ -1,0 +1,84 @@
+substitutions:
+  node_name: plain-core-board
+  core_revision: "1"
+
+packages:
+  device_base: !include common/board.yaml
+  wifi: !include common/wifi_improv.yaml
+  local: !include common/local_components.yaml
+
+logger:
+  deassert_rts_dtr: true
+  hardware_uart : USB_SERIAL_JTAG
+  level: VERBOSE
+
+api:
+
+external_components:
+  - source:
+      type: local
+      path: ../esphome/components
+    components: [ satellite1 ]
+
+spi:
+  - id: spi_0
+    clk_pin:  GPIO12
+    mosi_pin: GPIO11
+    miso_pin: GPIO13
+  
+  - id: spi_1
+    interface: spi3
+    clk_pin:  GPIO16
+    mosi_pin: GPIO5
+    miso_pin: GPIO1
+
+
+
+ota:
+  - platform: satellite1
+    id: ota_satellite1_xmos
+    spi_id: spi_0
+    cs_pin: GPIO10
+
+
+http_request:
+
+
+satellite1:
+  spi_id: spi_1
+  cs_pin: GPIO09
+  data_rate: 1000
+  spi_mode: MODE3
+
+button:
+  - platform: template
+    id: flash_satellite
+    name: "Flash Satellite1"
+    entity_category: diagnostic
+    on_press:
+      then:
+        - ota.satellite1.flash:
+            url: http://192.168.178.20:8080/satellite_firmware_bypass.bin
+            md5_url: http://192.168.178.20:8080/satellite_firmware_bypass.bin.md5
+
+
+switch:
+  - platform: gpio
+    id: expl_led_0
+    name: "Explorer LED 1"
+    pin:
+      satellite1: 
+      port: 0
+      pin: 1
+      mode:
+        output: true
+
+#binary_sensor:
+#  - platform: gpio
+#    pin:
+#      satellite1: 
+#      port: 1
+#      pin: 0
+#      mode:
+#        input: true
+#    name: "Action Button"

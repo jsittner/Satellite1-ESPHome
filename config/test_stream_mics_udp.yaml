@@ -1,10 +1,11 @@
 substitutions:
   node_name: mic_udp_streamer
+  core_revision: "1"
 
 packages:
   device_base: !include common/board.yaml
   wifi: !include common/wifi_improv.yaml
-  adf: !include common/adf_pipeline.yaml
+  adf: !include common/adf_pipeline_48k.yaml
   local: !include common/local_components.yaml
 
 logger:
