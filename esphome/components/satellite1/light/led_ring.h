@@ -11,6 +11,10 @@ namespace satellite1 {
 
 const uint32_t NUMBER_OF_LEDS = 12;
 
+const uint32_t LED_RES_ID = 200;
+const uint32_t CMD_WRITE_LED_RING_RAW = 0;
+
+
 class LEDRing : public light::AddressableLight, public SatelliteSPIService {
 public:
     LEDRing() : num_leds_(NUMBER_OF_LEDS) {}
@@ -23,15 +27,11 @@ public:
 
     light::LightTraits get_traits() override {
         auto traits = light::LightTraits();
-        traits.set_supported_color_modes({light::ColorMode::RGB_WHITE});
+        traits.set_supported_color_modes({light::ColorMode::RGB});
         return traits;
     }
 
-    void write_state(light::LightState *state) override {
-        if (this->is_failed())
-            return;
-        this->wb_write(this->buf_, this->buffer_size_);
-    }
+    void write_state(light::LightState *state) override;
 
     void clear_effect_data() override {
         for (int i = 0; i < this->size(); i++)

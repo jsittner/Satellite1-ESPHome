@@ -98,3 +98,9 @@ binary_sensor:
       pin: 1
       inverted: true
     name: "Action Button 2"
+
+
+light:
+  - platform: satellite1
+    name: LED-Ring
+    id: led_ring

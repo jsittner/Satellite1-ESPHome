@@ -17,7 +17,7 @@ LedRing = satellite1_ns.class_("LEDRing", light.AddressableLight, Satellite1SPIS
 
 CONFIG_SCHEMA = light.ADDRESSABLE_LIGHT_SCHEMA.extend(
     {
-        cv.GenerateID(): cv.declare_id(LedRing),
+        cv.GenerateID(CONF_OUTPUT_ID): cv.declare_id(LedRing),
         cv.GenerateID(CONF_SATELLITE1): cv.use_id(Satellite1),
     }
 )
