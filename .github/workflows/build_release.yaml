@@ -148,7 +148,7 @@ jobs:
         with:
           name: zip-artifacts
           path: files
-
+      - run: tree
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
