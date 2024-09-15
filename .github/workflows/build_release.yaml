@@ -6,7 +6,6 @@ on:
       - main
       - develop
       - staging
-      - feature/32-release-actions
   workflow_dispatch:
     inputs:
       tag:
