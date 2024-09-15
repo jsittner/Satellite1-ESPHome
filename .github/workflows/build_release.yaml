@@ -148,7 +148,20 @@ jobs:
         with:
           name: zip-artifacts
           path: files
-      - run: tree
+
+      - name: Bump version
+        if: ${{ !github.event.inputs.tag }} # if manual tag is provided, use it
+        uses: anothrNick/github-tag-action@1.61.0
+        id: bump
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # To create a major bump add #major to commit message
+          DEFAULT_BUMP: ${{ github.ref_name == 'main' && 'minor' || github.ref_name == 'staging' && 'minor' || 'patch' }}
+          WITH_V: true
+          PRERELEASE: ${{ github.ref_name != 'main' }}
+          PRERELEASE_SUFFIX: ${{ github.ref_name == 'dev' && 'alpha' || 'rc' }}
+          DRY_RUN: false # Set the tag to the commit.
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
