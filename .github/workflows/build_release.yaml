@@ -74,21 +74,36 @@ jobs:
         with:
           fromTag: ${{ steps.dump.outputs.previous_tag }}
 
-  build-firmware:
-    name: Build Firmware
-    needs:
-      - prepare
-    uses: esphome/workflows/.github/workflows/build.yml@main
-    with:
-      files: ${{ fromJSON(needs.prepare.outputs.build_cfg_files) }}
-      esphome-version: 2024.6.0
-      release-version: ${{ needs.prepare.outputs.next_tag }}
+      - name: debug files
+        run: |
+          mkdir -p files/satellite-va-rev1
+          mkdir -p files/satellite-va-rev2
+          touch files/satellite-va-rev1/config.yaml
+          touch files/satellite-va-rev2/config.yaml
+          touch files/satellite-va-rev1/misc.bin
+          touch files/satellite-va-rev2/misc.bin
+          touch files/satellite-va-rev1/misc1.bin
+          touch files/satellite-va-rev2/misc1.bin
+      - name: Upload debug files
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          path: files
+
+  # build-firmware:
+  #   name: Build Firmware
+  #   needs:
+  #     - prepare
+  #   uses: esphome/workflows/.github/workflows/build.yml@main
+  #   with:
+  #     files: ${{ fromJSON(needs.prepare.outputs.build_cfg_files) }}
+  #     esphome-version: 2024.6.0
+  #     release-version: ${{ needs.prepare.outputs.next_tag }}
 
 
   create_artifacts:
     name: Upload Zip Artifacts
     needs:
-      - build-firmware
+      # - build-firmware
       - prepare
     runs-on: ubuntu-latest
     steps:
@@ -97,7 +112,6 @@ jobs:
         with:
           path: files
 
-      - run: tree
       - name: Create zip files
         run: |
           mkdir -p build
@@ -105,11 +119,12 @@ jobs:
           find files -name "*.bin" -exec cp {} build/ \;
           zip -r build.zip build
 
+      - run: tree
       - name: Upload artifact
         uses: actions/upload-artifact@v3.1.2
         with:
           name: zip-artifacts
-          path: release.zip
+          path: build.zip
 
   create_release:
     name: Create Release
