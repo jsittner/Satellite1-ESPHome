@@ -44,7 +44,7 @@ jobs:
           DEFAULT_BUMP: ${{ github.ref_name == 'main' && 'minor' || github.ref_name == 'staging' && 'minor' || 'patch' }}
           WITH_V: true
           PRERELEASE: ${{ github.ref_name != 'main' }}
-          PRERELEASE_SUFFIX: ${{ github.ref_name == 'dev' && 'alpha' || 'rc' }}
+          PRERELEASE_SUFFIX: ${{ github.ref_name == 'staging' && 'beta' || 'alpha' }}
           DRY_RUN: true # Prevent action from pushing the tag.
 
       - name: Set tag for release
@@ -92,7 +92,7 @@ jobs:
               fetch-depth: 0
 
       - name: Bump version and push tag
-        if: ${{ !github.event.inputs.tag }} # if manual tag is provided, use it
+        if: ${{ !github.event.inputs.tag }}
         uses: anothrNick/github-tag-action@1.70.0
         id: bump
         env:
@@ -101,7 +101,7 @@ jobs:
           DEFAULT_BUMP: ${{ github.ref_name == 'main' && 'minor' || github.ref_name == 'staging' && 'minor' || 'patch' }}
           WITH_V: true
           PRERELEASE: ${{ github.ref_name != 'main' }}
-          PRERELEASE_SUFFIX: ${{ github.ref_name == 'dev' && 'alpha' || 'rc' }}
+          PRERELEASE_SUFFIX: ${{ github.ref_name == 'staging' && 'beta' || 'alpha' }}
           DRY_RUN: false # Set the tag to the commit.
 
       - name: Release Changelog Builder
@@ -110,10 +110,11 @@ jobs:
         with:
           fromTag: ${{ needs.prepare.outputs.previous_tag }}
 
-  create_artifacts:
-    name: Upload Zip Artifacts
+  create_release:
+    name: Create Release
     needs:
       - push-tag
+      - prepare
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
@@ -128,31 +129,10 @@ jobs:
           find files -name "*.bin" -exec cp {} build/ \;
           zip -r build.zip build
 
-      - run: tree
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: zip-artifacts
-          path: build.zip
-
-  create_release:
-    name: Create Release
-    needs:
-      - create_artifacts
-      - push-tag
-      - prepare
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: zip-artifacts
-          path: files
-
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          files: files/build.zip
+          files: build.zip
           generate_release_notes: true
           append_body: true
           body: ${{ needs.push-tag.outputs.changelog }}
