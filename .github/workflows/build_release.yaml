@@ -93,7 +93,7 @@ jobs:
 
       - name: Bump version and push tag
         if: ${{ !github.event.inputs.tag }} # if manual tag is provided, use it
-        uses: anothrNick/github-tag-action@1.61.0
+        uses: anothrNick/github-tag-action@1.70.0
         id: bump
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -157,7 +157,5 @@ jobs:
           append_body: true
           body: ${{ needs.push-tag.outputs.changelog }}
           tag_name: ${{ needs.prepare.outputs.next_tag }}
-          draft: true
-
 
 # Push tag to repository
