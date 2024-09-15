@@ -81,6 +81,7 @@ jobs:
     name: Push tag to repository and build changelog.
     needs:
       - prepare
+      - build-firmware
     runs-on: ubuntu-latest
     outputs:
       changelog: ${{ steps.changelog.outputs.changelog }}
@@ -112,7 +113,7 @@ jobs:
   create_artifacts:
     name: Upload Zip Artifacts
     needs:
-      - build-firmware
+      - push-tag
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
@@ -138,7 +139,7 @@ jobs:
     name: Create Release
     needs:
       - create_artifacts
-      - build-firmware
+      - push-tag
       - prepare
     runs-on: ubuntu-latest
     steps:
@@ -154,7 +155,7 @@ jobs:
           files: files/build.zip
           generate_release_notes: true
           append_body: true
-          body: ${{ needs.build-firmware.outputs.changelog }}
+          body: ${{ needs.push-tag.outputs.changelog }}
           tag_name: ${{ needs.prepare.outputs.next_tag }}
           draft: true
 
