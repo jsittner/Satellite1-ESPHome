@@ -78,18 +78,26 @@ jobs:
 
       - name: debug files
         run: |
-          mkdir -p files/satellite-va-rev1
-          mkdir -p files/satellite-va-rev2
-          touch files/satellite-va-rev1/config.yaml
-          touch files/satellite-va-rev2/config.yaml
-          touch files/satellite-va-rev1/misc.bin
-          touch files/satellite-va-rev2/misc.bin
-          touch files/satellite-va-rev1/misc1.bin
-          touch files/satellite-va-rev2/misc1.bin
+          mkdir -p outputs/satellite-va-rev1
+          mkdir -p outputs/satellite-va-rev2
+          touch outputs/satellite-va-rev1/config.yaml
+          touch outputs/satellite-va-rev2/config.yaml
+          touch outputs/satellite-va-rev1/misc.bin
+          touch outputs/satellite-va-rev2/misc.bin
+          touch outputs/satellite-va-rev1/misc1.bin
+          touch outputs/satellite-va-rev2/misc1.bin
+
       - name: Upload debug files
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v4
         with:
-          path: files
+          name: satellite-va-rev1
+          path: outputs/satellite-va-rev1
+
+      - name: Upload debug files
+        uses: actions/upload-artifact@v4
+        with:
+          name: satellite-va-rev2
+          path: outputs/satellite-va-rev2
 
   # build-firmware:
   #   name: Build Firmware
@@ -110,7 +118,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@v4
         with:
           path: files
 
@@ -123,7 +131,7 @@ jobs:
 
       - run: tree
       - name: Upload artifact
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v4
         with:
           name: zip-artifacts
           path: build.zip
@@ -136,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3.0.2
+        uses: actions/download-artifact@v4
         with:
           name: zip-artifacts
           path: files
