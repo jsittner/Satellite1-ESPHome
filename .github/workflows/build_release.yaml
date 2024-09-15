@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+      - develop
+      - staging
       - feature/32-release-actions
   workflow_dispatch:
     inputs:
@@ -35,8 +37,9 @@ jobs:
         run: echo "manual_tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
 
       - name: Bump version
-        if: ${{ !steps.set_tag.outputs.manual_tag }} # if manual tag is provided, use it
-        uses: anothrNick/github-tag-action@1.61.0
+        # if manual tag is provided, use it
+        if: ${{ !steps.set_tag.outputs.manual_tag }}
+        uses: anothrNick/github-tag-action@1.70.0
         id: bump
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -46,6 +49,7 @@ jobs:
           PRERELEASE: ${{ github.ref_name != 'main' }}
           PRERELEASE_SUFFIX: ${{ github.ref_name == 'staging' && 'beta' || 'alpha' }}
           DRY_RUN: true # Prevent action from pushing the tag.
+          INITIAL_VERSION: 1.0.0
 
       - name: Set tag for release
         if: ${{ steps.set_tag.outputs.manual_tag || steps.bump.outputs.tag }}
@@ -103,6 +107,7 @@ jobs:
           PRERELEASE: ${{ github.ref_name != 'main' }}
           PRERELEASE_SUFFIX: ${{ github.ref_name == 'staging' && 'beta' || 'alpha' }}
           DRY_RUN: false # Set the tag to the commit.
+          INITIAL_VERSION: 1.0.0
 
       - name: Release Changelog Builder
         id: changelog
