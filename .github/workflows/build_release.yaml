@@ -71,6 +71,16 @@ jobs:
     name: Build Firmware
     needs:
       - prepare
+    uses: esphome/workflows/.github/workflows/build.yml@main
+    with:
+      files: ${{ fromJSON(needs.prepare.outputs.build_cfg_files) }}
+      esphome-version: 2024.6.0
+      release-version: ${{ needs.prepare.outputs.next_tag }}
+
+  push-tag:
+    name: Push tag to repository and build changelog.
+    needs:
+      - prepare
     runs-on: ubuntu-latest
     outputs:
       changelog: ${{ steps.changelog.outputs.changelog }}
@@ -79,12 +89,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
               fetch-depth: 0
-
-      - uses: esphome/workflows/.github/workflows/build.yml@main
-        with:
-          files: ${{ fromJSON(needs.prepare.outputs.build_cfg_files) }}
-          esphome-version: 2024.6.0
-          release-version: ${{ needs.prepare.outputs.next_tag }}
 
       - name: Bump version and push tag
         if: ${{ !github.event.inputs.tag }} # if manual tag is provided, use it
