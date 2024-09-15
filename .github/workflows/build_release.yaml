@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-      - develop
-      - staging
-      - feature/32-release-actions
   workflow_dispatch:
     inputs:
       tag:
@@ -25,7 +22,6 @@ jobs:
       commit_id: ${{ steps.dump.outputs.commit }}
       previous_tag: ${{ steps.dump.outputs.previous_tag }}
       next_tag: ${{ steps.set_release_tag.outputs.release_tag }}
-      changelog: ${{ steps.changelog.outputs.changelog }}
     steps:
       - name: Check out code from GitHub
         uses: actions/checkout@v4.1.6
@@ -70,51 +66,48 @@ jobs:
           echo "previous_tag=$(git describe --abbrev=0 --tags)" >> $GITHUB_OUTPUT
           echo "files=$(ls config/satellite*.yaml | jq --slurp --raw-input )" >> $GITHUB_OUTPUT
 
+  build-firmware:
+    name: Build Firmware
+    needs:
+      - prepare
+    runs-on: ubuntu-latest
+    outputs:
+      changelog: ${{ steps.changelog.outputs.changelog }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+              fetch-depth: 0
+
+      - uses: esphome/workflows/.github/workflows/build.yml@main
+        with:
+          files: ${{ fromJSON(needs.prepare.outputs.build_cfg_files) }}
+          esphome-version: 2024.6.0
+          release-version: ${{ needs.prepare.outputs.next_tag }}
+
+      - name: Bump version and push tag
+        if: ${{ !github.event.inputs.tag }} # if manual tag is provided, use it
+        uses: anothrNick/github-tag-action@1.61.0
+        id: bump
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # To create a major bump add #major to commit message
+          DEFAULT_BUMP: ${{ github.ref_name == 'main' && 'minor' || github.ref_name == 'staging' && 'minor' || 'patch' }}
+          WITH_V: true
+          PRERELEASE: ${{ github.ref_name != 'main' }}
+          PRERELEASE_SUFFIX: ${{ github.ref_name == 'dev' && 'alpha' || 'rc' }}
+          DRY_RUN: false # Set the tag to the commit.
+
       - name: Release Changelog Builder
         id: changelog
         uses: mikepenz/release-changelog-builder-action@v5
         with:
-          fromTag: ${{ steps.dump.outputs.previous_tag }}
-
-      - name: debug files
-        run: |
-          mkdir -p outputs/satellite-va-rev1
-          mkdir -p outputs/satellite-va-rev2
-          touch outputs/satellite-va-rev1/config.yaml
-          touch outputs/satellite-va-rev2/config.yaml
-          touch outputs/satellite-va-rev1/misc.bin
-          touch outputs/satellite-va-rev2/misc.bin
-          touch outputs/satellite-va-rev1/misc1.bin
-          touch outputs/satellite-va-rev2/misc1.bin
-
-      - name: Upload debug files
-        uses: actions/upload-artifact@v4
-        with:
-          name: satellite-va-rev1
-          path: outputs/satellite-va-rev1
-
-      - name: Upload debug files
-        uses: actions/upload-artifact@v4
-        with:
-          name: satellite-va-rev2
-          path: outputs/satellite-va-rev2
-
-  # build-firmware:
-  #   name: Build Firmware
-  #   needs:
-  #     - prepare
-  #   uses: esphome/workflows/.github/workflows/build.yml@main
-  #   with:
-  #     files: ${{ fromJSON(needs.prepare.outputs.build_cfg_files) }}
-  #     esphome-version: 2024.6.0
-  #     release-version: ${{ needs.prepare.outputs.next_tag }}
-
+          fromTag: ${{ needs.prepare.outputs.previous_tag }}
 
   create_artifacts:
     name: Upload Zip Artifacts
     needs:
-      # - build-firmware
-      - prepare
+      - build-firmware
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
@@ -140,6 +133,7 @@ jobs:
     name: Create Release
     needs:
       - create_artifacts
+      - build-firmware
       - prepare
     runs-on: ubuntu-latest
     steps:
@@ -149,26 +143,13 @@ jobs:
           name: zip-artifacts
           path: files
 
-      - name: Bump version
-        if: ${{ !github.event.inputs.tag }} # if manual tag is provided, use it
-        uses: anothrNick/github-tag-action@1.61.0
-        id: bump
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # To create a major bump add #major to commit message
-          DEFAULT_BUMP: ${{ github.ref_name == 'main' && 'minor' || github.ref_name == 'staging' && 'minor' || 'patch' }}
-          WITH_V: true
-          PRERELEASE: ${{ github.ref_name != 'main' }}
-          PRERELEASE_SUFFIX: ${{ github.ref_name == 'dev' && 'alpha' || 'rc' }}
-          DRY_RUN: false # Set the tag to the commit.
-
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           files: files/build.zip
           generate_release_notes: true
           append_body: true
-          body: ${{ needs.prepare.outputs.changelog }}
+          body: ${{ needs.build-firmware.outputs.changelog }}
           tag_name: ${{ needs.prepare.outputs.next_tag }}
           draft: true
 
