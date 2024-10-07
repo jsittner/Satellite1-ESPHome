@@ -1,0 +1,251 @@
+
+# play testset flac files
+script:
+  - id: play_subset
+    then:
+
+      #- logger.log: "Playing: 22 - 12 bit per sample.flac"
+      #- media_player.play_media: 'http://192.168.178.20:8080/subset/22%20-%2012%20bit%20per%20sample.flac'
+      #- delay: 5s
+      #- wait_until:
+      #    media_player.is_idle:
+
+      #- logger.log: "Playing: 23 - 8 bit per sample.flac"
+      #- media_player.play_media: 'http://192.168.178.20:8080/subset/23%20-%208%20bit%20per%20sample.flac'
+      #- delay: 5s
+      #- wait_until:
+      #    media_player.is_idle:
+
+      #- logger.log: "Playing: 26 - variable blocksize file created with CUETools.Flake 2.1.6.flac"
+      #- media_player.play_media: 'http://192.168.178.20:8080/subset/26%20-%20variable%20blocksize%20file%20created%20with%20CUETools.Flake%202.1.6.flac'
+      #- delay: 5s
+      #- wait_until:
+      #    media_player.is_idle:
+
+      #- logger.log: "Playing: 27 - old format variable blocksize file created with Flake 0.11.flac"
+      #- media_player.play_media: 'http://192.168.178.20:8080/subset/27%20-%20old%20format%20variable%20blocksize%20file%20created%20with%20Flake%200.11.flac'
+      #- delay: 5s
+      #- wait_until:
+      #    media_player.is_idle:
+
+      #- logger.log: "Playing: 28 - high resolution audio, default settings.flac"
+      #- media_player.play_media: 'http://192.168.178.20:8080/subset/28%20-%20high%20resolution%20audio%2C%20default%20settings.flac'
+      #- delay: 5s
+      #- wait_until:
+      #    media_player.is_idle:
+
+      #- logger.log: "Playing: 29 - high resolution audio, blocksize 16384.flac"
+      #- media_player.play_media: 'http://192.168.178.20:8080/subset/29%20-%20high%20resolution%20audio%2C%20blocksize%2016384.flac'
+      #- delay: 5s
+      #- wait_until:
+      #    media_player.is_idle:
+
+      #- logger.log: "Playing: 30 - high resolution audio, blocksize 13456.flac"
+      #- media_player.play_media: 'http://192.168.178.20:8080/subset/30%20-%20high%20resolution%20audio%2C%20blocksize%2013456.flac'
+      #- delay: 5s
+      #- wait_until:
+      #    media_player.is_idle:
+
+      #- logger.log: "Playing: 31 - high resolution audio, using only 32nd order predictors.flac"
+      #- media_player.play_media: 'http://192.168.178.20:8080/subset/31%20-%20high%20resolution%20audio%2C%20using%20only%2032nd%20order%20predictors.flac'
+      #- delay: 5s
+      #- wait_until:
+      #    media_player.is_idle:
+
+      - logger.log: "Playing: 32 - high resolution audio, partition order 8 containing escaped partitions.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/32%20-%20high%20resolution%20audio%2C%20partition%20order%208%20containing%20escaped%20partitions.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 33 - samplerate 192kHz.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/33%20-%20samplerate%20192kHz.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 34 - samplerate 192kHz, using only 32nd order predictors.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/34%20-%20samplerate%20192kHz%2C%20using%20only%2032nd%20order%20predictors.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 35 - samplerate 134560Hz.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/35%20-%20samplerate%20134560Hz.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 36 - samplerate 384kHz.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/36%20-%20samplerate%20384kHz.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 37 - 20 bit per sample.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/37%20-%2020%20bit%20per%20sample.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 38 - 3 channels (3.0).flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/38%20-%203%20channels%20%283.0%29.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 39 - 4 channels (4.0).flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/39%20-%204%20channels%20%284.0%29.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 40 - 5 channels (5.0).flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/40%20-%205%20channels%20%285.0%29.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 41 - 6 channels (5.1).flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/41%20-%206%20channels%20%285.1%29.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 42 - 7 channels (6.1).flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/42%20-%207%20channels%20%286.1%29.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 43 - 8 channels (7.1).flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/43%20-%208%20channels%20%287.1%29.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 44 - 8-channel surround, 192kHz, 24 bit, using only 32nd order predictors.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/44%20-%208-channel%20surround%2C%20192kHz%2C%2024%20bit%2C%20using%20only%2032nd%20order%20predictors.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 45 - no total number of samples set.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/45%20-%20no%20total%20number%20of%20samples%20set.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 46 - no min-max framesize set.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/46%20-%20no%20min-max%20framesize%20set.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 47 - only STREAMINFO.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/47%20-%20only%20STREAMINFO.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 48 - Extremely large SEEKTABLE.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/48%20-%20Extremely%20large%20SEEKTABLE.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 49 - Extremely large PADDING.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/49%20-%20Extremely%20large%20PADDING.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 50 - Extremely large PICTURE.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/50%20-%20Extremely%20large%20PICTURE.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 51 - Extremely large VORBISCOMMENT.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/51%20-%20Extremely%20large%20VORBISCOMMENT.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 52 - Extremely large APPLICATION.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/52%20-%20Extremely%20large%20APPLICATION.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 53 - CUESHEET with very many indexes.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/53%20-%20CUESHEET%20with%20very%20many%20indexes.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 54 - 1000x repeating VORBISCOMMENT.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/54%20-%201000x%20repeating%20VORBISCOMMENT.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 55 - file 48-53 combined.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/55%20-%20file%2048-53%20combined.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 56 - JPG PICTURE.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/56%20-%20JPG%20PICTURE.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 57 - PNG PICTURE.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/57%20-%20PNG%20PICTURE.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 58 - GIF PICTURE.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/58%20-%20GIF%20PICTURE.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 59 - AVIF PICTURE.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/59%20-%20AVIF%20PICTURE.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 60 - mono audio.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/60%20-%20mono%20audio.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 61 - predictor overflow check, 16-bit.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/61%20-%20predictor%20overflow%20check%2C%2016-bit.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 62 - predictor overflow check, 20-bit.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/62%20-%20predictor%20overflow%20check%2C%2020-bit.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 63 - predictor overflow check, 24-bit.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/63%20-%20predictor%20overflow%20check%2C%2024-bit.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:
+
+      - logger.log: "Playing: 64 - rice partitions with escape code zero.flac"
+      - media_player.play_media: 'http://192.168.178.20:8080/subset/64%20-%20rice%20partitions%20with%20escape%20code%20zero.flac'
+      - delay: 5s
+      - wait_until:
+          media_player.is_idle:

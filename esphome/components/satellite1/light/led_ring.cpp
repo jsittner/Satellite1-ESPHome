@@ -38,7 +38,7 @@ void LEDRing::write_state(light::LightState *state){
   if (this->is_failed()){
     return;  
   }
-  this->parent_->transfer( LED_RES_ID, CMD_WRITE_LED_RING_RAW, this->buf_, this->buffer_size_);
+  this->parent_->transfer(LED_RES_ID, CMD_WRITE_LED_RING_RAW, this->buf_, this->buffer_size_);
 }
 
 

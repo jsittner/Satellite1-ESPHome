@@ -15,6 +15,8 @@ from esphome.const import (
 )
 
 CONF_SATELLITE1 = "satellite1"
+CONF_XMOS_RST_PIN = "xmos_rst_pin"
+CONF_FLASH_SW_PIN = "flash_sw_pin"
 
 DEPENDENCIES = ["spi"]
 CODEOWNERS = ["@gnumpi"]
@@ -22,9 +24,9 @@ CODEOWNERS = ["@gnumpi"]
 satellite1_ns = cg.esphome_ns.namespace("satellite1")
 Satellite1 = satellite1_ns.class_("Satellite1", SPIDevice, cg.Component )
 
-Satellite1SPIService = satellite1_ns.class_("SatelliteSPIService", cg.Parented.template(Satellite1) )
+Satellite1SPIService = satellite1_ns.class_("Satellite1SPIService", cg.Parented.template(Satellite1) )
 
-Satellite1GPIOPin = satellite1_ns.class_("Satellite1GPIOPin", cg.GPIOPin)
+Satellite1GPIOPin = satellite1_ns.class_("Satellite1GPIOPin", cg.GPIOPin, Satellite1SPIService, cg.Parented.template(Satellite1) )
 
 
 
@@ -32,16 +34,18 @@ Satellite1GPIOPin = satellite1_ns.class_("Satellite1GPIOPin", cg.GPIOPin)
 
 XMOSPort = satellite1_ns.enum("XMOSPort", is_class=True)
 XMOS_PORT = {
-    0: XMOSPort.PORT_A, 
-    1: XMOSPort.PORT_B,
-"INPUT_A" : XMOSPort.PORT_B,
-"OUTPUT_A" : XMOSPort.PORT_A      
+"INPUT_A" : XMOSPort.PORT_INPUT_A,
+"INPUT_B" : XMOSPort.PORT_INPUT_B,
+"OUTPUT_A" : XMOSPort.PORT_OUTPUT_A      
 }
 
 
 CONFIG_SCHEMA = (
     cv.Schema({
-        cv.GenerateID(): cv.declare_id(Satellite1)
+        cv.GenerateID(): cv.declare_id(Satellite1),
+        cv.Optional(CONF_XMOS_RST_PIN, default="GPIO12"): pins.gpio_output_pin_schema,
+        cv.Optional(CONF_FLASH_SW_PIN, default="GPIO14"): pins.gpio_output_pin_schema,
+
     }).extend(spi_device_schema(True, "1Hz"))
 )
 
@@ -71,28 +75,29 @@ PIN_SCHEMA = cv.All(
     }
 )
 
-# TODO: validate that all pins of a port are set to the same pin mode
 
-
-
-
+# Satellite1
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     await register_spi_device(var, config)
+    
+    rst_pin = await cg.gpio_pin_expression(config[CONF_XMOS_RST_PIN])
+    cg.add(var.set_xmos_rst_pin(rst_pin))
+    sw_pin = await cg.gpio_pin_expression(config[CONF_FLASH_SW_PIN])
+    cg.add(var.set_xmos_rst_pin(sw_pin))
     return var
 
 
 @pins.PIN_SCHEMA_REGISTRY.register(CONF_SATELLITE1, PIN_SCHEMA)
 async def satellite1_pin_to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
-    parent = await cg.get_variable(config[CONF_SATELLITE1])
-    cg.add(var.set_parent(parent))
+    await cg.register_parented(var, config[CONF_SATELLITE1])
 
     cg.add(var.set_pin(config[CONF_PORT], config[CONF_PIN]))
     cg.add(var.set_inverted(config[CONF_INVERTED]))
     port_mode = {
-        CONF_INPUT : config[CONF_PORT] in ["INPUT_A"],
+        CONF_INPUT : config[CONF_PORT] in ["INPUT_A","INPUT_B"],
         CONF_OUTPUT: config[CONF_PORT] in ["OUTPUT_A"]
     }
     cg.add(var.set_flags(pins.gpio_flags_expr(port_mode)))

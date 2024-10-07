@@ -5,8 +5,9 @@ substitutions:
 packages:
   device_base: !include common/board.yaml
   wifi: !include common/wifi_improv.yaml
-  adf: !include common/adf_pipeline_48k.yaml
+  #adf: !include common/adf_pipeline_48k.yaml
   local: !include common/local_components.yaml
+  vk: !include common/nabu_vk_duplex.yaml
 
 logger:
   deassert_rts_dtr: true
@@ -15,15 +16,15 @@ logger:
 
 api:
 
-microphone:
-  - platform: adf_pipeline
-    id: adf_microphone
-    gain_log2: 3
-    keep_pipeline_alive: false
-    pipeline:
-      - adf_i2s_in
-      - resampler
-      - self
+#microphone:
+#  - platform: adf_pipeline
+#    id: adf_microphone
+#    gain_log2: 3
+#    keep_pipeline_alive: false
+#    pipeline:
+#      - adf_i2s_in
+#      - resampler
+#      - self
 
 
 udp_stream:

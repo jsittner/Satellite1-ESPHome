@@ -15,13 +15,8 @@ static const uint8_t RET_STATUS_PAYLOAD_AVAIL = 23;
 
 static const uint8_t CONTROL_COMMAND_IGNORED_IN_DEVICE = 7;
 
-static const uint8_t GPIO_SERVICER_RESID = 250;
-static const uint8_t GPIO_SERVICER_RESID_PORTA = 252;
-static const uint8_t GPIO_SERVICER_RESID_PORTB = 254;
-
-static const uint8_t GPIO_SERVICER_CMD_READ_PORT  = 0x00;
-static const uint8_t GPIO_SERVICER_CMD_WRITE_PORT = 0x01;
-static const uint8_t GPIO_SERVICER_CMD_SET_PIN    = 0x02;
+static const uint8_t GPIO_SERVICER_RESID_PORTA = 221;
+static const uint8_t GPIO_SERVICER_RESID_PORTB = 211;
 
 namespace DC_RESOURCE {
 enum dc_resource_enum {
@@ -46,13 +41,6 @@ enum register_id {
 }
 
 
-enum class XMOSPort : uint8_t { PORT_A = 0, PORT_B };
-enum class XMOSPortMode : uint8_t { GPIO_IN = 0, GPIO_OUT, LED };
-
-static const uint8_t port_to_resource_id[2] = { GPIO_SERVICER_RESID_PORTA, GPIO_SERVICER_RESID_PORTB };
-
-class SatelliteSPIService;
-
 class Satellite1 : public Component,
                    public spi::SPIDevice <spi::BIT_ORDER_MSB_FIRST, spi::CLOCK_POLARITY_LOW,
                                           spi::CLOCK_PHASE_LEADING, spi::DATA_RATE_1KHZ> {
@@ -64,50 +52,32 @@ class Satellite1 : public Component,
   bool transfer( uint8_t resource_id, uint8_t command, uint8_t* payload, uint8_t payload_len);
 
   bool request_status_register_update();
-  uint8_t get_dc_status( DC_STATUS_REGISTER::register_id reg){ assert(reg < CONTROL_STATUS_REGISTER_LEN); return this->dc_status_register_[reg]; }
+  uint8_t get_dc_status( DC_STATUS_REGISTER::register_id reg){assert(reg < CONTROL_STATUS_REGISTER_LEN); return this->dc_status_register_[reg]; }
+  
+  void set_xmos_rst_pin(GPIOPin* xmos_rst_pin){this->xmos_rst_pin_ = xmos_rst_pin;}
+  void set_flash_sw_pin(GPIOPin* flash_sw_pin){this->flash_sw_pin_ = flash_sw_pin;}
 
 protected:
+  void set_spi_flash_direct_access_mode_(bool enable);
+  
   uint8_t dc_status_register_[CONTROL_STATUS_REGISTER_LEN];
-
+  bool spi_flash_direct_access_enabled_{false};
+  
+  GPIOPin* xmos_rst_pin_{nullptr};
+  GPIOPin* flash_sw_pin_{nullptr};
 };
 
 
 
-class SatelliteSPIService : public Parented<Satellite1> {
+class Satellite1SPIService : public Parented<Satellite1> {
 public:
-   
    virtual bool handle_response(uint8_t status, uint8_t res_id, uint8_t cmd, uint8_t* payload, uint8_t payload_len){return false;}
-   
 
 protected:
    uint8_t servicer_id_;
 
 };
 
-
-
-class Satellite1GPIOPin : public GPIOPin
-{
-public:
-    void setup() override {};
-    void pin_mode(gpio::Flags flags) override {}
-    bool digital_read() override;
-    void digital_write(bool value) override;
-
-    void set_parent(Satellite1 *parent) { this->parent_ = parent; }
-    void set_pin(XMOSPort port, uint8_t pin) { this->port_ = port; this->pin_ = pin; }
-    void set_inverted(bool inverted) { this->inverted_ = inverted; }
-    void set_flags(gpio::Flags flags) { this->flags_ = flags; }
-
-    std::string dump_summary() const override {return ""; };
-
-protected:
-    Satellite1 *parent_;
-    XMOSPort port_;
-    uint8_t pin_;
-    bool inverted_;
-    gpio::Flags flags_;
-};
 
 
 

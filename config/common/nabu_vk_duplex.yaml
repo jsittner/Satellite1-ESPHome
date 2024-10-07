@@ -1,0 +1,49 @@
+external_components:
+  - source:
+      type: local
+      path: /Users/siekmann/Privat/Projects/futureHome/nabu-voice-kit/esphome/components
+    components: [ audio_dac, media_player ]
+
+  - source:
+      type: local
+      path: ../esphome/components
+    components: [ i2s_audio, satellite1 ]
+
+i2s_audio:
+  - id: i2s_shared
+    i2s_lrclk_pin: GPIO45
+    i2s_bclk_pin: GPIO17
+    i2s_mclk_pin: GPIO02
+    access_mode: duplex
+
+media_player:
+  - platform: satellite1
+    id: nabu_media_player
+    name: Media Player
+    internal: false
+    sample_rate: 48000
+    i2s_dout_pin: GPIO16
+    bits_per_sample: 32bit
+    i2s_clock_mode: external
+    channel: right_left
+    i2s_audio_id: i2s_shared
+    volume_increment: 0.05
+    volume_min: 0.4
+    volume_max: 0.85
+    on_mute:
+      - script.execute: update_leds
+    on_unmute:
+      - script.execute: update_leds
+    on_volume:
+      - script.execute: update_leds
+
+microphone:
+  - platform: satellite1
+    id: mic0
+    sample_rate: 48000
+    i2s_din_pin: GPIO15
+    bits_per_sample: 32bit
+    i2s_clock_mode: external
+    channel: right_left
+    pdm: false
+    adc_type: external

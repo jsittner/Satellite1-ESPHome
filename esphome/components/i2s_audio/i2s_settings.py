@@ -75,6 +75,7 @@ CONFIG_SCHEMA_I2S_COMMON = cv.Schema(
 def get_i2s_config_schema(default_channel, default_rate, default_bits):
     return cv.Schema(
         {
+            cv.Optional(CONF_CLK_MODE, default=INTERNAL_CLK): cv.enum(I2S_CLK_MODES),
             cv.Optional(CONF_CHANNEL, default=default_channel): cv.enum(CHANNEL_FORMAT),
             cv.Optional(CONF_SAMPLE_RATE, default=default_rate): cv.int_range(min=1),
             cv.Optional(CONF_BITS_PER_SAMPLE, default=default_bits): cv.All(

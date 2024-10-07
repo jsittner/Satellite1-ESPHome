@@ -1,0 +1,147 @@
+substitutions:
+  node_name: "satellite-vk"
+  core_revision: "1"
+  led_ring_id: "satellite1_led_ring"
+
+
+packages:
+  device_base: !include common/board.yaml
+  wifi: !include common/wifi_improv.yaml
+  local: !include common/local_components.yaml
+  versioning: !include common/versioning.yaml
+  vk: !include common/nabu_vk_duplex.yaml
+  va: !include  common/va.yaml
+  led_ring: !include 
+    file: common/led_ring.yaml
+    vars:
+      led_ring_platform: satellite1
+
+esphome:
+  project:
+    name: satellite1.voice_assistant_r${core_revision}
+    version: dev
+  
+  on_boot:
+    priority: 375
+    then:
+      # Run the script to refresh the LED status
+      - script.execute: update_leds
+      - delay: 1s
+      
+      # If after 10 minutes, the device is still initializing (It did not yet connect to Home Assistant), turn off the init_in_progress variable and run the script to refresh the LED status
+      - delay: 10min
+      - if:
+          condition:
+            lambda: return id(init_in_progress);
+          then:
+            - lambda: id(init_in_progress) = false;
+            - script.execute: update_leds
+
+logger:
+  deassert_rts_dtr: true
+  hardware_uart : USB_SERIAL_JTAG
+  level: DEBUG
+
+api:
+  id: api_id
+  on_client_connected:
+    - lambda: id(init_in_progress) = false;
+    - script.execute: update_leds
+  on_client_disconnected:
+    - script.execute: update_leds
+
+spi:
+  - id: spi_0
+    clk_pin:  GPIO12
+    mosi_pin: GPIO11
+    miso_pin: GPIO13
+
+
+satellite1:
+  spi_id: spi_0
+  cs_pin: GPIO10
+  data_rate: 4000000
+  spi_mode: MODE3
+  xmos_rst_pin: GPIO9
+  flash_sw_pin: GPIO5
+
+
+switch:
+  - platform: gpio
+    id: expl_led_0
+    name: "Explorer LED 1"
+    pin:
+      satellite1: 
+      port: OUTPUT_A
+      pin: 0
+
+  - platform: gpio
+    id: expl_led_1
+    name: "Explorer LED 2"
+    pin:
+      satellite1: 
+      port: OUTPUT_A
+      pin: 1
+  
+  - platform: gpio
+    id: expl_led_2
+    name: "Explorer LED 3"
+    pin:
+      satellite1: 
+      port: OUTPUT_A
+      pin: 2
+
+  - platform: gpio
+    id: expl_led_3
+    name: "Explorer LED 4"
+    pin:
+      satellite1: 
+      port: OUTPUT_A
+      pin: 3
+
+  - platform: template
+    name: enable_mww
+    id: sw_enable_mww
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    
+    on_turn_on:
+      - micro_wake_word.start:
+    
+    on_turn_off:
+    - micro_wake_word.stop:
+
+binary_sensor:
+  - platform: gpio
+    id: btn_volume_up
+    pin:
+      satellite1: 
+      port: INPUT_A
+      pin: 0
+      inverted: true
+    name: "Volume Up"
+  
+  - platform: gpio
+    id: btn_volume_down
+    pin:
+      satellite1: 
+      port: INPUT_A
+      pin: 1
+      inverted: true
+    name: "Volume Down"
+
+
+light:
+  - platform: satellite1
+    id: !extend ${led_ring_id}
+    name: LED-Ring
+    
+
+micro_wake_word:
+  #model: github://esphome/micro-wake-word-models/models/v2/okay_nabu.json 
+  models:
+    - okay_nabu
+  on_wake_word_detected:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
+    - script.execute: update_leds
+

@@ -1,0 +1,82 @@
+script:
+# play testset flac files
+  - id: play_uncommon_0
+    then:
+
+      - logger.log: "Playing: 01 - changing samplerate.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/uncommon/01%20-%20changing%20samplerate.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 02 - increasing number of channels.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/uncommon/02%20-%20increasing%20number%20of%20channels.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 03 - decreasing number of channels.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/uncommon/03%20-%20decreasing%20number%20of%20channels.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 04 - changing bitdepth.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/uncommon/04%20-%20changing%20bitdepth.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 05 - 32bps audio.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/uncommon/05%20-%2032bps%20audio.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 06 - samplerate 768kHz.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/uncommon/06%20-%20samplerate%20768kHz.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 07 - 15 bit per sample.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/uncommon/07%20-%2015%20bit%20per%20sample.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 08 - blocksize 65535.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/uncommon/08%20-%20blocksize%2065535.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 09 - Rice partition order 15.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/uncommon/09%20-%20Rice%20partition%20order%2015.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 10 - file starting at frame header.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/uncommon/10%20-%20file%20starting%20at%20frame%20header.flac'
+      - delay: 5s
+
+# play testset flac files
+  - id: play_uncommon_1
+    then:
+
+      - logger.log: "Playing: 11 - file starting with unparsable data.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/uncommon/11%20-%20file%20starting%20with%20unparsable%20data.flac'
+      - delay: 5s
+
+# play testset flac files
+  - id: play_uncommon
+    then:
+      - script.execute: play_uncommon_0
+      - script.wait: play_uncommon_0
+      - script.execute: play_uncommon_1
+      - script.wait: play_uncommon_1

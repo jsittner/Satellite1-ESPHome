@@ -2,6 +2,6 @@ external_components:
   - source:
       type: local
       path: ../esphome/components
-    components: [ udp_stream, version ]
+    components: [ udp_stream, version, runtime_testing ]
     
 

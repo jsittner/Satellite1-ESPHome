@@ -15,7 +15,7 @@ const uint32_t LED_RES_ID = 200;
 const uint32_t CMD_WRITE_LED_RING_RAW = 0;
 
 
-class LEDRing : public light::AddressableLight, public SatelliteSPIService {
+class LEDRing : public light::AddressableLight, public Satellite1SPIService {
 public:
     LEDRing() : num_leds_(NUMBER_OF_LEDS) {}
 
@@ -48,5 +48,5 @@ private:
     int32_t num_leds_;
 };
 
-} //namespace matrixio
+} //namespace satellite1
 } //namespace esphome

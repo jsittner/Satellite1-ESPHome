@@ -1,0 +1,82 @@
+script:
+# play testset flac files
+  - id: play_faulty_0
+    then:
+
+      - logger.log: "Playing: 01 - wrong max blocksize.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/faulty/01%20-%20wrong%20max%20blocksize.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 02 - wrong maximum framesize.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/faulty/02%20-%20wrong%20maximum%20framesize.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 03 - wrong bit depth.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/faulty/03%20-%20wrong%20bit%20depth.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 04 - wrong number of channels.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/faulty/04%20-%20wrong%20number%20of%20channels.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 05 - wrong total number of samples.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/faulty/05%20-%20wrong%20total%20number%20of%20samples.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 06 - missing streaminfo metadata block.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/faulty/06%20-%20missing%20streaminfo%20metadata%20block.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 07 - other metadata blocks preceding streaminfo metadata block.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/faulty/07%20-%20other%20metadata%20blocks%20preceding%20streaminfo%20metadata%20block.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 08 - blocksize 65536.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/faulty/08%20-%20blocksize%2065536.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 09 - blocksize 1.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/faulty/09%20-%20blocksize%201.flac'
+      - delay: 5s
+
+      - logger.log: "Playing: 10 - invalid vorbis comment metadata block.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/faulty/10%20-%20invalid%20vorbis%20comment%20metadata%20block.flac'
+      - delay: 5s
+
+# play testset flac files
+  - id: play_faulty_1
+    then:
+
+      - logger.log: "Playing: 11 - incorrect metadata block length.flac"
+      - wait_until:
+          media_player.is_idle:
+      - media_player.play_media: 'http://192.168.178.20:8080/faulty/11%20-%20incorrect%20metadata%20block%20length.flac'
+      - delay: 5s
+
+# play testset flac files
+  - id: play_faulty
+    then:
+      - script.execute: play_faulty_0
+      - script.wait: play_faulty_0
+      - script.execute: play_faulty_1
+      - script.wait: play_faulty_1

@@ -390,6 +390,8 @@ uint8_t SatelliteFlasher::write_to_flash_() {
         ESP_LOGE(TAG, "writing page error");
       }
       
+      this->read_page_(page_pos, &cmp_buf[0] );
+      
       if (memcmp(&dnload_req[0], &cmp_buf[0], FLASH_PAGE_SIZE) != 0){
         //give it a second try
         /*

@@ -12,10 +12,9 @@ void Satellite1::setup(){
     this->spi_setup();
 }   
 
+
 void Satellite1::dump_config(){
 }
-
-
 
 
 bool Satellite1::request_status_register_update(){
@@ -26,6 +25,10 @@ bool Satellite1::request_status_register_update(){
 
 
 bool Satellite1::transfer( uint8_t resource_id, uint8_t command, uint8_t* payload, uint8_t payload_len){
+  if( this->spi_flash_direct_access_enabled_ ){
+    return false;
+  }
+  
   uint8_t send_recv_buf[256+3] = {0};
   int status_report_dummies = std::max<int>( 0, CONTROL_STATUS_REGISTER_LEN - payload_len - 1);
   
@@ -71,7 +74,6 @@ bool Satellite1::transfer( uint8_t resource_id, uint8_t command, uint8_t* payloa
         vTaskDelay(1);
     } while( send_recv_buf[0] == CONTROL_COMMAND_IGNORED_IN_DEVICE && attempts-- > 0 );
   
-
     if( send_recv_buf[0] == CONTROL_COMMAND_IGNORED_IN_DEVICE ) {
       return false;
     }
@@ -83,17 +85,16 @@ bool Satellite1::transfer( uint8_t resource_id, uint8_t command, uint8_t* payloa
 }
 
 
-
-
-void Satellite1GPIOPin::digital_write(bool value){
-  uint8_t payload[2] = { this->pin_, value };
-  this->parent_->transfer( DC_RESOURCE::GPIO_PORTA, GPIO_SERVICER_CMD_SET_PIN, payload, 2);
-}
-
-bool Satellite1GPIOPin::digital_read(){
-  this->parent_->request_status_register_update();
-  uint8_t port_value = this->parent_->get_dc_status( DC_STATUS_REGISTER::GPIO_PORTB );
-  return !!( port_value & (1 << this->pin_) ) != this->inverted_;
+void Satellite1::set_spi_flash_direct_access_mode_(bool enable){
+  if ( enable ) {
+    this->xmos_rst_pin_->digital_write(0);
+    this->flash_sw_pin_->digital_write(1);
+  }
+  else {
+    this->xmos_rst_pin_->digital_write(1);
+    this->flash_sw_pin_->digital_write(0);
+  }
+  this->spi_flash_direct_access_enabled_ = enable;
 }
 
 
