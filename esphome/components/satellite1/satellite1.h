@@ -74,6 +74,9 @@ public:
    virtual bool handle_response(uint8_t status, uint8_t res_id, uint8_t cmd, uint8_t* payload, uint8_t payload_len){return false;}
 
 protected:
+   uint8_t transfer_byte(uint8_t byte ) {return this->parent_->transfer_byte(byte);}
+   void enable() {this->parent_->enable();}
+   void disable(){this->parent_->disable();}
    uint8_t servicer_id_;
 
 };

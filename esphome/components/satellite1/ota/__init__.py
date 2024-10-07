@@ -10,11 +10,17 @@ from esphome.components.http_request import (
     CONF_HTTP_REQUEST_ID,
     HttpRequestComponent,
 )
+
 from esphome.components.ota import BASE_OTA_SCHEMA, ota_to_code, OTAComponent
 from esphome.core import coroutine_with_priority
 
-from esphome.components.spi import SPIDevice, register_spi_device, spi_device_schema
-from .. import satellite1_ns
+from .. import (
+    CONF_SATELLITE1,
+    satellite1_ns,
+    Satellite1, 
+    Satellite1SPIService
+)
+
 
 CODEOWNERS = ["@gnumpi"]
 
@@ -24,7 +30,7 @@ DEPENDENCIES = ["network", "http_request", "satellite1"]
 CONF_MD5 = "md5"
 CONF_MD5_URL = "md5_url"
 
-SatelliteFlasher = satellite1_ns.class_("SatelliteFlasher", OTAComponent, SPIDevice )
+SatelliteFlasher = satellite1_ns.class_("SatelliteFlasher", OTAComponent, Satellite1SPIService)
 SatelliteFlasherAction = satellite1_ns.class_(
     "SatelliteFlasherAction", automation.Action
 )
@@ -34,21 +40,20 @@ CONFIG_SCHEMA = cv.All(
         {
             cv.GenerateID(): cv.declare_id(SatelliteFlasher),
             cv.GenerateID(CONF_HTTP_REQUEST_ID): cv.use_id(HttpRequestComponent),
+            cv.GenerateID(CONF_SATELLITE1): cv.use_id(Satellite1)
         }
     )
     .extend(BASE_OTA_SCHEMA)
     .extend(cv.COMPONENT_SCHEMA)
-    .extend(spi_device_schema(True, "8MHz")),
 )
 
 
 @coroutine_with_priority(52.0)
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
+    await cg.register_parented(var, config[CONF_SATELLITE1])
     await ota_to_code(var, config)
-    #await cg.register_component(var, config)
-    await register_spi_device(var, config)
-    
+    await cg.register_component(var, config)
     http_comp = await cg.get_variable(config[CONF_HTTP_REQUEST_ID])
     cg.add( var.set_http_request_component(http_comp) )
 

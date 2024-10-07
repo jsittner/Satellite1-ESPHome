@@ -1,0 +1,4 @@
+script:
+  - id: update_leds
+    then:
+      - lambda: ""

@@ -29,7 +29,7 @@ void SatelliteFlasher::dump_flash_info(){
 
 bool SatelliteFlasher::init_flasher(){
   ESP_LOGD(TAG, "Setting up XMOS flasher...");
-  this->spi_setup();
+  this->parent_->set_spi_flash_direct_access_mode_(true);
   this->read_JEDECID_();
   this->dump_flash_info();
   return true;
@@ -37,6 +37,7 @@ bool SatelliteFlasher::init_flasher(){
 
 bool SatelliteFlasher::deinit_flasher(){
   ESP_LOGD(TAG, "Stopping XMOS flasher...");
+  this->parent_->set_spi_flash_direct_access_mode_(false);
   return true;
  }
 

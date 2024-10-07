@@ -4,6 +4,7 @@
 #include "esphome/components/ota/ota_backend.h"
 #include "esphome/components/spi/spi.h"
 
+#include "esphome/components/satellite1/satellite1.h"
 
 namespace esphome {
 namespace satellite1 {
@@ -20,8 +21,7 @@ enum SatelliteFlasherError : uint8_t {
 
 
 class SatelliteFlasher : public ota::OTAComponent,
-                         public spi::SPIDevice <spi::BIT_ORDER_MSB_FIRST, spi::CLOCK_POLARITY_LOW,
-                                                spi::CLOCK_PHASE_LEADING, spi::DATA_RATE_1MHZ> {
+                         public Satellite1SPIService {
 public:
   void setup();
   void dump_config();
