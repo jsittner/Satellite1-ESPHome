@@ -1,12 +1,12 @@
 wifi:
+  id: wifi_id
   ap:
   on_connect:
-    - delay: 5s  # Gives time for improv results to be transmitted
-    - ble.disable:
+    - script.execute: update_leds
   on_disconnect:
-    - ble.enable:
+    - script.execute: update_leds
 
 improv_serial:
 
-esp32_improv:
-  authorizer: none
+#esp32_improv:
+#  authorizer: none
