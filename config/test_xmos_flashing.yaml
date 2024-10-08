@@ -53,7 +53,7 @@ button:
     on_press:
       then:
         - ota.satellite1.flash:
-            url: http://192.168.178.20:8080/satellite_firmware_bypass.bin
-            md5_url: http://192.168.178.20:8080/satellite_firmware_bypass.bin.md5
+            url: https://github.com/FutureProofHomes/Documentation/blob/main/assets/firmware/xmos/v1.0.1-alpha.20/satellite1_firmware_adec.factory.bin?raw=true
+            md5_url: https://github.com/FutureProofHomes/Documentation/blob/main/assets/firmware/xmos/v1.0.1-alpha.20/satellite1_firmware_adec.factory.md5?raw=true
 
 
