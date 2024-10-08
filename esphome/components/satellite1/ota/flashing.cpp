@@ -128,7 +128,6 @@ void SatelliteFlasher::flash(){
   uint8_t ota_status;
   if (this->init_flasher() ){
     ota_status = this->write_to_flash_();
-    this->deinit_flasher();
   }
   else {
     ota_status = OTA_CONNECTION_ERROR;
@@ -153,6 +152,8 @@ void SatelliteFlasher::flash(){
       this->md5_expected_.clear();  // will be reset at next attempt
       break;
   }
+  delay(5);
+  this->deinit_flasher();
 }
 
 
