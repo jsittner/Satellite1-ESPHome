@@ -10,10 +10,27 @@ static const char *TAG = "Satellite1";
 
 void Satellite1::setup(){
     this->spi_setup();
+    if( this->xmos_rst_pin_ ){
+      this->xmos_rst_pin_->setup();
+    }  
+    if( this->flash_sw_pin_ ){
+      this->flash_sw_pin_->setup();
+    }  
 }   
 
 
 void Satellite1::dump_config(){
+  esph_log_config(TAG, "Satellite1 config:");
+  if( this->xmos_rst_pin_ ){
+    this->xmos_rst_pin_->dump_summary();
+  } else {
+    esph_log_config(TAG, "    xmos_rst_pin not set up properly.");
+  }
+  if( this->flash_sw_pin_ ){
+    this->flash_sw_pin_->dump_summary();
+  }else {
+    esph_log_config(TAG, "    flash_sw_pin not set up properly.");
+  }
 }
 
 
