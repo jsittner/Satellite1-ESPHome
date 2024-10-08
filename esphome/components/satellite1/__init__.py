@@ -85,7 +85,7 @@ async def to_code(config):
     rst_pin = await cg.gpio_pin_expression(config[CONF_XMOS_RST_PIN])
     cg.add(var.set_xmos_rst_pin(rst_pin))
     sw_pin = await cg.gpio_pin_expression(config[CONF_FLASH_SW_PIN])
-    cg.add(var.set_xmos_rst_pin(sw_pin))
+    cg.add(var.set_flash_sw_pin(sw_pin))
     return var
 
 
