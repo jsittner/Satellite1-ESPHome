@@ -54,7 +54,7 @@ button:
     on_press:
       then:
         - ota.satellite1.flash:
-            url: https://github.com/FutureProofHomes/Documentation/blob/main/assets/firmware/xmos/v1.0.1-alpha.20/satellite1_firmware_adec.factory.bin?raw=true
-            md5_url: https://github.com/FutureProofHomes/Documentation/blob/main/assets/firmware/xmos/v1.0.1-alpha.20/satellite1_firmware_adec.factory.md5?raw=true
+            url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.20/satellite1_firmware_adec.factory.md5
+            md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.20/satellite1_firmware_adec.factory.bin
 
 
