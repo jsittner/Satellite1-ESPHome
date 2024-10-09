@@ -1,5 +1,5 @@
 #include "satellite1.h"
-
+#include "esp_rom_gpio.h"
 #include "esphome/core/log.h"
 
 namespace esphome {
@@ -9,6 +9,7 @@ static const char *TAG = "Satellite1";
 
 
 void Satellite1::setup(){
+    esp_rom_gpio_pad_select_gpio( 40 );
     this->spi_setup();
     if( this->xmos_rst_pin_ ){
       this->xmos_rst_pin_->setup();
