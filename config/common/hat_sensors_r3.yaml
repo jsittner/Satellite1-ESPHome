@@ -1,7 +1,7 @@
 sensor:
   - platform: aht10
     address: 0x38
-    variant: AHT20
+    variant: AHT10
     temperature:
       name: "Living Room Temperature"
     humidity:
