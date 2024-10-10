@@ -9,7 +9,7 @@
 namespace esphome {
 namespace satellite1 {
 
-const uint32_t NUMBER_OF_LEDS = 12;
+const uint32_t NUMBER_OF_LEDS = 24;
 
 const uint32_t LED_RES_ID = 200;
 const uint32_t CMD_WRITE_LED_RING_RAW = 0;

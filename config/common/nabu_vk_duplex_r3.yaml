@@ -27,7 +27,7 @@ media_player:
     name: Media Player
     internal: false
     sample_rate: 48000
-    i2s_dout_pin: GPIO11
+    i2s_dout_pin: GPIO10
     bits_per_sample: 32bit
     i2s_clock_mode: external
     channel: right_left
@@ -46,7 +46,7 @@ microphone:
   - platform: satellite1
     id: mic0
     sample_rate: 48000
-    i2s_din_pin: GPIO10
+    i2s_din_pin: GPIO11
     bits_per_sample: 32bit
     i2s_clock_mode: external
     channel: right_left
