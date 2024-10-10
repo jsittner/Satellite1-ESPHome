@@ -19,7 +19,7 @@ i2s_audio:
 
 audio_dac:
   - platform: pcm5122
-    address: 0x98
+    address: 0x4D
 
 media_player:
   - platform: satellite1
