@@ -34,9 +34,9 @@ Satellite1GPIOPin = satellite1_ns.class_("Satellite1GPIOPin", cg.GPIOPin, Satell
 
 XMOSPort = satellite1_ns.enum("XMOSPort", is_class=True)
 XMOS_PORT = {
-"INPUT_A" : XMOSPort.PORT_INPUT_A,
-"INPUT_B" : XMOSPort.PORT_INPUT_B,
-"OUTPUT_A" : XMOSPort.PORT_OUTPUT_A      
+"INPUT_A" : XMOSPort.INPUT_A,
+"INPUT_B" : XMOSPort.INPUT_B,
+"OUTPUT_A" : XMOSPort.OUTPUT_A      
 }
 
 

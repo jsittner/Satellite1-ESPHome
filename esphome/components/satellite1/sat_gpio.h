@@ -7,16 +7,14 @@
 namespace esphome {
 namespace satellite1 {
 
-static const uint8_t GPIO_SERVICER_RESID = 250;
-
 static const uint8_t GPIO_SERVICER_CMD_READ_PORT  = 0x00;
 static const uint8_t GPIO_SERVICER_CMD_WRITE_PORT = 0x01;
 static const uint8_t GPIO_SERVICER_CMD_SET_PIN    = 0x02;
 
 enum class XMOSPort : uint8_t { 
-    PORT_INPUT_A = 0, //buttons 
-    PORT_INPUT_B, // rotary encoder
-    PORT_OUTPUT_A // explorer board LEDs
+    INPUT_A = 0, //buttons 
+    INPUT_B, // rotary encoder
+    OUTPUT_A // explorer board LEDs
 };
 
 class Satellite1GPIOPin : public GPIOPin, public Satellite1SPIService {

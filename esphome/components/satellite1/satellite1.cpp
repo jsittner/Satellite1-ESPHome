@@ -51,7 +51,7 @@ bool Satellite1::transfer( uint8_t resource_id, uint8_t command, uint8_t* payloa
   }
   
   uint8_t send_recv_buf[256+3] = {0};
-  int status_report_dummies = std::max<int>( 0, CONTROL_STATUS_REGISTER_LEN - payload_len - 1);
+  int status_report_dummies = std::max<int>( 0, DC_STATUS_REGISTER::REGISTER_LEN - payload_len - 1);
   
   int attempts = 3; 
   do {
@@ -77,7 +77,7 @@ bool Satellite1::transfer( uint8_t resource_id, uint8_t command, uint8_t* payloa
 
   // Got status register report
   if( send_recv_buf[0] == DC_RESOURCE::CNTRL_ID && send_recv_buf[1] != DC_RET_STATUS::PAYLOAD_AVAILABLE ){
-    memcpy( this->dc_status_register_, &send_recv_buf[2], CONTROL_STATUS_REGISTER_LEN );
+    memcpy( this->dc_status_register_, &send_recv_buf[2], DC_STATUS_REGISTER::REGISTER_LEN );
     uint8_t *arr = this->dc_status_register_;
   }
   
