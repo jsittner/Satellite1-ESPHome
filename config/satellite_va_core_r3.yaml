@@ -95,9 +95,27 @@ binary_sensor:
     pin:
       satellite1: 
       port: INPUT_A
-      pin: 1
+      pin: 2
       inverted: true
     name: "Volume Down"
+
+  - platform: gpio
+    id: btn_action
+    pin:
+      satellite1: 
+      port: INPUT_A
+      pin: 1
+      inverted: true
+    name: "Action"
+  
+  - platform: gpio
+    id: inp_hw_mute
+    pin:
+      satellite1: 
+      port: INPUT_A
+      pin: 3
+      inverted: true
+    name: "Mics Muted"
 
 
 light:
@@ -123,8 +141,8 @@ button:
     on_press:
       then:
         - ota.satellite1.flash:
-            url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.24/satellite1_firmware_adec.factory.bin
-            md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.24/satellite1_firmware_adec.factory.md5
+            url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.27/satellite1_firmware_adec.factory.bin
+            md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.27/satellite1_firmware_adec.factory.md5
 
 
 switch:
