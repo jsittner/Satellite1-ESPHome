@@ -41,6 +41,9 @@ logger:
   hardware_uart : USB_SERIAL_JTAG
   level: DEBUG
 
+status_led:
+  pin: GPIO45
+
 api:
   id: api_id
   on_client_connected:
