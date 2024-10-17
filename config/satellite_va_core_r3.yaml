@@ -92,6 +92,8 @@ binary_sensor:
       pin: 0
       inverted: true
     name: "Volume Up"
+    on_press:
+      - media_player.volume_up: nabu_media_player
   
   - platform: gpio
     id: btn_volume_down
@@ -101,6 +103,8 @@ binary_sensor:
       pin: 2
       inverted: true
     name: "Volume Down"
+    on_press:
+      - media_player.volume_down: nabu_media_player
 
   - platform: gpio
     id: btn_action
