@@ -1,4 +1,4 @@
-#include "TAS2780.h"
+#include "tas2780.h"
 
 #include "esphome/core/defines.h"
 #include "esphome/core/helpers.h"
