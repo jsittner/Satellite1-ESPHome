@@ -1,14 +1,14 @@
 external_components:
   - source:
       type: git
-      url: https://github.com/esphome/voice-kit
+      url: https://github.com/gnumpi/nabu-voice-kit
       ref: dev
     components: [ audio_dac, media_player ]
 
   - source:
       type: local
       path: ../esphome/components
-    components: [ i2s_audio, satellite1, pcm5122 ]
+    components: [ i2s_audio, satellite1, pcm5122, tas2780 ]
 
 i2s_audio:
   - id: i2s_shared
@@ -20,6 +20,9 @@ i2s_audio:
 audio_dac:
   - platform: pcm5122
     address: 0x4D
+  
+  - platform: tas2780
+    address: 0x38
 
 media_player:
   - platform: satellite1
