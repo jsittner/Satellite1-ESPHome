@@ -8,7 +8,7 @@ external_components:
   - source:
       type: local
       path: ../esphome/components
-    components: [ i2s_audio, satellite1, pcm5122, tas2780 ]
+    components: [ i2s_audio, satellite1, pcm5122 ]
 
 i2s_audio:
   - id: i2s_shared
