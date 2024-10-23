@@ -16,6 +16,7 @@ env:
   DEFAULT_PYTHON: "3.9"
 permissions:
   contents: write
+  pull-requests: read
 jobs:
   prepare:
     runs-on: ubuntu-latest
