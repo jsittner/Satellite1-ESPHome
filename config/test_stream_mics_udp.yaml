@@ -1,11 +1,13 @@
 substitutions:
   node_name: mic_udp_streamer
+  core_revision: "3"
 
 packages:
   device_base: !include common/board.yaml
   wifi: !include common/wifi_improv.yaml
-  adf: !include common/adf_pipeline.yaml
   local: !include common/local_components.yaml
+  vk: !include common/nabu_vk_duplex_r3.yaml
+  dummy: !include common/dummy.yaml
 
 logger:
   deassert_rts_dtr: true
@@ -13,17 +15,12 @@ logger:
   level: VERBOSE
 
 api:
-
-microphone:
-  - platform: adf_pipeline
-    id: adf_microphone
-    gain_log2: 3
-    keep_pipeline_alive: false
-    pipeline:
-      - adf_i2s_in
-      - resampler
-      - self
-
+  id: api_id
+  on_client_connected:
+    - lambda: id(init_in_progress) = false;
+    - script.execute: update_leds
+  on_client_disconnected:
+    - script.execute: update_leds
 
 udp_stream:
   #use ip address of this machine if not set
