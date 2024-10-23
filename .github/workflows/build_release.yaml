@@ -77,7 +77,11 @@ jobs:
     uses: esphome/workflows/.github/workflows/build.yml@main
     with:
       files: ${{ fromJSON(needs.prepare.outputs.build_cfg_files) }}
+<<<<<<< HEAD
       esphome-version: 2024.6.0
+=======
+      esphome-version: 2024.9.2
+>>>>>>> develop
       release-version: ${{ needs.prepare.outputs.next_tag }}
 
   push-tag:
@@ -113,8 +117,11 @@ jobs:
         uses: mikepenz/release-changelog-builder-action@v5
         with:
           fromTag: ${{ needs.prepare.outputs.previous_tag }}
+<<<<<<< HEAD
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+=======
+>>>>>>> develop
 
   create_release:
     name: Create Release

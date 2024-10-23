@@ -1,18 +1,22 @@
 substitutions:
   node_name: "satellite-va"
   core_revision: "1"
-  LED_PIN: "GPIO5"
+  led_ring_id: "satellite1_led_ring"
 
 
 packages:
   device_base: !include common/board.yaml
   wifi: !include common/wifi_improv.yaml
-  adf: !include common/adf_pipeline.yaml
   local: !include common/local_components.yaml
-  #sensors: !include common/hat_sensors.yaml
+  sensors: !include common/hat_sensors.yaml
+  vk: !include common/nabu_vk_duplex.yaml
   va: !include common/va.yaml
-  led: !include common/everloop.yaml
   versioning: !include common/versioning.yaml
+  led_ring: !include 
+    file: common/led_ring.yaml
+    vars:
+      led_ring_platform: satellite1
+  
 
 esphome:
   project:
@@ -26,150 +30,71 @@ logger:
   level: DEBUG
 
 api:
-
-microphone:
-  - platform: adf_pipeline
-    id: adf_microphone
-    gain_log2: 3
-    keep_pipeline_alive: false
-    pipeline:
-      - adf_i2s_in
-      - resampler
-      - self
-
-media_player:
-  - platform: adf_pipeline
-    id: adf_media_player
-    name: cosmic_player_r${core_revision}
-    keep_pipeline_alive: false
-    internal: false
-    pipeline:
-      - self
-      - resampler
-      - adf_i2s_out
-
-micro_wake_word:
-  model: okay_nabu
-  on_wake_word_detected:
-      - media_player.stop:
-      - voice_assistant.start:
-
-voice_assistant:
-  microphone: adf_microphone
-  media_player: adf_media_player
-
-  use_wake_word: false
-  #vad_threshold: 3
-
-  noise_suppression_level: 4
-  auto_gain: 31dBFS
-  volume_multiplier: 4.0
-
+  id: api_id
   on_client_connected:
     - lambda: id(init_in_progress) = false;
-    - if:
-        condition:
-          switch.is_on: use_wake_word
-        then:
-          - micro_wake_word.start:
-          - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
-        else:
-          - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
-    - script.execute: control_led
-
+    - script.execute: update_leds
   on_client_disconnected:
-    - lambda: id(voice_assistant_phase) = ${voice_assist_not_ready_phase_id};
-    - voice_assistant.stop
-    - micro_wake_word.stop
-    - script.execute: control_led
+    - script.execute: update_leds
+
+
+i2c:
+  - id: bus_a
+    sda: GPIO8
+    scl: GPIO18
+    frequency: 100kHz
+    scan: True
+
+spi:
+  - id: spi_0
+    clk_pin:  GPIO12
+    mosi_pin: GPIO11
+    miso_pin: GPIO13
+
+ota:
+  - platform: satellite1
+    id: ota_satellite1_xmos
+
+http_request:
+
+satellite1:
+  spi_id: spi_0
+  cs_pin: GPIO10
+  data_rate: 1000
+  spi_mode: MODE3
+  xmos_rst_pin: GPIO9 # not used in this revision
+  flash_sw_pin: GPIO5 # not used in this revision
+
+binary_sensor:
+  - platform: gpio
+    id: btn_volume_up
+    pin:
+      satellite1: 
+      port: INPUT_A
+      pin: 0
+      inverted: true
+    name: "Volume Up"
   
-  on_listening:
+  - platform: gpio
+    id: btn_volume_down
+    pin:
+      satellite1: 
+      port: INPUT_A
+      pin: 1
+      inverted: true
+    name: "Volume Down"
+
+
+light:
+  - platform: satellite1
+    id: !extend ${led_ring_id}
+    name: LED-Ring
+    
+
+micro_wake_word:
+  #model: github://esphome/micro-wake-word-models/models/v2/okay_nabu.json 
+  models:
+    - okay_nabu
+  on_wake_word_detected:
     - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
-    - script.execute: control_led
-
-  # When the voice assistant starts to think: Set the correct phase and run the script to refresh the LED status
-  on_stt_vad_end:
-    - lambda: id(voice_assistant_phase) = ${voice_assist_thinking_phase_id};
-    - script.execute: control_led
-
-  # When the voice assistant starts to reply: Set the correct phase and run the script to refresh the LED status
-  on_tts_start:
-    - lambda: id(voice_assistant_phase) = ${voice_assist_replying_phase_id};
-    - script.execute: control_led
-
-  on_end:
-      then:
-        - voice_assistant.stop
-        - wait_until:
-            not:
-              voice_assistant.is_running:
-        - if:
-            condition:
-              switch.is_on: use_wake_word
-            then:
-              - micro_wake_word.start:
-        - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
-        - script.execute: control_led
-  
-  on_error:
-    - if:
-        condition:
-          lambda: return !id(init_in_progress);
-        then:
-          - lambda: id(voice_assistant_phase) = ${voice_assist_error_phase_id};  
-          - script.execute: control_led
-          - delay: 1s
-          - voice_assistant.stop
-          - wait_until:
-              not:
-                voice_assistant.is_running:
-          - if:
-              condition:
-                switch.is_on: use_wake_word
-              then:
-                - micro_wake_word.start:
-                - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
-              else:
-                - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
-          
-          - script.execute: control_led
-
-
-
-
-switch:
-  - platform: template
-    name: Enable Voice Assistant
-    id: use_wake_word
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    icon: mdi:assistant
-    # When the switch is turned on (on Home Assistant):
-    # Start the voice assistant component
-    # Set the correct phase and run the script to refresh the LED status
-    on_turn_on:
-      - logger.log: "switch on"
-      - if:
-          condition:
-            lambda: return !id(init_in_progress);
-          then:
-            - logger.log: "condition 1"
-            - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
-            - voice_assistant.stop
-            - delay: 1s
-            - if:
-                condition:
-                  not:
-                    - voice_assistant.is_running
-                then:
-                  - logger.log: "Starting MWW"
-                  #- voice_assistant.start_continuous
-                  - micro_wake_word.start:
-    on_turn_off:
-      - if:
-          condition:
-            lambda: return !id(init_in_progress);
-          then:
-            - voice_assistant.stop
-            - micro_wake_word.stop
-            - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
+    - script.execute: update_leds
