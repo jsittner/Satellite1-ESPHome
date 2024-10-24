@@ -1,0 +1,141 @@
+substitutions:
+  # Phases of the Voice Assistant
+  # The voice assistant is ready to be triggered by a wake word
+  voice_assist_idle_phase_id: '1'
+  # The voice assistant is waiting for a voice command (after being triggered by the wake word)
+  voice_assist_waiting_for_command_phase_id: '2'
+  # The voice assistant is listening for a voice command
+  voice_assist_listening_for_command_phase_id: '3'
+  # The voice assistant is currently processing the command
+  voice_assist_thinking_phase_id: '4'
+  # The voice assistant is replying to the command
+  voice_assist_replying_phase_id: '5'
+  # The voice assistant is not ready
+  voice_assist_not_ready_phase_id: '10'
+  # The voice assistant encountered an error
+  voice_assist_error_phase_id: '11'
+
+# external_components:
+#   - source:
+#       type: git
+#       url: https://github.com/esphome/voice-kit
+#       ref: dev
+#     components:
+#       - aic3204
+#       - audio_dac
+#       - media_player
+#       - micro_wake_word
+#       - microphone
+#       - nabu
+#       - nabu_microphone
+#       - voice_assistant
+#       - voice_kit
+#     refresh: 0s
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/esphome/voice-kit
+      ref: dev
+    components:
+      - micro_wake_word
+      - microphone
+      - voice_assistant
+    refresh: 0s
+
+globals:
+  # Global variable tracking the phase of the voice assistant (defined above). Initialized to not_ready
+  - id: voice_assistant_phase
+    type: int
+    restore_value: no
+    initial_value: ${voice_assist_not_ready_phase_id}
+
+micro_wake_word:
+  #model: github://esphome/micro-wake-word-models/models/v2/okay_nabu.json 
+  id: mww
+  models:
+    - model: okay_nabu
+      id: okay_nabu
+    - model: hey_jarvis
+      id: hey_jarvis
+    - model: https://github.com/kahrendt/microWakeWord/releases/download/stop/stop.json
+      id: stop
+      internal: true
+  vad:
+  microphone: mic0
+  on_wake_word_detected:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
+    - script.execute: update_leds
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
+
+voice_assistant:
+  id: va
+  microphone: mic0
+  media_player: nabu_media_player
+  micro_wake_word: mww
+  use_wake_word: false
+  noise_suppression_level: 0
+  auto_gain: 0 dbfs
+  volume_multiplier: 1
+  on_client_connected:
+    - lambda: id(init_in_progress) = false;
+    - micro_wake_word.start:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+    - script.execute: update_leds
+  on_client_disconnected:
+    - voice_assistant.stop:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_not_ready_phase_id};
+    - script.execute: update_leds
+  on_error:
+    - if:
+        condition:
+          lambda: return !id(init_in_progress);
+        then:
+          - lambda: id(voice_assistant_phase) = ${voice_assist_error_phase_id};
+          - script.execute: update_leds
+  # When the voice assistant starts: Play a wake up sound, duck audio.
+  on_start:
+    - nabu.set_ducking:
+        decibel_reduction: 20   # Number of dB quieter; higher implies more quiet, 0 implies full volume
+        duration: 0.0s          # The duration of the transition (default is 0)
+  on_listening:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_waiting_for_command_phase_id};
+    - script.execute: update_leds
+  on_stt_vad_start:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_listening_for_command_phase_id};
+    - script.execute: update_leds
+  on_stt_vad_end:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_thinking_phase_id};
+    - script.execute: update_leds
+  on_tts_start:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_replying_phase_id};
+    - script.execute: update_leds
+    # - script.execute: activate_stop_word_if_tts_step_is_long
+  # When the voice assistant ends: Stop ducking audio.
+  on_end:
+    - wait_until:
+        not:
+          voice_assistant.is_running:
+    - nabu.set_ducking:
+        decibel_reduction: 0   # 0 dB means no reduction
+        duration: 1.0s
+    # - script.stop: activate_stop_word_if_tts_step_is_long
+    - lambda: id(stop).disable();
+    - if:
+        condition:
+          lambda: return id(voice_assistant_phase) == ${voice_assist_error_phase_id};
+        then:
+          - delay: 1s
+    - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+    - script.execute: update_leds
+  # on_timer_finished:
+  #   - switch.turn_on: timer_ringing
+  # on_timer_started:
+  #   - script.execute: update_leds
+  # on_timer_cancelled:
+  #   - script.execute: update_leds
+  # on_timer_updated:
+  #   - script.execute: update_leds
+  # on_timer_tick:
+  #   - script.execute: update_leds
