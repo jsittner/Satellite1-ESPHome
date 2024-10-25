@@ -73,6 +73,7 @@ class I2SAudioComponent : public Component {
   int lrclk_pin_;
   i2s_port_t port_{};
   i2s_driver_config_t installed_cfg_{};
+  bool driver_loaded_{false};
 };
 
 class ExternalADC;
