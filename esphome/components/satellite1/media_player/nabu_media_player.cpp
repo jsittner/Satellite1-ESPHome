@@ -142,13 +142,11 @@ esp_err_t NabuMediaPlayer::start_i2s_driver_() {
   if (!this->claim_i2s_access()) {
     return ESP_ERR_INVALID_STATE;  // Waiting for another i2s component to return lock
   }
-  
 
   i2s_driver_config_t config = this->get_i2s_cfg();
   if (!this->install_i2s_driver(config)) {
     return ESP_ERR_INVALID_STATE;
   }
-
   return ESP_OK;
 }
 
@@ -239,23 +237,23 @@ void NabuMediaPlayer::speaker_task(void *params) {
               }
 
             } else {
-              i2s_zero_dma_buffer(this_speaker->parent_->get_port());
+              //i2s_zero_dma_buffer(this_speaker->parent_->get_port());
 
               event.type = EventType::IDLE;
               xQueueSend(this_speaker->speaker_event_queue_, &event, 0);
             }
           }
 
-          i2s_zero_dma_buffer(this_speaker->parent_->get_port());
+          //i2s_zero_dma_buffer(this_speaker->parent_->get_port());
 
           event.type = EventType::STOPPING;
           xQueueSend(this_speaker->speaker_event_queue_, &event, portMAX_DELAY);
 
           allocator.deallocate(buffer, SAMPLES_IN_ALL_DMA_BUFFERS);
-          i2s_stop(this_speaker->parent_->get_port());
-          i2s_driver_uninstall(this_speaker->parent_->get_port());
-
-          this_speaker->parent_->unlock();
+          //i2s_stop(this_speaker->parent_->get_port());
+          //i2s_driver_uninstall(this_speaker->parent_->get_port());
+          this_speaker->uninstall_i2s_driver();
+          //this_speaker->parent_->unlock();
 
           event.type = EventType::STOPPED;
           xQueueSend(this_speaker->speaker_event_queue_, &event, portMAX_DELAY);

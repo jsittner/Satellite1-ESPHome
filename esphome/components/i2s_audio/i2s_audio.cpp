@@ -66,6 +66,10 @@ bool I2SAudioComponent::install_i2s_driver_(i2s_driver_config_t i2s_cfg, uint8_t
   this->lock();
   esph_log_d(TAG, "Install driver requested by %s", access == I2SAccess::RX ? "Reader" : "Writer");
   if( this->access_state_ == I2SAccess::FREE || this->access_state_ == access ){
+    if( this->driver_loaded_ ){
+      ESP_LOGW(TAG,"trying to load i2s driver twice");
+      return true;
+    }
     if(this->access_mode_ == I2SAccessMode::DUPLEX){
       i2s_cfg.mode = (i2s_mode_t) (i2s_cfg.mode | I2S_MODE_TX | I2S_MODE_RX);
     }
@@ -73,6 +77,7 @@ bool I2SAudioComponent::install_i2s_driver_(i2s_driver_config_t i2s_cfg, uint8_t
     esph_log_d(TAG, "Installing driver : %s", success ? "yes" : "no" );
     i2s_pin_config_t pin_config = this->get_pin_config();
     if( success ){
+      this->driver_loaded_ = true;
       if( this->audio_in_ != nullptr )
       {
         pin_config.data_in_num = this->audio_in_->get_din_pin();
@@ -107,6 +112,7 @@ bool I2SAudioComponent::uninstall_i2s_driver_(uint8_t access){
     if (err == ESP_OK) {
       success = true;
       this->access_state_ = I2SAccess::FREE;
+      this->driver_loaded_ = false;
     } else {
       esph_log_e(TAG, "Couldn't unload driver");
     }
