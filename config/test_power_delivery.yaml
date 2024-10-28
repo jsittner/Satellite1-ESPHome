@@ -1,0 +1,33 @@
+substitutions:
+  node_name: plain-core-board
+  core_revision: "3"
+
+packages:
+  device_base: !include common/board.yaml
+  wifi: !include common/wifi_improv.yaml
+  local: !include common/local_components.yaml
+  dummy: !include common/dummy.yaml
+
+logger:
+  deassert_rts_dtr: true
+  hardware_uart : USB_SERIAL_JTAG
+  level: VERBOSE
+
+api:
+
+external_components:
+  - source:
+      type: local
+      path: ../esphome/components
+    components: [ fusb302b ]
+
+i2c:
+  - id: bus_a
+    sda: GPIO5
+    scl: GPIO6
+    frequency: 400kHz
+    scan: True
+
+
+fusb302b:
+
