@@ -22,11 +22,11 @@ binary_sensor:
       inverted: true
     name: "Button Up (Vol+)"
     on_press:
-      - media_player.volume_up: nabu_media_player
-      - light.turn_on:
-          brightness: 100%
-          id: satellite1_led_ring
-          effect: "Volume Display"
+      then:
+        - lambda: id(volume_buttons_touched) = true;
+        - script.execute:
+            id: control_volume
+            increase_volume: true
   
   - platform: gpio
     id: btn_down
@@ -37,11 +37,11 @@ binary_sensor:
       inverted: true
     name: "Button Down (Vol-)"
     on_press:
-      - media_player.volume_down: nabu_media_player
-      - light.turn_on:
-          brightness: 100%
-          id: satellite1_led_ring
-          effect: "Volume Display"
+      then:
+        - lambda: id(volume_buttons_touched) = true;
+        - script.execute:
+            id: control_volume
+            increase_volume: false
 
   - platform: gpio
     id: btn_action
