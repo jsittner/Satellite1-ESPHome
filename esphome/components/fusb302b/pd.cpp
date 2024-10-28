@@ -95,8 +95,8 @@ static PDMsg build_source_cap_response( pd_power_info_t pwr_info, uint8_t pos )
   /* Reference: 6.4.2 Request Message */
   uint32_t data[1];
   if (pwr_info.type != PD_PDO_TYPE_AUGMENTED_PDO) {
-      //uint32_t req = pwr_info.max_i ? pwr_info.max_i : pwr_info.max_p;
-      uint32_t req = 10;
+      uint32_t req = pwr_info.max_i ? pwr_info.max_i : pwr_info.max_p;
+      //uint32_t req = 10;
       data[0] = ((uint32_t) req <<  0) |   /* B9 ...0    Max Operating Current 10mA units / Max Operating Power in 250mW units */
                 ((uint32_t) req << 10) |   /* B19...10   Operating Current 10mA units / Operating Power in 250mW units */
                 //((uint32_t)   1 << 25) |   /* B25        USB Communication Capable */
