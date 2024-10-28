@@ -1,0 +1,115 @@
+external_components:
+  - source:
+      type: git
+      url: https://github.com/gnumpi/nabu-voice-kit
+      ref: dev
+    components: [ audio_dac, media_player ]
+    refresh: 0s
+
+  - source:
+      type: local
+      path: ../esphome/components
+    components: [ i2s_audio, satellite1, pcm5122 ]
+    refresh: 0s
+
+  - source:
+      type: git
+      url: https://github.com/esphome/voice-kit
+      ref: dev
+    components: [ nabu ]
+    refresh: 0s
+
+i2s_audio:
+  - id: i2s_shared
+    i2s_lrclk_pin: GPIO07
+    i2s_bclk_pin: GPIO08
+    i2s_mclk_pin: GPIO09
+    access_mode: duplex
+
+# fusb302b:
+
+audio_dac:
+  - platform: pcm5122
+    address: 0x4D
+  
+  #- platform: tas2780
+  #  address: 0x38
+
+media_player:
+  - platform: satellite1
+    id: nabu_media_player
+    name: Sat1 Media Player
+    internal: false
+    sample_rate: 48000
+    i2s_dout_pin: GPIO10
+    bits_per_sample: 32bit
+    i2s_clock_mode: external
+    channel: right_left
+    i2s_audio_id: i2s_shared
+    volume_increment: 0.05
+    volume_min: 0.4
+    volume_max: 0.85
+    on_mute:
+      - script.execute: control_leds
+    on_unmute:
+      - script.execute: control_leds
+    on_volume:
+      - script.execute: control_leds
+    on_announcement:
+      - nabu.set_ducking:
+          decibel_reduction: 20
+          duration: 0.0s
+    on_state:
+      if:
+        condition:
+          and:
+            - switch.is_off: timer_ringing
+            - not:
+                voice_assistant.is_running:
+            - not:
+                lambda: return id(nabu_media_player)->state == media_player::MediaPlayerState::MEDIA_PLAYER_STATE_ANNOUNCING;
+        then:
+          - nabu.set_ducking:
+              decibel_reduction: 0
+              duration: 1.0s
+
+    files:
+      - id: center_button_press_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/center_button_press.flac
+      - id: center_button_double_press_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/center_button_double_press.flac
+      - id: center_button_triple_press_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/center_button_triple_press.flac
+      - id: center_button_long_press_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/center_button_long_press.flac
+      - id: factory_reset_initiated_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/factory_reset_initiated.mp3
+      - id: factory_reset_cancelled_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/factory_reset_cancelled.mp3
+      - id: jack_connected_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/jack_connected.flac
+      - id: jack_disconnected_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/jack_disconnected.flac
+      - id: mute_switch_on_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/mute_switch_on.flac
+      - id: mute_switch_off_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/mute_switch_off.flac
+      - id: timer_finished_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
+      - id: wake_word_triggered_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/wake_word_triggered.flac
+      - id: easter_egg_tick_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/easter_egg_tick.mp3
+      - id: easter_egg_tada_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/easter_egg_tada.mp3
+
+microphone:
+  - platform: satellite1
+    id: mic0
+    sample_rate: 48000
+    i2s_din_pin: GPIO11
+    bits_per_sample: 32bit
+    i2s_clock_mode: external
+    channel: right_left
+    pdm: false
+    adc_type: external

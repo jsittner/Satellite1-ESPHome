@@ -1,0 +1,68 @@
+button:
+  # Flashes Satellite1 with most recent XMOS firmware
+  #TODO: This needs use latest firmware and not hardcoded version
+  - platform: template
+    id: flash_satellite
+    name: "Flash Latest XMOS Firmware"
+    entity_category: diagnostic
+    on_press:
+      then:
+        - ota.satellite1.flash:
+            url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.27/satellite1_firmware_adec.factory.bin
+            md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.27/satellite1_firmware_adec.factory.md5
+
+
+binary_sensor:
+  - platform: gpio
+    id: btn_up
+    pin:
+      satellite1: 
+      port: INPUT_A
+      pin: 0
+      inverted: true
+    name: "Button Up (Vol+)"
+    on_press:
+      - media_player.volume_up: nabu_media_player
+      - light.turn_on:
+          brightness: 100%
+          id: satellite1_led_ring
+          effect: "Volume Display"
+  
+  - platform: gpio
+    id: btn_down
+    pin:
+      satellite1: 
+      port: INPUT_A
+      pin: 2
+      inverted: true
+    name: "Button Down (Vol-)"
+    on_press:
+      - media_player.volume_down: nabu_media_player
+      - light.turn_on:
+          brightness: 100%
+          id: satellite1_led_ring
+          effect: "Volume Display"
+
+  - platform: gpio
+    id: btn_action
+    pin:
+      satellite1: 
+      port: INPUT_A
+      pin: 1
+      inverted: true
+    name: "Button Right (Action)"
+  
+  - platform: gpio
+    id: btn_left
+    pin:
+      satellite1: 
+      port: INPUT_A
+      pin: 3
+      inverted: false
+    name: "Button Left (Mute)"
+
+  # - platform: factory_reset
+  #   id: factory_reset_button
+  #   name: "Factory Reset"
+  #   entity_category: diagnostic
+  #   internal: true
