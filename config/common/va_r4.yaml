@@ -18,7 +18,6 @@ substitutions:
 
 micro_wake_word:
   models:
-    - model: okay_nabu
     - model: hey_jarvis
   vad:
   on_wake_word_detected:
