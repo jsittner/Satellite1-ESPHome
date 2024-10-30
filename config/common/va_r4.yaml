@@ -18,7 +18,7 @@ substitutions:
 
 micro_wake_word:
   models:
-    - model: hey_jarvis
+    - model: okay_nabu
   vad:
   on_wake_word_detected:
     # If the wake word is detected when the device is muted (Possible with the software mute switch): Do nothing
@@ -94,6 +94,9 @@ switch:
             - switch.template.publish:
                 id: master_mute_switch
                 state: OFF
+          else:
+            - lambda: id(warning) = true;
+            - script.execute: control_leds
     on_turn_on:
       - script.execute: control_leds
     on_turn_off:

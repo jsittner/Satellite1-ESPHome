@@ -58,7 +58,7 @@ globals:
     type: int
     restore_value: no
     initial_value: ${voice_assist_not_ready_phase_id}
-  # Global variable tracking if the dial was recently touched.
+  # Global variable tracking if the volume button was recently touched.
   - id: volume_buttons_touched
     type: bool
     restore_value: no
@@ -86,3 +86,8 @@ globals:
   - id: is_timer_active
     type: bool
     restore_value: false
+  # Global variable storing if user action causes warning
+  - id: warning
+    type: bool
+    restore_value: no
+    initial_value: 'false'

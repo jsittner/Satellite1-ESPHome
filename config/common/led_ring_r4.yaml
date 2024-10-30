@@ -6,7 +6,7 @@ light:
     id: ${led_ring_id}
     name: LED Ring
     entity_category: config
-    icon: "mdi:circle-outline"
+    icon: "mdi:dots-circle"
     default_transition_length: 0ms
     restore_mode: RESTORE_DEFAULT_OFF
     effects:
@@ -209,6 +209,41 @@ light:
             if (brightness_step == 0 || brightness_step == brightness_step_number) {
               brightness_decreasing = !brightness_decreasing;
             }
+      - addressable_lambda:
+          name: "Warning"
+          update_interval: 10ms
+          lambda: |-
+            static uint8_t brightness_step = 0;
+            static bool brightness_decreasing = true;
+            static uint8_t brightness_step_number = 10;
+            static uint8_t blink_count = 0;  // New counter for blink cycles
+            if (initial_run) {
+              brightness_step = 0;
+              brightness_decreasing = true;
+              blink_count = 0;
+            }
+            Color error_color(255, 0, 0);
+            if (blink_count < 5) {  // Only blink 5 times
+              for (int i = 0; i < 24; i++) {
+                it[i] = error_color * uint8_t(255/brightness_step_number*(brightness_step_number-brightness_step));
+              }
+              if (brightness_decreasing) {
+                brightness_step++;
+              } else {
+                brightness_step--;
+              }
+              if (brightness_step == 0 || brightness_step == brightness_step_number) {
+                brightness_decreasing = !brightness_decreasing;
+                if (brightness_step == 0) {  // Completed one blink cycle
+                  blink_count++;
+                }
+              }
+            } else {
+              // Turn off LEDs after 5 blinks
+              for (int i = 0; i < 24; i++) {
+                it[i] = Color(0, 0, 0);
+              }
+            }
       - pulse:
           name: "Fast Pulse"
           transition_length: 100ms
@@ -377,6 +412,8 @@ script:
             id(control_leds_jack_unplugged_recently).execute();
           } else if (id(volume_buttons_touched)) {
             id(control_leds_volume_buttons_touched).execute();
+          } else if (id(warning)) {
+            id(control_leds_warning).execute();
           } else if (id(timer_ringing).state) {
             id(control_leds_timer_ringing).execute();
           } else if (id(voice_assistant_phase) == ${voice_assist_waiting_for_command_phase_id}) {
@@ -507,6 +544,24 @@ script:
           blue: 0
           id: satellite1_led_ring
           effect: "Error"
+      - delay: 2s
+      - lambda: id(volume_buttons_touched) = false;
+      - script.execute: control_leds
+
+  # Script executed when the voice assistant requires user action
+  # 5 Fast Red Pulses
+  - id: control_leds_warning
+    then:
+      - light.turn_on:
+          brightness: !lambda return min ( max( id(satellite1_led_ring).current_values.get_brightness() , 0.2f ) + 0.1f , 1.0f );
+          red: 1
+          green: 0
+          blue: 0
+          id: satellite1_led_ring
+          effect: "Warning"
+      - delay: 2s
+      - lambda: id(warning) = false;
+      - script.execute: control_leds
 
   # Script executed when the voice assistant is muted or silent
   # The LED next to the 2 microphones turn red / one red LED next to the speaker grill

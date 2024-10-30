@@ -89,8 +89,3 @@ satellite1:
   spi_mode: MODE3
   xmos_rst_pin: GPIO12
   flash_sw_pin: GPIO14
-
-# light:
-#   - platform: satellite1
-#     id: !extend ${led_ring_id}
-#     name: Sat1 LED Ring

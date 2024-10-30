@@ -1,9 +1,19 @@
 button:
+  # Restarts Sat1 Device
+  - platform: restart
+    name: "Restart Sat1"
+    entity_category: diagnostic
+
+  # Restarts Sat1 to safe mode
+  - platform: safe_mode
+    name: "Restart Sat1 (Safe Mode)"
+    entity_category: diagnostic
+
   # Flashes Satellite1 with most recent XMOS firmware
-  #TODO: This needs use latest firmware and not hardcoded version
+  #TODO: This needs to grab the latest firmware and not hardcoded version
   - platform: template
     id: flash_satellite
-    name: "Flash Latest XMOS Firmware"
+    name: "Flash Latest XMOS FW"
     entity_category: diagnostic
     on_press:
       then:
@@ -11,6 +21,14 @@ button:
             url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.27/satellite1_firmware_adec.factory.bin
             md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.27/satellite1_firmware_adec.factory.md5
 
+  # Restors the Sat1 ESP back to factory settings
+  #TODO: What buttons do we want to long press to initiate this
+  #TODO: Create the factory reset firmware
+  - platform: factory_reset
+    id: factory_reset_button
+    name: "Factory Reset ESP32 FW"
+    entity_category: diagnostic
+    internal: true
 
 binary_sensor:
   - platform: gpio
@@ -21,6 +39,7 @@ binary_sensor:
       pin: 0
       inverted: true
     name: "Button Up (Vol+)"
+    icon: "mdi:volume-plus"
     on_press:
       then:
         - lambda: id(volume_buttons_touched) = true;
@@ -36,6 +55,7 @@ binary_sensor:
       pin: 2
       inverted: true
     name: "Button Down (Vol-)"
+    icon: "mdi:volume-minus"
     on_press:
       then:
         - lambda: id(volume_buttons_touched) = true;
@@ -51,6 +71,7 @@ binary_sensor:
       pin: 1
       inverted: true
     name: "Button Right (Action)"
+    icon: "mdi:gesture-tap"
   
   - platform: gpio
     id: btn_left
@@ -59,10 +80,18 @@ binary_sensor:
       port: INPUT_A
       pin: 3
       inverted: false
-    name: "Button Left (Mute)"
+    name: "Button Left (HW Mute)"
+    icon: "mdi:microphone-off"
+    on_state:
+      - if:
+          condition:
+            binary_sensor.is_off: btn_left
+          then:
+            - switch.template.publish:
+                id: master_mute_switch
+                state: OFF
+          else:
+            - switch.template.publish:
+                id: master_mute_switch
+                state: ON
 
-  # - platform: factory_reset
-  #   id: factory_reset_button
-  #   name: "Factory Reset"
-  #   entity_category: diagnostic
-  #   internal: true
