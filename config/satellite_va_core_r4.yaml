@@ -1,6 +1,6 @@
 substitutions:
   #Change to any preferred name
-  friendly_name: "Satellite1 DevKit"  
+  friendly_name: "Satellite1"  
 
   #Recommend leaving the following unchanged
   node_name: satellite1
