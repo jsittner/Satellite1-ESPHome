@@ -128,3 +128,4 @@ microphone:
     channel: right_left
     pdm: false
     adc_type: external
+    gain_log2: 4
