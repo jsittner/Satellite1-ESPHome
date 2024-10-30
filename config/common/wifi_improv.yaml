@@ -2,9 +2,9 @@ wifi:
   id: wifi_id
   ap:
   on_connect:
-    - script.execute: update_leds
+    - script.execute: control_leds
   on_disconnect:
-    - script.execute: update_leds
+    - script.execute: control_leds
 
 improv_serial:
 

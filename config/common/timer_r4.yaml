@@ -1,13 +1,4 @@
 switch:
-  # Wake Word Sound Switch.
-  - platform: template
-    id: wake_sound
-    name: Wake sound
-    icon: "mdi:bullhorn"
-    entity_category: config
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_ON
-    
   # Internal switch to track when a timer is ringing on the device.
   - platform: template
     id: timer_ringing
@@ -42,7 +33,7 @@ switch:
       # Enable stop wake word
       # - lambda: id(stop).enable();
       # Ring timer
-      # - script.execute: ring_timer
+      - script.execute: ring_timer
       # Refresh LED
       - script.execute: control_leds
       # If 15 minutes have passed and the timer is still ringing, stop it.

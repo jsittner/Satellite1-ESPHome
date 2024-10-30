@@ -1,5 +1,5 @@
 esphome:
-  name: ${node_name}-rev${core_revision}
+  name: ${node_name}-rev${built_for_core_hw_version}
   min_version: 2024.2.0
   platformio_options:
     board_build.flash_mode: dio
@@ -8,7 +8,7 @@ esphome:
   on_boot:
     priority: 600
     then:
-      - logger.log: "Core-Rev ${core_revision}"
+      - logger.log: "Core-Rev ${built_for_core_hw_version}"
       - delay: 30s
       - if:
           condition:

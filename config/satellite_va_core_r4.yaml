@@ -1,42 +1,77 @@
 substitutions:
-  node_name: satellite1-voice-assistant
-  core_revision: "4"
+  #Change to any preferred name
+  friendly_name: "Satellite1 DevKit"  
 
-packages:
-  device_base: !include common/board.yaml
-  wifi: !include common/wifi_improv_r4.yaml
-  local: !include common/local_components.yaml
-  buttons: !include common/buttons_r4.yaml
-  voice_kernel: !include common/nabu_vk_duplex_r4.yaml
-  voice_assistant: !include common/va_r4.yaml
-  led_ring: !include common/led_ring_r4.yaml
-  hat_sensors: !include common/hat_sensors_r3.yaml
-  timer: !include common/timer_r4.yaml
-  # versioning: !include common/versioning.yaml
-  #TODO: Currently BLE tracker will cause device to intermittently crash (especially when streaming music)
-  # ble_tracker: !include common/ble_tracker_r4.yaml 
-
+  #Recommend leaving the following unchanged
+  node_name: satellite1
+  company_name: FutureProofHomes
+  project_name: Satellite1
+  component_name: Core
+  fw_version: "v2.0.0-alpha.8"
+  built_with_core_hw_version: "v1.0.0-beta.1"
+  built_with_hat_hw_version: "v1.0.0-beta.1"
 
 esphome:
+  name: ${node_name}
+  name_add_mac_suffix: true
+  friendly_name: ${friendly_name}
+  min_version: 2024.2.0
+  platformio_options:
+    board_build.flash_mode: dio
+    board_upload.maximum_size: 16777216
+
   project:
-    name: FutureProofHomes.Satellite1_rev${core_revision}
-    version: dev
+    name: ${company_name}.${project_name}
+    version: ${fw_version}
   
   on_boot:
-    priority: 375
-    then:
-      # Run the script to refresh the LED status
-      - script.execute: control_leds
-      - delay: 1s
-      
-      # If after 10 minutes, the device is still initializing (It did not yet connect to Home Assistant), turn off the init_in_progress variable and run the script to refresh the LED status
-      - delay: 10min
-      - if:
-          condition:
-            lambda: return id(init_in_progress);
-          then:
-            - lambda: id(init_in_progress) = false;
-            - script.execute: control_leds
+    - priority: 375
+      then:
+        # Run the script to refresh the LED status
+        - script.execute: control_leds
+        - delay: 1s
+        
+        # If after 10 minutes, the device is still initializing (It did not yet connect to Home Assistant), turn off the init_in_progress variable and run the script to refresh the LED status
+        - delay: 10min
+        - if:
+            condition:
+              lambda: return id(init_in_progress);
+            then:
+              - lambda: id(init_in_progress) = false;
+              - script.execute: control_leds
+    - priority: 600
+      then:
+        - logger.log: "${company_name} ${project_name} ${component_name} version ${built_with_core_hw_version} running firmware ${fw_version}"
+        - delay: 30s
+        - if:
+            condition:
+              lambda: return id(init_in_progress);
+            then:
+              - lambda: id(init_in_progress) = false;
+    
+
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: ESP32S3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      # need to set a s3 compatible board for the adf-sdk to compile
+      # board specific code is not used though
+      CONFIG_ESP32_S3_BOX_BOARD: "y"
+
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+
+ota:
+  - platform: satellite1
+    id: ota_satellite1_xmos
 
 
 logger:
@@ -58,13 +93,7 @@ api:
     - script.execute: control_leds
 
 
-ota:
-  - platform: satellite1
-    id: ota_satellite1_xmos
-
-
 http_request:
-
 
 i2c:
   - id: bus_a
@@ -89,3 +118,18 @@ satellite1:
   spi_mode: MODE3
   xmos_rst_pin: GPIO12
   flash_sw_pin: GPIO14
+
+
+packages:
+  globals: !include common/globals.yaml
+  wifi: !include common/wifi_improv.yaml
+  buttons: !include common/buttons.yaml
+  media_player: !include common/media_player_r4.yaml
+  voice_assistant: !include common/voice_assistant_r4.yaml
+  led_ring: !include common/led_ring_r4.yaml
+  hat_sensors: !include common/hat_sensors_r3.yaml
+  timer: !include common/timer_r4.yaml
+  debug: !include common/debug.yaml
+  # versioning: !include common/versioning.yaml
+  #TODO: Currently BLE tracker will cause device to intermittently crash (especially when streaming music)
+  # ble_tracker: !include common/ble_tracker_r4.yaml 

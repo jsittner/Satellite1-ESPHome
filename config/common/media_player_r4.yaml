@@ -4,20 +4,20 @@ external_components:
       url: https://github.com/gnumpi/nabu-voice-kit
       ref: dev
     components: [ audio_dac, media_player ]
-    refresh: 0s
+    refresh: 60s
 
   - source:
       type: local
       path: ../esphome/components
     components: [ i2s_audio, satellite1, pcm5122 ]
-    refresh: 0s
+    refresh: 60s
 
   - source:
       type: git
       url: https://github.com/esphome/voice-kit
       ref: dev
     components: [ nabu ]
-    refresh: 0s
+    refresh: 60s
 
 
 globals:
@@ -117,15 +117,3 @@ media_player:
         file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/easter_egg_tick.mp3
       - id: easter_egg_tada_sound
         file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/easter_egg_tada.mp3
-
-microphone:
-  - platform: satellite1
-    id: mic0
-    sample_rate: 48000
-    i2s_din_pin: GPIO11
-    bits_per_sample: 32bit
-    i2s_clock_mode: external
-    channel: right_left
-    pdm: false
-    adc_type: external
-    gain_log2: 4

@@ -1,14 +1,15 @@
 substitutions:
   node_name: "satellite-va"
-  core_revision: "1"
+  built_for_core_hw_version: "1"
   led_ring_id: "satellite1_led_ring"
 
 
 packages:
-  device_base: !include common/board.yaml
+  globals: !include common/globals.yaml
   wifi: !include common/wifi_improv.yaml
   local: !include common/local_components.yaml
   sensors: !include common/hat_sensors.yaml
+  buttons: !include common/buttons.yaml
   vk: !include common/nabu_vk_duplex.yaml
   va: !include common/va.yaml
   versioning: !include common/versioning.yaml
@@ -20,7 +21,7 @@ packages:
 
 esphome:
   project:
-    name: satellite1.voice_assistant_r${core_revision}
+    name: satellite1.voice_assistant_r${built_for_core_hw_version}
     version: dev
 
 

@@ -31,7 +31,18 @@ globals:
     restore_value: false
 
 
+microphone:
+  - platform: satellite1
+    id: mic0
+    sample_rate: 48000
+    i2s_din_pin: GPIO11
+    bits_per_sample: 32bit
+    i2s_clock_mode: external
+    channel: right_left
+    pdm: false
+    adc_type: external
 
+#TODO: @gnumpi I need your help getting Nabu's custom mWW operational: https://github.com/esphome/home-assistant-voice-pe/blob/7416427fb966d00b8926ec87c8d0983c770611d9/home-assistant-voice.yaml#L1480
 micro_wake_word:
   models:
     - model: okay_nabu
@@ -75,6 +86,16 @@ micro_wake_word:
 
 
 switch:
+    # Wake Word Sound Switch.
+  - platform: template
+    id: wake_sound
+    name: Wake sound
+    icon: "mdi:bullhorn"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
+    # Enable user to toggle wake word on/off?  Perhaps this is no longer necessary?
   - platform: template
     id: sw_enable_mww
     restore_mode: RESTORE_DEFAULT_OFF
@@ -118,61 +139,7 @@ switch:
     on_turn_off:
       - script.execute: control_leds
 
-
-# voice_assistant:
-#   id: va
-#   microphone: mic0
-#   media_player: nabu_media_player
-
-#   use_wake_word: false
-#   #vad_threshold: 3
-
-#   noise_suppression_level: 0
-#   auto_gain: 0 dbfs
-#   volume_multiplier: 1
-
-#   on_client_connected:
-#     - lambda: id(init_in_progress) = false;
-#     - if:
-#         condition:
-#           switch.is_on: sw_enable_mww
-#         then:
-#           - micro_wake_word.start:
-#           - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
-#         else:
-#           - lambda: id(voice_assistant_phase) = ${voice_assist_not_ready_phase_id};
-
-#   on_client_disconnected:
-#     - lambda: id(voice_assistant_phase) = ${voice_assist_not_ready_phase_id};
-#     - voice_assistant.stop
-#     - micro_wake_word.stop
-
-#   on_end:
-#       then:
-#         - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
-#         - script.execute: control_leds
-#         - voice_assistant.stop
-#         - wait_until:
-#             not:
-#               voice_assistant.is_running:
-#         - if:
-#             condition:
-#               switch.is_on: sw_enable_mww
-#             then:
-#               - micro_wake_word.start:
-#   on_error:
-#       then:
-#         - voice_assistant.stop
-#         - wait_until:
-#             not:
-#               voice_assistant.is_running:
-#         - if:
-#             condition:
-#               switch.is_on: sw_enable_mww
-#             then:
-#               - micro_wake_word.start:
-
-
+#TODO: @gnumpi I need your help getting Nabu's custom mWW working with their custom voice_assistant component: https://github.com/esphome/home-assistant-voice-pe/blob/7416427fb966d00b8926ec87c8d0983c770611d9/home-assistant-voice.yaml#L1531
 voice_assistant:
   id: va
   microphone: mic0

@@ -1,6 +1,6 @@
 substitutions:
   node_name: mic_udp_streamer
-  core_revision: "3"
+  built_for_core_hw_version: "3"
 
 packages:
   device_base: !include common/board.yaml

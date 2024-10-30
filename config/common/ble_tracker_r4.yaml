@@ -2,19 +2,19 @@
 #We we specify which device to track by using Bermuda in Home Assistant: https://github.com/agittins/bermuda 
 esp32_ble_tracker:
   scan_parameters:
-    interval: 1100ms
-    window: 1100ms
-    active: true
+    active: false # Whether to send scan-request packets to devices to gather more info (like devicename)
+    interval: 320ms # suggested 211ms # default 320ms
+    window:   300ms # suggested 120ms # default 30ms
 
-bluetooth_proxy:
-  active: true
+# bluetooth_proxy:
+#   active: true
 
 switch:
   - platform: template
     name: Enable BLE Tracking
     id: sw_enable_bletracker
     optimistic: true
-    restore_mode: ALWAYS_OFF
+    restore_mode: RESTORE_DEFAULT_OFF
     
     on_turn_on:
       - esp32_ble_tracker.start_scan:

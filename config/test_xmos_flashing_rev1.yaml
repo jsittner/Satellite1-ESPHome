@@ -1,6 +1,6 @@
 substitutions:
   node_name: plain-core-board
-  core_revision: "1"
+  built_for_core_hw_version: "1"
 
 packages:
   device_base: !include common/board.yaml
