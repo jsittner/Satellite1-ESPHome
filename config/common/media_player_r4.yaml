@@ -4,20 +4,20 @@ external_components:
       url: https://github.com/gnumpi/nabu-voice-kit
       ref: dev
     components: [ audio_dac, media_player ]
-    refresh: 60s
+    refresh: 600s
 
   - source:
       type: local
       path: ../esphome/components
     components: [ i2s_audio, satellite1, pcm5122 ]
-    refresh: 60s
+    refresh: 600s
 
   - source:
       type: git
       url: https://github.com/esphome/voice-kit
       ref: dev
     components: [ nabu ]
-    refresh: 60s
+    refresh: 600s
 
 
 globals:
