@@ -27,6 +27,7 @@ CONF_PDM = "pdm"
 CONF_SAMPLE_RATE = "sample_rate"
 CONF_BITS_PER_SAMPLE = "bits_per_sample"
 CONF_USE_APLL = "use_apll"
+CONF_GAIN_LOG_2 = "gain_log2"
 
 I2SAudioMicrophone = i2s_audio_ns.class_(
     "I2SAudioMicrophone", I2SReader, microphone.Microphone, cg.Component
@@ -91,6 +92,7 @@ CONFIG_SCHEMA = cv.All(
                     cv.Optional(
                         CONF_I2S_ADC, default={CONF_MODEL: "generic"}
                     ): CONFIG_SCHEMA_ADC,
+                    cv.Optional(CONF_GAIN_LOG_2, default=0): cv.int_range(0, 7),
                 }
             ).extend(i2s.CONFIG_SCHEMA_I2S_COMMON),
         },
@@ -111,6 +113,7 @@ async def to_code(config):
         channel = ESP32_VARIANT_ADC1_PIN_TO_CHANNEL[variant][pin_num]
         cg.add(var.set_adc_channel(channel))
     else:
+        cg.add(var.set_gain_log2(config[CONF_GAIN_LOG_2]))
         await register_i2s_reader(var, config)
 
     await microphone.register_microphone(var, config)
