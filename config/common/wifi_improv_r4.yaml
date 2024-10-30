@@ -6,6 +6,14 @@ wifi:
   on_disconnect:
     - script.execute: control_leds
 
+globals:
+  # Global variable storing the state of ImprovBLE. Used to draw different LED animations
+  - id: improv_ble_in_progress
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+
 improv_serial:
 
 #esp32_improv:

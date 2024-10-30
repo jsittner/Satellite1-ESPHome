@@ -15,6 +15,22 @@ substitutions:
   # The voice assistant encountered an error
   voice_assist_error_phase_id: '11'
 
+globals:
+  # Global variable tracking the phase of the voice assistant (defined above). Initialized to not_ready
+  - id: voice_assistant_phase
+    type: int
+    restore_value: no
+    initial_value: ${voice_assist_not_ready_phase_id}
+    # Global variable storing the first active timer
+  - id: first_active_timer
+    type: voice_assistant::Timer
+    restore_value: false
+  # Global variable storing if a timer is active
+  - id: is_timer_active
+    type: bool
+    restore_value: false
+
+
 
 micro_wake_word:
   models:

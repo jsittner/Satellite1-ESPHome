@@ -1,6 +1,19 @@
 substitutions:
   led_ring_id: "satellite1_led_ring"
 
+globals:
+  # Global index for our LEDs. So that switching between different animation does not lead to unwanted effects.
+  - id: global_led_animation_index
+    type: int
+    restore_value: no
+    initial_value: '0'
+  # Global variable tracking if the LED color was recently changed.
+  - id: color_changed
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+
 light:
   - platform: satellite1
     id: ${led_ring_id}

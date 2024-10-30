@@ -1,3 +1,10 @@
+globals:
+  # Global variable tracking if the volume button was recently touched.
+  - id: volume_buttons_touched
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
 button:
   # Restarts Sat1 Device
   - platform: restart
