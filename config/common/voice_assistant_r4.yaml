@@ -29,6 +29,16 @@ globals:
   - id: is_timer_active
     type: bool
     restore_value: false
+    # Global initialization variable. Initialized to true and set to false once everything is connected. Only used to have a smooth "plugging" experience
+  - id: init_in_progress
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+  # Global variable storing if user action causes warning
+  - id: warning
+    type: bool
+    restore_value: no
+    initial_value: 'false'
 
 
 microphone:

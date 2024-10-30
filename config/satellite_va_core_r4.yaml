@@ -121,7 +121,6 @@ satellite1:
 
 
 packages:
-  globals: !include common/globals.yaml
   wifi: !include common/wifi_improv.yaml
   buttons: !include common/buttons.yaml
   media_player: !include common/media_player_r4.yaml
