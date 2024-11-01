@@ -56,7 +56,6 @@ void FUSB302B::setup(){
   cntrl3 |= (0x03 << FUSB_CONTROL3_N_RETRIES_SHIFT) | FUSB_CONTROL3_AUTO_RETRY;
   this->reg(FUSB_CONTROL3) = cntrl3;
   
-  
   this->reg(FUSB_POWER) = 0x0F;
 
   /* Flush the RX buffer */
@@ -111,7 +110,8 @@ bool FUSB302B::cc_line_selection_(){
     
     // TX_CC1|AUTO_CRC|SPECREV0
     //this->reg(FUSB_SWITCHES1) = 0x25;
-    this->reg(FUSB_SWITCHES1) = FUSB_SWITCHES1_TXCC1 | FUSB_SWITCHES1_AUTO_CRC | (0x01 << FUSB_SWITCHES1_SPECREV_SHIFT);
+    //this->reg(FUSB_SWITCHES1) = FUSB_SWITCHES1_TXCC1 | FUSB_SWITCHES1_AUTO_CRC | (0x01 << FUSB_SWITCHES1_SPECREV_SHIFT);
+    this->reg(FUSB_SWITCHES1) = FUSB_SWITCHES1_TXCC1 | (0x01 << FUSB_SWITCHES1_SPECREV_SHIFT);
     
     ESP_LOGD(TAG, "CC select: 1");
   } else if (cc1 == 0 && cc2 > 0) {
@@ -122,7 +122,8 @@ bool FUSB302B::cc_line_selection_(){
     
     // TX_CC2|AUTO_CRC|SPECREV0
     //this->reg(FUSB_SWITCHES1) =  0x26;
-    this->reg(FUSB_SWITCHES1) = FUSB_SWITCHES1_TXCC2 | FUSB_SWITCHES1_AUTO_CRC | (0x01 << FUSB_SWITCHES1_SPECREV_SHIFT);
+    //this->reg(FUSB_SWITCHES1) = FUSB_SWITCHES1_TXCC2 | FUSB_SWITCHES1_AUTO_CRC | (0x01 << FUSB_SWITCHES1_SPECREV_SHIFT);
+    this->reg(FUSB_SWITCHES1) = FUSB_SWITCHES1_TXCC2 | (0x01 << FUSB_SWITCHES1_SPECREV_SHIFT);
     ESP_LOGD(TAG, "CC select: 2");
   }
   else{
@@ -146,10 +147,10 @@ bool FUSB302B::check_cc_line_(){
 
 void FUSB302B::fusb_reset_(){
   /* Flush the TX buffer */
-  this->reg(FUSB_CONTROL0) = FUSB_CONTROL0_TX_FLUSH;
+  //this->reg(FUSB_CONTROL0) = FUSB_CONTROL0_TX_FLUSH;
   
   /* Flush the RX buffer */
-  this->reg(FUSB_CONTROL1) = FUSB_CONTROL1_RX_FLUSH;
+  //this->reg(FUSB_CONTROL1) = FUSB_CONTROL1_RX_FLUSH;
 
   /* Reset the PD logic */
   this->reg(FUSB_RESET) = FUSB_RESET_PD_RESET;
@@ -204,26 +205,21 @@ void FUSB302B::check_status_(){
         ESP_LOGD(TAG, "status1a: %d", this->status_.status1a );
       }
       
-      if( !(this->status_.status0 & FUSB_STATUS0_VBUSOK)){
-        
-          //reset cc pins to pull down
-          this->reg(FUSB_SWITCHES0) = FUSB_SWITCHES0_PDWN_1 | FUSB_SWITCHES0_PDWN_2;
-          this->reg(FUSB_SWITCHES1) = 0x01 << 5;  
-          this->reg(FUSB_MEASURE) = 49;
-          /* turn off internal oscillator */
-          this->reg(FUSB_POWER) = PWR_BANDGAP | PWR_RECEIVER | PWR_MEASURE;
-          this->state_ = FUSB302_STATE_UNATTACHED;
-          this->get_src_cap_retry_count_ = 0;
-          this->wait_src_cap_ = true;
-          ESP_LOGD(TAG, "USB-C unattached.");
-          return;
-        
-      }
-      if ( this->status_.status0a & FUSB_STATUS0A_HARDRST ) {
-        ESP_LOGD(TAG, "FUSB_STATUS0A_HARDRST");
-        this->fusb_reset_();
-        //this->reg(FUSB_RESET) = FUSB_RESET_PD_RESET;
-        return;
+      if( !(this->status_.status0 & FUSB_STATUS0_VBUSOK) || (this->status_.interrupt & FUSB_INTERRUPT_I_BC_LVL )){
+          if( this->status_.status0 & FUSB_STATUS0_VBUSOK && !check_cc_line_() )
+          {
+            //reset cc pins to pull down
+            this->reg(FUSB_SWITCHES0) = FUSB_SWITCHES0_PDWN_1 | FUSB_SWITCHES0_PDWN_2;
+            this->reg(FUSB_SWITCHES1) = 0x01 << 5;  
+            this->reg(FUSB_MEASURE) = 49;
+            /* turn off internal oscillator */
+            this->reg(FUSB_POWER) = PWR_BANDGAP | PWR_RECEIVER | PWR_MEASURE;
+            this->state_ = FUSB302_STATE_UNATTACHED;
+            this->get_src_cap_retry_count_ = 0;
+            this->wait_src_cap_ = true;
+            ESP_LOGD(TAG, "USB-C unattached.");
+            return;
+          }
       }
       
       if( this->status_.interrupta ){
@@ -242,14 +238,11 @@ void FUSB302B::check_status_(){
         ESP_LOGD(TAG, "Interrupt: Valid Package was received");
       }
       
-      
-      
       if (this->status_.interruptb & FUSB_INTERRUPTB_I_GCRCSENT) {
         //Sent a GoodCRC acknowledge packet in response to 
         //an incoming packet that has the correct CRC value
         ESP_LOGD(TAG, "FUSB302_EVENT_GOOD_CRC_SENT");
       }
-            
       
       if( !(this->status_.status1 & FUSB_STATUS1_RX_EMPTY)) {
         PDMsg msg;
@@ -260,8 +253,14 @@ void FUSB302B::check_status_(){
           uint8_t cntrl1 = this->reg(FUSB_CONTROL1).get();
           this->reg(FUSB_CONTROL1) = cntrl1 | FUSB_CONTROL1_RX_FLUSH;
         }
-        
       }
+
+      if ( this->status_.status0a & FUSB_STATUS0A_HARDRST ) {
+        ESP_LOGD(TAG, "FUSB_STATUS0A_HARDRST");
+        this->fusb_reset_();
+        //this->reg(FUSB_RESET) = FUSB_RESET_PD_RESET;
+        return;
+      }            
 #if 0      
       if( false && this->wait_src_cap_ ){
         if( get_src_cap_retry_count_ && millis() - get_src_cap_time_stamp_ < 5000 ){
@@ -303,7 +302,7 @@ bool FUSB302B::read_message_(PDMsg &msg){
   uint16_t header;  
   this->read_register(FUSB_FIFOS, (uint8_t*) &header, 2 );
   
-  ESP_LOGD(TAG, "Received header: %d", header);
+  //ESP_LOGD(TAG, "Received header: %d", header);
   msg.set_header( header );
   msg.debug_log();
   
@@ -317,12 +316,12 @@ bool FUSB302B::read_message_(PDMsg &msg){
   /* Read CRC32 only, the PHY already checked it. */
   uint8_t dummy[4];
   this->read_register(FUSB_FIFOS, dummy, 4);
-  return isSOP;
+  return true;
 }
 
 bool FUSB302B::send_message_(const PDMsg &msg){
   ESP_LOGD(TAG, "Sending Message (%d) id: %d.", (int) msg.type, msg.id );
-  msg.debug_log();
+  /msg.debug_log();
   uint8_t buf[40];
   uint8_t *pbuf = buf;
   
@@ -350,8 +349,9 @@ bool FUSB302B::send_message_(const PDMsg &msg){
   
   if( this->write_register( FUSB_FIFOS, buf, pbuf - buf) != i2c::ERROR_OK ){
     ESP_LOGE(TAG, "Sending Message (%d) failed.", (int) msg.type );
+    return false;
   }
-  delay(1);
+
 	return true;
 }
 
