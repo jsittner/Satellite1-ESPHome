@@ -8,7 +8,7 @@ external_components:
   - source:
       type: local
       path: ../esphome/components
-    components: [ i2s_audio, satellite1, pcm5122 ]
+    components: [ i2s_audio, satellite1, pcm5122, fusb302b ]
 
 i2s_audio:
   - id: i2s_shared
@@ -17,7 +17,7 @@ i2s_audio:
     i2s_mclk_pin: GPIO09
     access_mode: duplex
 
-# fusb302b:
+fusb302b:
 
 audio_dac:
   - platform: pcm5122

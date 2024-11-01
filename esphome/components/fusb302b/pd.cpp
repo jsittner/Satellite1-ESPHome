@@ -42,13 +42,6 @@ bool PowerDelivery::handle_cntrl_message_(const PDMsg &msg){
         ESP_LOGD(TAG, "recieved good crc msg");
         PDMsg::msg_cnter_++;
       break;
-    case PD_CNTRL_PS_RDY:
-      ESP_LOGD(TAG, "Source signalled PS_RDY");
-      break;  
-    case PD_CNTRL_DR_SWAP:
-      ESP_LOGD(TAG, "recieved a DR_Swap request, rejecting it.");
-      //this->send_message_( PDMsg(pd_control_msg_type::PD_CNTRL_REJECT) );
-      break;  
     default:
      break;  
   }
@@ -102,8 +95,8 @@ static PDMsg build_source_cap_response( pd_power_info_t pwr_info, uint8_t pos )
   /* Reference: 6.4.2 Request Message */
   uint32_t data[1];
   if (pwr_info.type != PD_PDO_TYPE_AUGMENTED_PDO) {
-      uint32_t req = pwr_info.max_i ? pwr_info.max_i : pwr_info.max_p;
-      //uint32_t req = 10;
+      //uint32_t req = pwr_info.max_i ? pwr_info.max_i : pwr_info.max_p;
+      uint32_t req = 10;
       data[0] = ((uint32_t) req <<  0) |   /* B9 ...0    Max Operating Current 10mA units / Max Operating Power in 250mW units */
                 ((uint32_t) req << 10) |   /* B19...10   Operating Current 10mA units / Operating Power in 250mW units */
                 //((uint32_t)   1 << 25) |   /* B25        USB Communication Capable */
@@ -140,16 +133,6 @@ PDMsg PowerDelivery::create_fallback_request_message() const {
 
 
 bool PowerDelivery::respond_to_src_cap_msg_( const PDMsg &msg ){
-  void taskENTER_CRITICAL( void );
-  uint32_t start_time = millis();
-  this->send_message_( PDMsg(pd_control_msg_type::PD_CNTRL_GOODCRC) );
-  this->send_message_( this->create_fallback_request_message() );
-  uint32_t stop_time = millis();
-  void taskEXIT_CRITICAL( void );
-  ESP_LOGD( TAG, "Ellapsed time: %d", stop_time - start_time);
-
-  //this->send_message_( PDMsg(pd_control_msg_type::PD_CNTRL_GET_SOURCE_CAP) );
-  
   // {.limit = 100,  .use_voltage = 1, .use_current = 0},    /* PD_POWER_OPTION_MAX_20V */
   pd_power_info_t selected_info;
   memset( &selected_info, 0 , sizeof(pd_power_info_t) );
@@ -163,7 +146,6 @@ bool PowerDelivery::respond_to_src_cap_msg_( const PDMsg &msg ){
         pwr_info.max_i,
         pwr_info.max_p
      );
-     //PD_PDO( msg.data_objects[idx], idx).debug_log();
     if (pwr_info.type == PD_PDO_TYPE_AUGMENTED_PDO) {
         continue;
     } else {
@@ -176,10 +158,7 @@ bool PowerDelivery::respond_to_src_cap_msg_( const PDMsg &msg ){
         }
     }
   }
-  
-  
-  return true;
-
+  //PDMsg response = create_fallback_request_message();
   PDMsg response = build_source_cap_response(selected_info, selected + 1);
   this->send_message_( response );
 
@@ -236,7 +215,7 @@ uint16_t PDMsg::get_coded_header() const {
   return h;
 }
 
-void PDMsg::debug_log() const {
+void PDMsg::debug_log() const{
   ESP_LOGD(TAG, "PD Message (%d)", this->type );
   ESP_LOGD(TAG, "   type: %d", this->type );
   ESP_LOGD(TAG, "    rev: %d", this->spec_rev );
@@ -245,27 +224,6 @@ void PDMsg::debug_log() const {
   ESP_LOGD(TAG, "    ext: %d", !!(this->extended) );
   ESP_LOGD(TAG, "  coded: %d", this->get_coded_header());
   ESP_LOGD(TAG, "Current Cnter: %d", this->msg_cnter_);
-}
-
-void PD_PDO::debug_log() const {
-    ESP_LOGD(TAG, "PDO #%d Type: %d", this->index_ , static_cast<int>(this->type()) );
-
-    // Log each parameter based on the type of PDO
-    if (this->type() == pd_power_data_obj_type::PD_PDO_TYPE_FIXED_SUPPLY) {
-        ESP_LOGD(TAG, "    Dual Power Rule: %d", this->dual_power_rule());
-        ESP_LOGD(TAG, "    USB Suspend Supported: %d", this->usb_suspend_supported());
-        ESP_LOGD(TAG, "    Unconstrained Power: %d", this->unconstrained_power());
-        ESP_LOGD(TAG, "    USB Communication Capable: %d", this->usb_communication_capable());
-        ESP_LOGD(TAG, "    Dual Role Data: %d", this->dual_role_data());
-        ESP_LOGD(TAG, "    Unchunked Extended Message Support: %d", this->unchunked_extended_msg_support());
-        ESP_LOGD(TAG, "    EPR Mode Capable: %d", this->epr_mode_capable());
-        ESP_LOGD(TAG, "    Peak Current: %d", this->peak_current());
-        ESP_LOGD(TAG, "    Voltage (V): %4.2f", this->voltage_mV() / 1000. );
-        ESP_LOGD(TAG, "    Max Current (A): %4.2f", this->max_current_mA() / 1000. );
-    }
-    else {
-        ESP_LOGD(TAG, "    Non-fixed PDO type; further attributes may vary.");
-    }
 }
 
 
