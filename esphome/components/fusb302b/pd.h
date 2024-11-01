@@ -76,6 +76,36 @@ typedef struct {
     uint16_t max_p;     /* Power in 250mW units */
 } pd_power_info_t;
 
+
+class PD_PDO {
+public:
+  PD_PDO() = default;
+  PD_PDO( uint32_t pdo ) : pdo_(pdo) {}
+  PD_PDO( uint32_t pdo, uint8_t index ) : pdo_(pdo), index_(index) {}
+
+  pd_power_data_obj_type type() const {return static_cast<pd_power_data_obj_type>((pdo_ >> 30) & 0x3);}
+  bool dual_power_rule() const {return pdo_ & (1 << 29);}
+  bool usb_suspend_supported() const {return pdo_ & (1 << 28);}
+  bool unconstrained_power() const {return pdo_ & (1 << 27);}
+  bool usb_communication_capable() const {return pdo_ & (1 << 26);}
+  bool dual_role_data() const {return pdo_ & (1 << 25);}
+  bool unchunked_extended_msg_support() const {return pdo_ & (1 << 24);}
+  bool epr_mode_capable() const {return pdo_ & (1 << 23);}
+
+  uint8_t peak_current() const {return (pdo_ >> 20) & 0x3;}
+  uint16_t voltage_mV() const {return ((pdo_ >> 10) & 0x3FF) * 50;}
+  uint16_t max_current_mA() const {return (pdo_ & 0x3FF) * 10;}
+
+  void debug_log() const;
+
+protected:
+  uint32_t pdo_{0};
+  uint8_t index_{0};
+
+};
+
+
+
 class PDMsg {
 public:
   PDMsg() = default;
@@ -108,6 +138,7 @@ typedef uint32_t pd_pdo_t;
 
 class PowerDelivery {
 public:
+  PDMsg create_fallback_request_message() const;
 
 protected:
   void protocol_reset_();
