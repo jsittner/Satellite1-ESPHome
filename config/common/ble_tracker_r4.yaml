@@ -1,23 +1,29 @@
 #Creates a global hub so that you can track bluetooth low energy devices using your ESP32 node: https://esphome.io/components/esp32_ble_tracker
 #We we specify which device to track by using Bermuda in Home Assistant: https://github.com/agittins/bermuda 
 esp32_ble_tracker:
+  id: ble_tracker
   scan_parameters:
     active: false # Whether to send scan-request packets to devices to gather more info (like devicename)
-    interval: 320ms # suggested 211ms # default 320ms
-    window:   300ms # suggested 120ms # default 30ms
+    continuous: false
+    interval: 211ms # suggested 211ms # default 320ms
+    window:   120ms # suggested 120ms # default 30ms
 
 # bluetooth_proxy:
 #   active: true
+
+# logger:
+#   logs:
+#     esp32_ble_tracker: WARN
 
 switch:
   - platform: template
     name: Enable BLE Tracking
     id: sw_enable_bletracker
     optimistic: true
+    icon: "mdi:bluetooth"
+    entity_category: config
     restore_mode: RESTORE_DEFAULT_OFF
-    
     on_turn_on:
       - esp32_ble_tracker.start_scan:
-    
     on_turn_off:
       - esp32_ble_tracker.stop_scan:

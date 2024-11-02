@@ -9,8 +9,12 @@ wifi:
   ap:
   on_connect:
     - script.execute: control_leds
+    # - delay: 30s
+    # - esp32_ble_tracker.start_scan:
+    #     continuous: true
   on_disconnect:
     - script.execute: control_leds
+    # - esp32_ble_tracker.stop_scan:
 
 improv_serial:
 
