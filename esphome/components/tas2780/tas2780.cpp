@@ -64,22 +64,31 @@ void TAS2780::setup(){
   }
 
 void TAS2780::loop(){
+  static uint32_t last_call = millis();
+  if ( millis() - last_call > 4000 ){
 #if 1  
-  uint8_t reg2 = this->reg(0x02).get();
-  ESP_LOGD(TAG, "Reg 0x02: %d.", reg2 );
+    last_call = millis();
+    uint8_t reg2 = this->reg(0x02).get();
+    ESP_LOGD(TAG, "Reg 0x02: %d.", reg2 );
 
-  reg2 = this->reg(0x49).get();
-  ESP_LOGD(TAG, "Reg 0x49: %d.", reg2 );
-  reg2 = this->reg(0x4A).get();
-  ESP_LOGD(TAG, "Reg 0x4A: %d.", reg2 );
-  reg2 = this->reg(0x4B).get();
-  ESP_LOGD(TAG, "Reg 0x4B: %d.", reg2 );
-  reg2 = this->reg(0x4F).get();
-  ESP_LOGD(TAG, "Reg 0x4F: %d.", reg2 );
-  reg2 = this->reg(0x50).get();
-  ESP_LOGD(TAG, "Reg 0x50: %d.\n", reg2 );
-  delay(5);
+    reg2 = this->reg(0x49).get();
+    ESP_LOGD(TAG, "Reg 0x49: %d.", reg2 );
+    reg2 = this->reg(0x4A).get();
+    ESP_LOGD(TAG, "Reg 0x4A: %d.", reg2 );
+    reg2 = this->reg(0x4B).get();
+    ESP_LOGD(TAG, "Reg 0x4B: %d.", reg2 );
+    reg2 = this->reg(0x4F).get();
+    ESP_LOGD(TAG, "Reg 0x4F: %d.", reg2 );
+    reg2 = this->reg(0x50).get();
+    ESP_LOGD(TAG, "Reg 0x50: %d.\n", reg2 );
+
+    // clear interrupt latches
+    this->reg(0x5c) = 0x19 | (1 << 2);
+    
+    // activate 
+    this->reg(0x02) = 0x80;
 #endif
+  }
 }
 
 
