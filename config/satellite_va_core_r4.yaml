@@ -64,14 +64,14 @@ esp32:
     type: esp-idf
     version: recommended
     sdkconfig_options:
-      # CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
-      # CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
-      # CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
-      # CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
       CONFIG_ESP32_S3_BOX_BOARD: "y"
-      # CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y"
+      CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y"
 
-      # CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"
+      CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"
 
       # # Settings based on https://github.com/espressif/esp-adf/issues/297#issuecomment-783811702
       # CONFIG_ESP32_WIFI_STATIC_RX_BUFFER_NUM: "16"
@@ -167,10 +167,9 @@ packages:
   led_ring: !include common/led_ring_r4.yaml
   hat_sensors: !include common/hat_sensors_r3.yaml
   timer: !include common/timer_r4.yaml
-  debug: !include common/debug.yaml
-  
 
-  # versioning: !include common/versioning.yaml
+  # Enable Deubugging Mode for detail info and logs
+  # debug: !include common/debug.yaml
 
   #TODO: Currently BLE Room Presence detection tracker will cause device to intermittently crash or not boot at all (props to anyone who can solve this!)
   # room_presence: !include common/room_presence_r4.yaml 
