@@ -7,7 +7,8 @@ substitutions:
   company_name: FutureProofHomes
   project_name: Satellite1
   component_name: Core
-  fw_version: "v2.0.0-alpha.8"
+  esp32_fw_version: "v2.0.0-alpha.8"
+  xmos_fw_version: "v1.0.1-alpha.27"
   built_with_core_hw_version: "v1.0.0-beta.1"
   built_with_hat_hw_version: "v1.0.0-beta.1"
 
@@ -26,7 +27,7 @@ esphome:
 
   project:
     name: ${company_name}.${project_name}
-    version: ${fw_version}
+    version: ${esp32_fw_version}
   
   on_boot:
     - priority: 375
@@ -45,7 +46,7 @@ esphome:
               - script.execute: control_leds
     - priority: 600
       then:
-        - logger.log: "${company_name} ${project_name} ${component_name} version ${built_with_core_hw_version} running firmware ${fw_version}"
+        - logger.log: "${company_name} ${project_name} ${component_name} version ${built_with_core_hw_version} running ESP firmware: ${esp32_fw_version} and XMOS firmware: ${xmos_fw_version}"
         - delay: 30s
         - if:
             condition:

@@ -47,15 +47,15 @@ button:
   #TODO: The LED ring does not show a visual status when flashing because we connect to the LEDs via XMOS and can't connect during flashing.  Hrmmmmmm....
   - platform: template
     id: flash_satellite
-    name: "Flash Latest XMOS FW"
+    name: "Flash XMOS ${xmos_fw_version}"
     entity_category: diagnostic
     on_press:
       then:
         - lambda: id(xmos_flash_button_touched) = true;
         - script.execute: control_leds
         - ota.satellite1.flash:
-            url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.27/satellite1_firmware_adec.factory.bin
-            md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.27/satellite1_firmware_adec.factory.md5
+            url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_adec.factory.bin
+            md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_adec.factory.md5
 
   # Restors the Sat1 ESP back to factory settings
   #TODO: What buttons do we want to long press to initiate this
