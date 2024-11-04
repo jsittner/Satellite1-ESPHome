@@ -4,7 +4,8 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
-    
+  
+  # Global variable tracking if the action button was recently touched.
   - id: action_button_touched
     type: bool
     restore_value: no
@@ -14,8 +15,8 @@ event:
   # Event entity exposed to the user to automate on complex center button presses.
   # The simple press is not exposed as it is used to control the device itself.
   - platform: template
-    id: button_press_event
-    name: "Button press"
+    id: action_button_press_event
+    name: "Action Button Press"
     icon: mdi:button-pointer
     device_class: button
     event_types:
@@ -198,7 +199,7 @@ binary_sensor:
                     priority: false
                     sound_file: !lambda return id(center_button_double_press_sound);
                 - event.trigger:
-                    id: button_press_event
+                    id: action_button_press_event
                     event_type: "double_press"
       # Triple Click
       #  . Exposed as an event entity. To be used in automations inside Home Assistant
@@ -219,7 +220,7 @@ binary_sensor:
                     priority: false
                     sound_file: !lambda return id(center_button_triple_press_sound);
                 - event.trigger:
-                    id: button_press_event
+                    id: action_button_press_event
                     event_type: "triple_press"
       # Long Press
       #  . Exposed as an event entity. To be used in automations inside Home Assistant
@@ -236,7 +237,7 @@ binary_sensor:
                     sound_file: !lambda return id(center_button_long_press_sound);
                 - light.turn_off: satellite1_led_ring
                 - event.trigger:
-                    id: button_press_event
+                    id: action_button_press_event
                     event_type: "long_press"
       # Very important do not remove. Trust me :D
       - timing:

@@ -178,25 +178,25 @@ light:
             if (id(nabu_media_player).volume == 0.0f) {
               it[0] = silenced_color;
             }
-      # - addressable_lambda:
-      #     name: "Center Button Touched"
-      #     update_interval: 16ms
-      #     lambda: |-
-      #       if (initial_run) {
-      #         // set voice_assistant_leds light to colors based on led_ring
-      #         auto led_ring_cv = id(satellite1_led_ring).current_values;
-      #         auto va_leds_call = id(voice_assistant_leds).make_call();
-      #         va_leds_call.from_light_color_values(led_ring_cv);
-      #         va_leds_call.set_brightness( min ( max( id(led_ring).current_values.get_brightness() , 0.2f ) + 0.1f , 1.0f ) );
-      #         va_leds_call.set_state(true);
-      #         va_leds_call.perform();
-      #       }
-      #       auto light_color = id(voice_assistant_leds).current_values;
-      #       Color color(light_color.get_red() * 255, light_color.get_green() * 255,
-      #             light_color.get_blue() * 255);
-      #       for (int i = 0; i < 24; i++) {
-      #         it[i] = color;
-      #       }
+      - addressable_lambda:
+          name: "Action Button Touched"
+          update_interval: 16ms
+          lambda: |-
+            if (initial_run) {
+              // set voice_assistant_leds light to colors based on led_ring
+              auto led_ring_cv = id(satellite1_led_ring).current_values;
+              auto va_leds_call = id(satellite1_led_ring).make_call();
+              va_leds_call.from_light_color_values(led_ring_cv);
+              va_leds_call.set_brightness( min ( max( id(satellite1_led_ring).current_values.get_brightness() , 0.2f ) + 0.1f , 1.0f ) );
+              va_leds_call.set_state(true);
+              va_leds_call.perform();
+            }
+            auto light_color = id(satellite1_led_ring).current_values;
+            Color color(light_color.get_red() * 255, light_color.get_green() * 255,
+                  light_color.get_blue() * 255);
+            for (int i = 0; i < 24; i++) {
+              it[i] = color;
+            }
       - addressable_twinkle:
           name: "Twinkle"
           twinkle_probability: 50%
@@ -426,7 +426,7 @@ script:
             id(control_leds_jack_unplugged_recently).execute();
           } else if (id(volume_buttons_touched)) {
             id(control_leds_volume_buttons_touched).execute();
-          } else if (id(action_button_touched)) {
+          } else if (id(btn_action).state) {
             id(control_leds_action_button_touched).execute();
           } else if (id(warning)) {
             id(control_leds_warning).execute();
@@ -606,16 +606,7 @@ script:
       - light.turn_on:
           brightness: !lambda return min ( max( id(satellite1_led_ring).current_values.get_brightness() , 0.2f ) + 0.1f , 1.0f );
           id: satellite1_led_ring
-          effect: "Volume Display"
-
-  # Script executed when the volume button is touched
-  # A number of LEDs turn on indicating a visual representation of the volume of the media player entity.
-  - id: control_leds_action_button_touched
-    then:
-      - light.turn_on:
-          brightness: !lambda return min ( max( id(satellite1_led_ring).current_values.get_brightness() , 0.2f ) + 0.1f , 1.0f );
-          id: satellite1_led_ring
-          effect: "Volume Display"      
+          effect: "Volume Display"  
 
   # Script executed when the jack has just been unplugged
   # A ripple effect
@@ -637,12 +628,12 @@ script:
 
   # Script executed when the center button is touched
   # The complete LED ring turns on
-  - id: control_leds_center_button_touched
+  - id: control_leds_action_button_touched
     then:
       - light.turn_on:
           brightness: !lambda return min ( max( id(satellite1_led_ring).current_values.get_brightness() , 0.2f ) + 0.1f , 1.0f );
           id: satellite1_led_ring
-          effect: "Center Button Touched"
+          effect: "Action Button Touched"
 
   # Script executed when the timer is ringing, to control the LEDs
   # The LED ring blinks.
