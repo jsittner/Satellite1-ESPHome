@@ -20,7 +20,7 @@ globals:
   - id: voice_assistant_phase
     type: int
     restore_value: no
-    initial_value: ${voice_assist_not_ready_phase_id}
+    # initial_value: ${voice_assist_not_ready_phase_id}
     # Global variable storing the first active timer
   - id: first_active_timer
     type: voice_assistant::Timer
