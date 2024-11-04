@@ -104,7 +104,7 @@ esp32:
 
 psram:
   mode: octal
-  speed: 80MHz
+  speed: 120MHz
 
 
 ota:
@@ -166,7 +166,10 @@ packages:
   led_ring: !include common/led_ring_r4.yaml
   hat_sensors: !include common/hat_sensors_r3.yaml
   timer: !include common/timer_r4.yaml
-  # debug: !include common/debug.yaml
+  debug: !include common/debug.yaml
+  
+
   # versioning: !include common/versioning.yaml
-  #TODO: Currently BLE tracker will cause device to intermittently crash (especially when streaming music)
-  # ble_tracker: !include common/ble_tracker_r4.yaml 
+
+  #TODO: Currently BLE Room Presence detection tracker will cause device to intermittently crash or not boot at all (props to anyone who can solve this!)
+  # room_presence: !include common/room_presence_r4.yaml 

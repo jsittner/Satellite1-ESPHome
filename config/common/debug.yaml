@@ -28,3 +28,6 @@ sensor:
     name: "Wi-Fi Signal Strength"
     entity_category: "diagnostic"
     update_interval: 60s
+
+logger:
+  level: DEBUG
