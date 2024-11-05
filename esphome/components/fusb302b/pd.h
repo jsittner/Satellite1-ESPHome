@@ -57,16 +57,12 @@ enum pd_control_msg_type {
   PD_CNTRL_GET_REVISION = 0x18
 };
 
-
-
-
 enum pd_power_data_obj_type {   /* Power data object type */
     PD_PDO_TYPE_FIXED_SUPPLY    = 0,
     PD_PDO_TYPE_BATTERY         = 1,
     PD_PDO_TYPE_VARIABLE_SUPPLY = 2,
     PD_PDO_TYPE_AUGMENTED_PDO   = 3     /* USB PD 3.0 */
 };
-
 
 typedef struct {
     enum pd_power_data_obj_type type;
@@ -100,28 +96,29 @@ public:
   static pd_spec_revision_t spec_rev_;
 };
 
-
-
-
 typedef uint32_t pd_pdo_t;
+
+class PD_AMS {
+
+};
 
 
 class PowerDelivery {
 public:
+  virtual bool send_message_(const PDMsg &msg) = 0;
+  virtual bool read_message_(PDMsg &msg) = 0;
+  PDMsg create_fallback_request_message() const;
+  bool handle_message_(const PDMsg &msg);
 
 protected:
+  bool active_ams_{false};
   void protocol_reset_();
   
-  bool handle_message_(const PDMsg &msg);
   bool handle_data_message_(const PDMsg &msg);
   bool handle_cntrl_message_(const PDMsg &msg);
 
   pd_power_info_t parse_power_info_( pd_pdo_t &pdo ) const;
   bool respond_to_src_cap_msg_( const PDMsg &msg );
-  PDMsg create_fallback_request_message() const;
-  
-  virtual bool read_message_(PDMsg &msg) = 0;
-  virtual bool send_message_(const PDMsg &msg) = 0;
   
   pd_spec_revision_t spec_revision_{pd_spec_revision_t::PD_SPEC_REV_2};
 };

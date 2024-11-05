@@ -20,6 +20,7 @@ bool PowerDelivery::handle_message_(const PDMsg &msg){
 bool PowerDelivery::handle_data_message_(const PDMsg &msg){
   switch( msg.type ){
     case PD_DATA_SOURCE_CAP:
+        this->active_ams_ = true;
         if( PDMsg::spec_rev_ == pd_spec_revision_t::PD_SPEC_REV_1 ){
           if( msg.spec_rev >= pd_spec_revision_t::PD_SPEC_REV_3 ){
             PDMsg::spec_rev_ = pd_spec_revision_t::PD_SPEC_REV_3;
@@ -41,6 +42,13 @@ bool PowerDelivery::handle_cntrl_message_(const PDMsg &msg){
     case PD_CNTRL_GOODCRC:
         ESP_LOGD(TAG, "recieved good crc msg");
         PDMsg::msg_cnter_++;
+      break;
+    case PD_CNTRL_PS_RDY:
+      this->active_ams_ = false;
+      break; 
+    case PD_CNTRL_SOFT_RESET:
+      this->send_message_(PDMsg(pd_control_msg_type::PD_CNTRL_ACCEPT));
+      PDMsg::msg_cnter_ = 0;
       break;
     default:
      break;  
@@ -152,7 +160,7 @@ bool PowerDelivery::respond_to_src_cap_msg_( const PDMsg &msg ){
         uint8_t v = true  ? pwr_info.max_v >> 2 : 1;
         uint8_t i = false ? pwr_info.max_i >> 2 : 1;
         uint16_t power = (uint16_t)v * i;  /* reduce 10-bit power info to 8-bit and use 8-bit x 8-bit multiplication */
-        if ( pwr_info.max_v * 50 / 1000 >= 20 || selected == 255) {
+        if ( pwr_info.max_v * 50 / 1000 <= 20 || selected == 255) {
             selected_info = pwr_info;
             selected = idx;
         }

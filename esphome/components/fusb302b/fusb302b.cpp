@@ -4,6 +4,10 @@
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
 
+#include "esp_rom_gpio.h"
+#include <driver/gpio.h>
+#include <hal/gpio_types.h>
+
 #include "fusb302_defines.h"
 
 namespace esphome {
@@ -27,6 +31,90 @@ enum FUSB302_transmit_data_tokens_t {
     TX_TOKEN_TXOFF   = 0xFE,
 };
 
+TaskHandle_t xTaskHandle = NULL;
+
+
+// ISR handler
+void IRAM_ATTR fusb302b_isr_handler(void *arg) {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+    // Notify the task from the ISR, using xTaskNotifyFromISR
+    xTaskNotifyFromISR(xTaskHandle, 0x01, eSetBits, &xHigherPriorityTaskWoken);
+
+    // Perform a context switch if needed
+    if (xHigherPriorityTaskWoken == pdTRUE) {
+        portYIELD_FROM_ISR();
+    }
+}
+
+
+static void trigger_task(void *params){
+  /*
+  - The first bit of the GoodCRC Message Shall be returned within 
+    tTransmit (0.195ms) after receipt of the last bit of the previous Message.
+  - The GoodCRC Message Shall return the Message’s MessageID 
+  */
+  ESP_LOGD(TAG, ">>> Starting FUSB trigger task <<<");
+  FUSB302B* fusb302b = (FUSB302B*) params;
+  uint32_t ulNotificationValue;
+  uint32_t take_time;
+  while(true){
+    
+    if (xTaskNotifyWait(0x00, 0xFFFFFFFF, &ulNotificationValue, portMAX_DELAY) == pdTRUE) {
+      ESP_LOGD(TAG, ">>> Responding to interrupt <<<");
+      take_time = millis();
+      uint8_t interrupt = fusb302b->reg(FUSB_INTERRUPT).get();
+      uint8_t interrupta = fusb302b->reg(FUSB_INTERRUPTA).get();
+      uint8_t interruptb = fusb302b->reg(FUSB_INTERRUPTB).get();
+      uint8_t status0 = fusb302b->reg(FUSB_STATUS0).get();
+      uint8_t status1 = fusb302b->reg(FUSB_STATUS1).get();
+      uint8_t status1a = fusb302b->reg(FUSB_STATUS1A).get();
+      ESP_LOGD(TAG, "Interrupt: %d",  interrupt);
+      ESP_LOGD(TAG, "Interrupta: %d", interrupta);
+      ESP_LOGD(TAG, "Interruptb: %d", interruptb);
+      ESP_LOGD(TAG, "status0: %d", status0);
+      ESP_LOGD(TAG, "status1: %d", status1);
+      
+      while( (interrupt & FUSB_INTERRUPT_I_CRC_CHK) || ( interrupta &  FUSB_INTERRUPTA_I_HARDRST) )
+      {
+        take_time = millis();
+        if( interrupta & FUSB_INTERRUPTA_I_SOFTRST ){
+          ESP_LOGW(TAG, "SOFT_RESET_REQUEST");
+        }
+        
+        if( interrupta & FUSB_INTERRUPTA_I_HARDRST ){
+          ESP_LOGE(TAG, "FUSB_STATUS0A_HARDRST");
+        }
+        
+        if( interrupt & FUSB_INTERRUPT_I_CRC_CHK ){
+          if( status0 & FUSB_STATUS0_CRC_CHK ){
+            PDMsg msg;
+            if( fusb302b->read_message_(msg) ){
+              fusb302b->handle_message_(msg);
+            } else {
+              ESP_LOGD(TAG, "reading sop message failed.");
+            }
+          }
+        }
+        
+        interrupt = fusb302b->reg(FUSB_INTERRUPT).get();
+        interrupta = fusb302b->reg(FUSB_INTERRUPTA).get();
+        interruptb = fusb302b->reg(FUSB_INTERRUPTB).get();
+        status0 = fusb302b->reg(FUSB_STATUS0).get();
+        status1 = fusb302b->reg(FUSB_STATUS1).get();
+        status1a = fusb302b->reg(FUSB_STATUS1A).get();
+        ESP_LOGD(TAG, "Interrupt: %d",  interrupt);
+        ESP_LOGD(TAG, "Interrupta: %d", interrupta);
+        ESP_LOGD(TAG, "Interruptb: %d", interrupta);
+        ESP_LOGD(TAG, "status0: %d",  status0);
+        ESP_LOGD(TAG, "status1: %d", status1);
+        ESP_LOGD(TAG, "status1a: %d", status1a);
+        ESP_LOGD(TAG, "Time: %d ms", millis() - take_time);
+      }
+    }
+  }
+}
+
 
 void FUSB302B::setup(){
 
@@ -44,9 +132,15 @@ void FUSB302B::setup(){
   
   /* Set interrupt masks */
   // Setting to 0 so interrupts are allowed
-  this->reg(FUSB_MASK1) = 0x00;
-  this->reg(FUSB_MASKA) = 0x00;
-  this->reg(FUSB_MASKB) = 0x00;
+  this->reg(FUSB_MASK1) = ~FUSB_MASK1_M_CRC_CHK;
+  //this->reg(FUSB_MASK1) = 0x51;
+  this->reg(FUSB_MASKA) = ~FUSB_MASKA_M_HARDRST & ~FUSB_MASKA_M_RETRYFAIL;
+  
+  //Mask the I_GCRCSENT interrupt
+  this->reg(FUSB_MASKB) = FUSB_MASKB_M_GCRCSENT;
+  
+    
+
   uint8_t cntrl0 = this->reg(FUSB_CONTROL0).get();
   this->reg(FUSB_CONTROL0) = cntrl0 & ~FUSB_CONTROL0_INT_MASK;
 
@@ -65,8 +159,12 @@ void FUSB302B::setup(){
   
   this->fusb_reset_();
 
-   this->startup_delay_ = millis();
+  this->startup_delay_ = millis();
+  
+  
+  
 }
+
 
 void FUSB302B::dump_config(){
 }
@@ -112,7 +210,7 @@ bool FUSB302B::cc_line_selection_(){
     
     this->reg(FUSB_SWITCHES1) = ( 
                     FUSB_SWITCHES1_TXCC1 | 
-                    FUSB_SWITCHES1_AUTO_CRC | 
+                    //FUSB_SWITCHES1_AUTO_CRC | 
                     (0x01 << FUSB_SWITCHES1_SPECREV_SHIFT));
 
   } else if (cc1 == 0 && cc2 > 0) {
@@ -122,7 +220,7 @@ bool FUSB302B::cc_line_selection_(){
     
     this->reg(FUSB_SWITCHES1) = (
                     FUSB_SWITCHES1_TXCC2 | 
-                    FUSB_SWITCHES1_AUTO_CRC | 
+                    //FUSB_SWITCHES1_AUTO_CRC | 
                     (0x01 << FUSB_SWITCHES1_SPECREV_SHIFT));
   }
   else{
@@ -149,6 +247,8 @@ void FUSB302B::fusb_reset_(){
   /* Reset the PD logic */
   this->reg(FUSB_RESET) = FUSB_RESET_PD_RESET;
 
+  this->read_status_();
+  
   PDMsg::msg_cnter_ = 0;
 }
 
@@ -166,21 +266,23 @@ void FUSB302B::read_status_(){
 }
 
 
-void FUSB302B::check_status_(){
-  this->read_status_();
-  //ESP_LOGD(TAG, "status0: %d", this->status_.status0 );
 
+
+
+void FUSB302B::check_status_(){
   switch( this->state_){
     case FUSB302_STATE_UNATTACHED:
-      if( this->status_.status0 & FUSB_STATUS0_VBUSOK )
       {
+      uint8_t status0 = this->reg(FUSB_STATUS0).get();
+      if( status0 & FUSB_STATUS0_VBUSOK )
+      {
+        if( this->startup_delay_ && millis() - this->startup_delay_ < 3000){
+          return; 
+        }
         /* enable internal oscillator */
         this->reg(FUSB_POWER) = PWR_BANDGAP | PWR_RECEIVER | PWR_MEASURE | PWR_INT_OSC;
         
-        if( this->startup_delay_ && millis() - this->startup_delay_ < 10000){
-          return; 
-        }
-        this->reg(FUSB_SWITCHES0) = FUSB_SWITCHES0_PDWN_1 | FUSB_SWITCHES0_PDWN_2;
+        //this->reg(FUSB_SWITCHES0) = FUSB_SWITCHES0_PDWN_1 | FUSB_SWITCHES0_PDWN_2;
         delay(1);
         if( !this->cc_line_selection_() ){
           return;
@@ -190,18 +292,44 @@ void FUSB302B::check_status_(){
         {
           ESP_LOGD(TAG, "Statup delay reached!");
           this->startup_delay_ = 0;
-          this->high_freq_.start();
-          //uint8_t sw1 = this->reg(FUSB_SWITCHES1).get();
-          //this->reg(FUSB_SWITCHES1) = sw1 | FUSB_SWITCHES1_AUTO_CRC;
+          //this->high_freq_.start();
           //this->send_message_( create_fallback_request_message() );
           //this->send_message_( PDMsg(pd_control_msg_type::PD_CNTRL_GET_SOURCE_CAP) ); 
-        }        
 
+          gpio_num_t irq_gpio_pin = GPIO_NUM_1;
+
+          gpio_config_t io_conf;
+          io_conf.pin_bit_mask = (1ULL << irq_gpio_pin);
+          io_conf.mode = GPIO_MODE_INPUT;
+          io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
+          io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+          io_conf.intr_type = GPIO_INTR_NEGEDGE	;
+
+          gpio_config(&io_conf);
+
+          // Install ISR service and attach the ISR handler
+          gpio_set_intr_type((gpio_num_t) irq_gpio_pin , GPIO_INTR_NEGEDGE	);
+          gpio_install_isr_service(0);
+          gpio_isr_handler_add( irq_gpio_pin, fusb302b_isr_handler, NULL);
+
+          // Create the task that will wait for notifications
+          xTaskCreatePinnedToCore(trigger_task, "fusb3202b_task", 4096, this , configMAX_PRIORITIES - 1 , &xTaskHandle, 1);
+          delay(1);
+        }  
+        
+        uint8_t sw1 = this->reg(FUSB_SWITCHES1).get();
+        this->reg(FUSB_SWITCHES1) = sw1 | FUSB_SWITCHES1_AUTO_CRC;
+        this->fusb_reset_();
+        
+        this->get_src_cap_time_stamp_ = millis();
+        this->get_src_cap_retry_count_ = 0;
+        this->wait_src_cap_ = true;
 
         this->state_ = FUSB302_STATE_ATTACHED;
         ESP_LOGD(TAG, "USB-C attached");
       }
-      break;
+      }  
+    break;
     
     case FUSB302_STATE_ATTACHED:
         
@@ -216,8 +344,18 @@ void FUSB302B::check_status_(){
         ESP_LOGD(TAG, "status1a: %d", this->status_.status1a );
       }
 #endif      
-      if( !(this->status_.status0 & FUSB_STATUS0_VBUSOK)){
-        
+#if 1      
+      uint8_t status0 = this->reg(FUSB_STATUS0).get();
+      if( !active_ams_ && !(status0 & FUSB_STATUS0_ACTIVITY) && ((status0 & FUSB_STATUS0_BC_LVL) == 0) ){
+          for(int cnt=0; cnt < 5; cnt++ ){
+            status0 = this->reg(FUSB_STATUS0).get();
+            if( !(status0 & FUSB_STATUS0_ACTIVITY) && ((status0 & FUSB_STATUS0_BC_LVL) > 0))
+            {
+              return;
+            }
+          }
+          this->fusb_reset_();
+
           //reset cc pins to pull down
           this->reg(FUSB_SWITCHES0) = FUSB_SWITCHES0_PDWN_1 | FUSB_SWITCHES0_PDWN_2;
           this->reg(FUSB_SWITCHES1) = 0x01 << 5;  
@@ -225,21 +363,48 @@ void FUSB302B::check_status_(){
           
           /* turn off internal oscillator */
           this->reg(FUSB_POWER) = PWR_BANDGAP | PWR_RECEIVER | PWR_MEASURE;
+
           
+          uint8_t sw1 = this->reg(FUSB_SWITCHES1).get();
+          this->reg(FUSB_SWITCHES1) = sw1 | FUSB_SWITCHES1_AUTO_CRC;
+
           this->state_ = FUSB302_STATE_UNATTACHED;
           this->get_src_cap_retry_count_ = 0;
           this->wait_src_cap_ = true;
           ESP_LOGD(TAG, "USB-C unattached.");
           return;
-        
       }
-      if ( this->status_.status0a & FUSB_STATUS0A_HARDRST ) {
+#endif      
+#if 0      
+      if( this->status_.status0a & FUSB_STATUS0A_HARDRST ) {
         ESP_LOGE(TAG, "FUSB_STATUS0A_HARDRST");
         this->fusb_reset_();
         return;
       }
+#endif
+#if 0      
+      if( (this->status_.interrupt & FUSB_INTERRUPT_I_CRC_CHK ) ){
+        ESP_LOGD(TAG, "Enabling AUTO_PRE");
+        this->reg(FUSB_CONTROL0) = FUSB_CONTROL0_AUTO_PRE;
+        this->write_to_tx_buffer_(PDMsg(pd_control_msg_type::PD_CNTRL_GOODCRC));
+        //this->ack_and_response_( this->create_fallback_request_message() );
+        bool empty = this->status_.status1 & FUSB_STATUS1_RX_EMPTY;
+        while( !empty ) {
+          PDMsg msg;
+          if( this->read_message_(msg) ){
+            //this->handle_message_(msg);
+          } else {
+            ESP_LOGD(TAG, "reading message failed.");
+            //uint8_t cntrl1 = this->reg(FUSB_CONTROL1).get();
+            //this->reg(FUSB_CONTROL1) = cntrl1 | FUSB_CONTROL1_RX_FLUSH;
+          }
+          empty = this->reg(FUSB_STATUS1).get() & FUSB_STATUS1_RX_EMPTY; 
+        }
+      }
+      return;
+#endif
 
-#if 1      
+#if 0      
       if( this->status_.interrupta ){
         ESP_LOGD(TAG, "Interrupta: %d", this->status_.interrupta);
       }
@@ -256,8 +421,6 @@ void FUSB302B::check_status_(){
         ESP_LOGD(TAG, "Interrupt: Valid Package was received");
       }
       
-      
-      
       if (this->status_.interruptb & FUSB_INTERRUPTB_I_GCRCSENT) {
         //Sent a GoodCRC acknowledge packet in response to 
         //an incoming packet that has the correct CRC value
@@ -265,6 +428,7 @@ void FUSB302B::check_status_(){
         this->response_timer_ = millis();
       }
 #endif      
+#if 0      
       if( !(this->status_.status1 & FUSB_STATUS1_RX_EMPTY)) {
         PDMsg msg;
         if( this->read_message_(msg) ){
@@ -276,10 +440,10 @@ void FUSB302B::check_status_(){
           //uint8_t cntrl1 = this->reg(FUSB_CONTROL1).get();
           //this->reg(FUSB_CONTROL1) = cntrl1 | FUSB_CONTROL1_RX_FLUSH;
         }
-        
-      }
+      }      
+#endif
 #if 0      
-      if( false && this->wait_src_cap_ ){
+      if( this->wait_src_cap_ ){
         if( get_src_cap_retry_count_ && millis() - get_src_cap_time_stamp_ < 5000 ){
           return;
         }
@@ -291,12 +455,14 @@ void FUSB302B::check_status_(){
         get_src_cap_retry_count_++;
         get_src_cap_time_stamp_ = millis();
         if( get_src_cap_retry_count_ < 4){
-          PDMsg msg = PDMsg(pd_control_msg_type::PD_CNTRL_GET_SOURCE_CAP);
-          this->send_msg_(msg);
+          /* Flush the RX buffer */
+          this->reg(FUSB_CONTROL1) = FUSB_CONTROL1_RX_FLUSH;
+          PDMsg msg = PDMsg( pd_control_msg_type::PD_CNTRL_SOFT_RESET) ;
+          this->send_message_(msg);
+          //this->send_message_(this->create_fallback_request_message());
           ESP_LOGD(TAG, "send get_source_cap msg (%d)", get_src_cap_retry_count_);
         } else {
           ESP_LOGD(TAG, "send get_source_cap reached max count.");
-          this->fusb_hard_reset_();
           this->get_src_cap_retry_count_ = 0;
           this->wait_src_cap_ = false;
         } 
@@ -307,38 +473,40 @@ void FUSB302B::check_status_(){
 }
 
 bool FUSB302B::read_message_(PDMsg &msg){
-  ESP_LOGD(TAG, "PD-Received new message.");
   
   uint8_t fifo_byte = this->reg(FUSB_FIFOS).get(); 
-  bool isSOP = true;
+  uint8_t ret = 0;
+  
   if( ( fifo_byte & FUSB_FIFO_RX_TOKEN_BITS) != FUSB_FIFO_RX_SOP )
   {
     ESP_LOGD(TAG, "Non SOP packet: %d", fifo_byte);
-    isSOP = false;
+    ret = 1;
   }
+  
   uint16_t header;  
-  this->read_register(FUSB_FIFOS, (uint8_t*) &header, 2 );
-  
-  ESP_LOGD(TAG, "Received header: %d", header);
+  ret |= this->read_register(FUSB_FIFOS, (uint8_t*) &header, 2);
   msg.set_header( header );
-  msg.debug_log();
-  
+    
   if (msg.num_of_obj > 7 ){
     ESP_LOGE(TAG, "Parsing error, num of objects can't exceed 7.");
     return false;
+  } else if ( msg.num_of_obj > 0){
+    ret |= this->read_register(FUSB_FIFOS, (uint8_t*) msg.data_objects, msg.num_of_obj * sizeof(uint32_t) );
   }
-  
-  this->read_register(FUSB_FIFOS, (uint8_t*) msg.data_objects, msg.num_of_obj * sizeof(uint32_t) );
   
   /* Read CRC32 only, the PHY already checked it. */
   uint8_t dummy[4];
-  this->read_register(FUSB_FIFOS, dummy, 4);
-  return isSOP;
+  ret |= this->read_register(FUSB_FIFOS, dummy, 4);
+  
+  if( ret == 0 ){
+    ESP_LOGD(TAG, "PD-Received new message (%d, %d).", msg.type, msg.num_of_obj);
+    //msg.debug_log();
+  }
+  
+  return (ret == 0);
 }
 
 bool FUSB302B::send_message_(const PDMsg &msg){
-  ESP_LOGD(TAG, "Sending Message (%d) id: %d.", (int) msg.type, msg.id );
-  msg.debug_log();
   uint8_t buf[40];
   uint8_t *pbuf = buf;
   
@@ -364,14 +532,20 @@ bool FUSB302B::send_message_(const PDMsg &msg){
   *pbuf++ = (uint8_t)TX_TOKEN_TXOFF;
   *pbuf++ = (uint8_t)TX_TOKEN_TXON;
   
+  static uint32_t last_call = millis();
   if( this->write_register( FUSB_FIFOS, buf, pbuf - buf) != i2c::ERROR_OK ){
     ESP_LOGE(TAG, "Sending Message (%d) failed.", (int) msg.type );
+  } else {
+    ESP_LOGD(TAG, "Sent Message (%d) id: %d. (%d)ms", (int) msg.type, msg.id, millis() - last_call );
   }
-  ESP_LOGD( TAG, "Sent message within %dms", millis() -  this->response_timer_);
-  delay(1);
+  last_call = millis();
+  //msg.debug_log();
+  
 	return true;
 }
 
+
+  
 
 
 }
