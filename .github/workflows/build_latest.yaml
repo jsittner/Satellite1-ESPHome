@@ -67,7 +67,7 @@ jobs:
             echo "files=''" >> $GITHUB_OUTPUT
           fi
  
-build-firmware:
+  build-firmware:
     if: needs.build-list.outputs.build_firmware == 'true'
     name: Build Firmware
     needs:
@@ -85,8 +85,8 @@ build-firmware:
           release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
           release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
           release-version: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
-  
-  
+ 
+          
   create_artifact_matrix:
     name: Create artifact matrix
     needs:

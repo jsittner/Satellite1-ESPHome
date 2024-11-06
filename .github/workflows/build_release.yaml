@@ -71,7 +71,7 @@ jobs:
           echo "previous_tag=$(git describe --abbrev=0 --tags)" >> $GITHUB_OUTPUT
           echo "files=$(ls config/satellite*.yaml | jq --slurp --raw-input )" >> $GITHUB_OUTPUT
 
-build-firmware:
+  build-firmware:
     name: Build Firmware
     needs:
       - prepare
@@ -87,6 +87,7 @@ build-firmware:
           esphome-version: 2024.10.2
           release-version: ${{ needs.prepare.outputs.next_tag }}
 
+          
   push-tag:
     name: Push tag to repository and build changelog.
     needs:
