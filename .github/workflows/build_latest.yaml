@@ -67,21 +67,17 @@ jobs:
             echo "files=''" >> $GITHUB_OUTPUT
           fi
  
-  build-firmware:
+build-firmware:
     if: needs.build-list.outputs.build_firmware == 'true'
     name: Build Firmware
     needs:
       - build-list
     runs-on: ubuntu-latest
     steps:
-      - name: Check out code from GitHub
-        uses: actions/checkout@v4.1.6
-
       - name: Install python-magic
-        run: |
-          pip install python-magic
+        run: pip install python-magic
 
-      - name: Run ESPHome Build
+      - name: Build Firmware
         uses: esphome/workflows/.github/workflows/build.yml@main
         with:
           files: ${{ fromJSON(needs.build-list.outputs.build_cfg_files) }}
@@ -89,7 +85,6 @@ jobs:
           release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
           release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
           release-version: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
-
   
   
   create_artifact_matrix:
