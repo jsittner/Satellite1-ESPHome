@@ -75,11 +75,21 @@ jobs:
     name: Build Firmware
     needs:
       - prepare
-    uses: esphome/workflows/.github/workflows/build.yml@main
-    with:
-      files: ${{ fromJSON(needs.prepare.outputs.build_cfg_files) }}
-      esphome-version: 2024.10.2
-      release-version: ${{ needs.prepare.outputs.next_tag }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code from GitHub
+        uses: actions/checkout@v4.1.6
+
+      - name: Install python-magic
+        run: |
+          pip install python-magic
+
+      - name: Run ESPHome Build
+        uses: esphome/workflows/.github/workflows/build.yml@main
+        with:
+          files: ${{ fromJSON(needs.prepare.outputs.build_cfg_files) }}
+          esphome-version: 2024.10.2
+          release-version: ${{ needs.prepare.outputs.next_tag }}
 
   push-tag:
     name: Push tag to repository and build changelog.
