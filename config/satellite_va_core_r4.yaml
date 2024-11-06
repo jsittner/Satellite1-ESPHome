@@ -21,7 +21,7 @@ esphome:
   name: ${node_name}
   name_add_mac_suffix: true
   friendly_name: ${friendly_name}
-  min_version: 2024.2.0
+  min_version: 2024.9.0
   platformio_options:
     board_build.flash_mode: dio
 
@@ -168,7 +168,7 @@ packages:
   hat_sensors: !include common/hat_sensors_r3.yaml
   timer: !include common/timer_r4.yaml
 
-  # Enable Deubugging Mode for detail info and logs
+  # Enable Deubugging Mode for detailed info and logs
   # debug: !include common/debug.yaml
 
   #TODO: Currently BLE Room Presence detection tracker will cause device to intermittently crash or not boot at all (props to anyone who can solve this!)
