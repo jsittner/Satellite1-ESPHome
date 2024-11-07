@@ -51,11 +51,12 @@ microphone:
     channel: right_left
     pdm: false
     adc_type: external
+    gain_log2: 6
 
 #TODO: @gnumpi I need your help getting Nabu's custom mWW operational: https://github.com/esphome/home-assistant-voice-pe/blob/7416427fb966d00b8926ec87c8d0983c770611d9/home-assistant-voice.yaml#L1480
 micro_wake_word:
   models:
-    - model: okay_nabu
+    - model: hey_jarvis
   vad:
   on_wake_word_detected:
     # If the wake word is detected when the device is muted (Possible with the software mute switch): Do nothing
