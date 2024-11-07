@@ -23,12 +23,13 @@ light:
     icon: "mdi:dots-circle"
     default_transition_length: 0ms
     restore_mode: RESTORE_DEFAULT_OFF
-    initial_state:
-      color_mode: rgb
-      brightness: 66%
-      red: 9.4%
-      green: 73.3%
-      blue: 94.9%
+    #TODO: Need to wait for latest version of esphome to introduce the `initial_state` property
+    # initial_state:
+    #   color_mode: rgb
+    #   brightness: 66%
+    #   red: 9.4%
+    #   green: 73.3%
+    #   blue: 94.9%
     effects:
       - addressable_lambda:
           name: "Waiting for Command"

@@ -43,6 +43,7 @@ packages:
 
 esphome:
   name: ${node_name}
+  min_version: 2024.9.0
   project:
     name: satellite1.voice_assistant_r${built_for_core_hw_version}
     version: dev
