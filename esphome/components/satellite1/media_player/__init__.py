@@ -218,7 +218,7 @@ def _read_audio_file_and_type(file_config):
 
     # magic = Magic(mime=True)
     # file_type = magic.from_buffer(data)
-    file_type = puremagic.from_string(file_contents, mime=True)
+    file_type = puremagic.from_string(data, mime=True)
     media_file_type = MEDIA_FILE_TYPE_ENUM["NONE"]
     if "wav" in file_type:
         media_file_type = MEDIA_FILE_TYPE_ENUM["WAV"]
