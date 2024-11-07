@@ -28,7 +28,7 @@ esphome:
     then:
       - logger.log: "Core-Rev ${core_revision}"
       # Run the script to refresh the LED status
-      - script.execute: update_leds
+      - script.execute: control_leds
       - delay: 1s
       
       # If after 10 minutes, the device is still initializing (It did not yet connect to Home Assistant), turn off the init_in_progress variable and run the script to refresh the LED status
@@ -38,7 +38,7 @@ esphome:
             lambda: return id(init_in_progress);
           then:
             - lambda: id(init_in_progress) = false;
-            - script.execute: update_leds
+            - script.execute: control_leds
 
 
 logger:
@@ -82,9 +82,9 @@ api:
   id: api_id
   on_client_connected:
     - lambda: id(init_in_progress) = false;
-    - script.execute: update_leds
+    - script.execute: control_leds
   on_client_disconnected:
-    - script.execute: update_leds
+    - script.execute: control_leds
 
 ota:
   - platform: satellite1

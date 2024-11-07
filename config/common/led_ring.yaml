@@ -37,7 +37,7 @@ light:
             }
 
 script:
-  - id: update_leds
+  - id: control_leds
     then:
       - lambda: |
           if (id(init_in_progress)) {
