@@ -72,7 +72,7 @@ jobs:
     name: Build Firmware
     needs:
       - build-list
-    uses: esphome/workflows/.github/workflows/build.yml@main
+    uses: esphome/workflows/.github/workflows/build.yml@dev
     with:
       files: ${{ fromJSON(needs.build-list.outputs.build_cfg_files) }}
       esphome-version: 2024.10.2
