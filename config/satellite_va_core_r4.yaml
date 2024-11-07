@@ -3,7 +3,7 @@ substitutions:
   friendly_name: "Satellite1"  
 
   #Recommend leaving the following unchanged
-  node_name: satellite1
+  node_name: satellite1-r4
   company_name: FutureProofHomes
   project_name: Satellite1
   component_name: Core
