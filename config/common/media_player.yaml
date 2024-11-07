@@ -1,15 +1,3 @@
-external_components:
-  - source:
-      type: git
-      url: https://github.com/gnumpi/nabu-voice-kit
-      ref: dev
-    components: [ audio_dac, media_player ]
-
-  - source:
-      type: local
-      path: ../esphome/components
-    components: [ i2s_audio, satellite1, pcm5122 ]
-
 i2s_audio:
   - id: i2s_shared
     i2s_lrclk_pin: GPIO07
@@ -17,15 +5,10 @@ i2s_audio:
     i2s_mclk_pin: GPIO09
     access_mode: duplex
 
-# fusb302b:
-
 audio_dac:
   - platform: pcm5122
     address: 0x4D
   
-  #- platform: tas2780
-  #  address: 0x38
-
 media_player:
   - platform: satellite1
     id: nabu_media_player
@@ -46,15 +29,3 @@ media_player:
       - script.execute: update_leds
     on_volume:
       - script.execute: update_leds
-
-microphone:
-  - platform: satellite1
-    id: mic0
-    sample_rate: 48000
-    i2s_din_pin: GPIO11
-    bits_per_sample: 32bit
-    i2s_clock_mode: external
-    channel: right_left
-    pdm: false
-    adc_type: external
-    gain_log2: 4

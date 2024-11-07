@@ -3,19 +3,22 @@ substitutions:
   core_revision: "3"
   led_ring_id: "satellite1_led_ring"
 
-packages:
-  device_base: !include common/board.yaml
-  wifi: !include common/wifi_improv.yaml
-  local: !include common/local_components.yaml
-  sensors: !include common/hat_sensors_r3.yaml
-  vk: !include common/nabu_vk_duplex_r3.yaml
-  va: !include common/va.yaml
-  led_ring: !include 
-    file: common/led_ring.yaml
-    vars:
-      led_ring_platform: satellite1
+  xmos_fw_version: "v1.0.1-alpha.27"
+  built_with_core_hw_version: "v1.0.0-beta.1"
+  built_with_hat_hw_version: "v1.0.0-beta.1"
+
+
+globals:
+  # Global initialisation variable. Initialized to true and set to false once everything is connected. Only used to have a smooth "plugging" experience
+  - id: init_in_progress
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+
 
 esphome:
+  name: ${node_name}-rev${core_revision}
+  min_version: 2024.2.0
   project:
     name: satellite1.voice_assistant_r${core_revision}
     version: dev
@@ -23,6 +26,7 @@ esphome:
   on_boot:
     priority: 375
     then:
+      - logger.log: "Core-Rev ${core_revision}"
       # Run the script to refresh the LED status
       - script.execute: update_leds
       - delay: 1s
@@ -36,10 +40,40 @@ esphome:
             - lambda: id(init_in_progress) = false;
             - script.execute: update_leds
 
+
 logger:
   deassert_rts_dtr: true
   hardware_uart : USB_SERIAL_JTAG
-  level: DEBUG
+  level: debug
+
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/gnumpi/nabu-voice-kit
+      ref: dev
+    components: [ audio_dac, media_player ]
+
+  - source:
+      type: local
+      path: ../esphome/components
+    components: [ i2s_audio, satellite1, pcm5122 ]
+
+
+packages:
+  core_board: !include common/core_board.yaml
+  wifi: !include common/wifi_improv.yaml
+  
+  sensors: !include common/hat_sensors.yaml
+  mp: !include common/media_player.yaml
+  va: !include common/voice_assistant.yaml
+  led_ring: !include 
+    file: common/led_ring.yaml
+    vars:
+      led_ring_platform: satellite1
+  debug: !include common/debug.yaml
+
+
 
 status_led:
   pin: GPIO45
@@ -55,23 +89,11 @@ api:
 ota:
   - platform: satellite1
     id: ota_satellite1_xmos
+  
+  - platform: esphome
 
 http_request:
 
-i2c:
-  - id: bus_a
-    sda: GPIO5
-    scl: GPIO6
-    frequency: 400kHz
-    scan: True
-
-
-spi:
-  - id: spi_0
-    clk_pin:  GPIO40
-    mosi_pin: GPIO39
-    miso_pin: GPIO41
-    interface: SPI3
 
 
 satellite1:
@@ -131,15 +153,6 @@ light:
     name: LED-Ring
     
 
-micro_wake_word:
-  #model: github://esphome/micro-wake-word-models/models/v2/okay_nabu.json 
-  models:
-    - okay_nabu
-  on_wake_word_detected:
-    - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
-    - script.execute: update_leds
-
-
 button:
   - platform: template
     id: flash_satellite
@@ -148,19 +161,7 @@ button:
     on_press:
       then:
         - ota.satellite1.flash:
-            url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.27/satellite1_firmware_adec.factory.bin
-            md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.27/satellite1_firmware_adec.factory.md5
+            url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_adec.factory.bin
+            md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_adec.factory.md5
 
 
-switch:
-  - platform: template
-    name: enable_mww
-    id: sw_enable_mww
-    optimistic: true
-    restore_mode: ALWAYS_OFF
-    
-    on_turn_on:
-      - micro_wake_word.start:
-    
-    on_turn_off:
-    - micro_wake_word.stop:
