@@ -75,10 +75,10 @@ jobs:
     name: Build Firmware
     needs:
       - prepare
-    uses: esphome/workflows/.github/workflows/build.yml@dev
+    uses: esphome/workflows/.github/workflows/build.yml@main
     with:
       files: ${{ fromJSON(needs.prepare.outputs.build_cfg_files) }}
-      esphome-version: 2024.10.2
+      esphome-version: dev
       release-version: ${{ needs.prepare.outputs.next_tag }}
 
 
