@@ -1,4 +1,4 @@
 script:
-  - id: update_leds
+  - id: control_leds
     then:
       - lambda: ""

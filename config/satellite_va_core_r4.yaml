@@ -162,14 +162,14 @@ satellite1:
 packages:
   wifi: !include common/wifi_improv.yaml
   buttons: !include common/buttons.yaml
-  media_player: !include common/media_player_r4.yaml
-  voice_assistant: !include common/voice_assistant_r4.yaml
-  led_ring: !include common/led_ring_r4.yaml
-  hat_sensors: !include common/hat_sensors_r3.yaml
-  timer: !include common/timer_r4.yaml
+  media_player: !include common/media_player.yaml
+  voice_assistant: !include common/voice_assistant.yaml
+  led_ring: !include common/led_ring.yaml
+  hat_sensors: !include common/hat_sensors.yaml
+  timer: !include common/timer.yaml
 
   # Enable Deubugging Mode for detailed info and logs
   # debug: !include common/debug.yaml
 
   #TODO: Currently BLE Room Presence detection tracker will cause device to intermittently crash or not boot at all (props to anyone who can solve this!)
-  # room_presence: !include common/room_presence_r4.yaml 
+  # room_presence: !include common/room_presence.yaml 

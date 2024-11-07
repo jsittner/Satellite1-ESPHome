@@ -1,22 +1,48 @@
 substitutions:
-  node_name: satellite-va
-  built_for_core_hw_version: "3"
-  led_ring_id: "satellite1_led_ring"
+  #Change to any preferred name
+  friendly_name: "Satellite1"  
+
+  #Recommend leaving the following unchanged
+  node_name: satellite1
+  company_name: FutureProofHomes
+  project_name: Satellite1
+  component_name: Core
+  esp32_fw_version: "v2.0.0-alpha.7"
+  xmos_fw_version: "v1.0.1-alpha.27"
+  built_with_core_hw_version: "v1.0.0-beta.1"
+  built_with_hat_hw_version: "v1.0.0-beta.1"
+
+  #Change to enable/disable debug mode in logs and esp device info 
+  #Firmware must be rebuilt and uploaded for changes to take effect
+  #TODO: Conditionally setting loggers and debug settings are coming!  https://github.com/esphome/esphome/pull/7604/commits
+  debug_enabled: "true"  # Set to "false" to disable debug
+
 
 packages:
-  globals: !include common/globals.yaml
   wifi: !include common/wifi_improv.yaml
-  local: !include common/local_components.yaml
-  sensors: !include common/hat_sensors_r3.yaml
   buttons: !include common/buttons.yaml
-  vk: !include common/nabu_vk_duplex_r3.yaml
-  va: !include common/va.yaml
-  led_ring: !include 
-    file: common/led_ring.yaml
-    vars:
-      led_ring_platform: satellite1
+  media_player: !include common/media_player.yaml
+  voice_assistant: !include common/voice_assistant.yaml
+  led_ring: !include common/led_ring.yaml
+  hat_sensors: !include common/hat_sensors.yaml
+  timer: !include common/timer.yaml
+
+  # Enable Deubugging Mode for detailed info and logs
+  # debug: !include common/debug.yaml
+
+# packages:
+#   wifi: !include common/wifi_improv.yaml
+#   sensors: !include common/hat_sensors.yaml
+#   buttons: !include common/buttons.yaml
+#   vk: !include common/nabu_vk_duplex_r3.yaml
+#   va: !include common/va.yaml
+#   led_ring: !include 
+#     file: common/led_ring.yaml
+#     vars:
+#       led_ring_platform: satellite1
 
 esphome:
+  name: ${node_name}
   project:
     name: satellite1.voice_assistant_r${built_for_core_hw_version}
     version: dev
@@ -25,7 +51,7 @@ esphome:
     priority: 375
     then:
       # Run the script to refresh the LED status
-      - script.execute: update_leds
+      - script.execute: control_leds
       - delay: 1s
       
       # If after 10 minutes, the device is still initializing (It did not yet connect to Home Assistant), turn off the init_in_progress variable and run the script to refresh the LED status
@@ -35,7 +61,17 @@ esphome:
             lambda: return id(init_in_progress);
           then:
             - lambda: id(init_in_progress) = false;
-            - script.execute: update_leds
+            - script.execute: control_leds
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: ESP32S3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32_S3_BOX_BOARD: "y"
 
 logger:
   deassert_rts_dtr: true
@@ -49,9 +85,9 @@ api:
   id: api_id
   on_client_connected:
     - lambda: id(init_in_progress) = false;
-    - script.execute: update_leds
+    - script.execute: control_leds
   on_client_disconnected:
-    - script.execute: update_leds
+    - script.execute: control_leds
 
 ota:
   - platform: satellite1
@@ -106,15 +142,6 @@ binary_sensor:
     name: "Volume Down"
     on_press:
       - media_player.volume_down: nabu_media_player
-
-  - platform: gpio
-    id: btn_action
-    pin:
-      satellite1: 
-      port: INPUT_A
-      pin: 1
-      inverted: true
-    name: "Action"
   
   - platform: gpio
     id: inp_hw_mute
@@ -130,38 +157,3 @@ light:
   - platform: satellite1
     id: !extend ${led_ring_id}
     name: LED-Ring
-    
-
-micro_wake_word:
-  #model: github://esphome/micro-wake-word-models/models/v2/okay_nabu.json 
-  models:
-    - okay_nabu
-  on_wake_word_detected:
-    - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
-    - script.execute: update_leds
-
-
-button:
-  - platform: template
-    id: flash_satellite
-    name: "Flash Satellite1"
-    entity_category: diagnostic
-    on_press:
-      then:
-        - ota.satellite1.flash:
-            url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.27/satellite1_firmware_adec.factory.bin
-            md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.1-alpha.27/satellite1_firmware_adec.factory.md5
-
-
-switch:
-  - platform: template
-    name: enable_mww
-    id: sw_enable_mww
-    optimistic: true
-    restore_mode: ALWAYS_OFF
-    
-    on_turn_on:
-      - micro_wake_word.start:
-    
-    on_turn_off:
-    - micro_wake_word.stop:
