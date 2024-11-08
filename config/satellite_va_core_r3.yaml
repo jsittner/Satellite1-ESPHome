@@ -82,6 +82,7 @@ packages:
     file: common/led_ring.yaml
     vars:
       led_ring_platform: satellite1
+  
   debug: !include common/debug.yaml
 
 
@@ -109,21 +110,6 @@ satellite1:
 
 
 
-light:
-  - platform: satellite1
-    id: !extend ${led_ring_id}
-    name: LED-Ring
-    
-
-button:
-  - platform: template
-    id: flash_satellite
-    name: "Flash Satellite1"
-    entity_category: diagnostic
-    on_press:
-      then:
-        - ota.satellite1.flash:
-            url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_adec.factory.bin
-            md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_adec.factory.md5
+   
 
 
