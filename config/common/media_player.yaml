@@ -29,6 +29,23 @@ media_player:
       - script.execute: control_leds
     on_volume:
       - script.execute: control_leds
+    on_announcement:
+      - nabu.set_ducking:
+          decibel_reduction: 20
+          duration: 0.0s
+    on_state:
+      if:
+        condition:
+          and:
+            - switch.is_off: timer_ringing
+            - not:
+                voice_assistant.is_running:
+            - not:
+                lambda: return id(nabu_media_player)->state == media_player::MediaPlayerState::MEDIA_PLAYER_STATE_ANNOUNCING;
+        then:
+          - nabu.set_ducking:
+              decibel_reduction: 0
+              duration: 1.0s
 
     files:
       - id: center_button_press_sound
@@ -47,6 +64,11 @@ media_player:
         file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/mute_switch_on.flac
       - id: mute_switch_off_sound
         file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/mute_switch_off.flac
+      - id: timer_finished_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
+      - id: wake_word_triggered_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/wake_word_triggered.flac
+
 
 
 script:

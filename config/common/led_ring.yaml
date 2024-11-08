@@ -44,7 +44,7 @@ script:
             id(control_leds_init_state).execute();
           } else if (!id(wifi_id).is_connected() || !id(api_id).is_connected()){
             id(control_leds_no_ha_connection_state).execute();
-          } else if (id(voice_assistant_phase) == ${voice_assist_listening_phase_id}) {
+          } else if (id(voice_assistant_phase) == ${voice_assist_waiting_for_command_phase_id}) {
             id(control_led_voice_assist_listening_phase).execute();
           } else {
             id(control_leds_idle_state).execute();
