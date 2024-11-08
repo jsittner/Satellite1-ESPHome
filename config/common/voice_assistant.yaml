@@ -40,17 +40,5 @@ micro_wake_word:
     - okay_nabu
   on_wake_word_detected:
     - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
-    - script.execute: update_leds
+    - script.execute: control_leds
 
-switch:
-  - platform: template
-    name: enable_mww
-    id: sw_enable_mww
-    optimistic: true
-    restore_mode: ALWAYS_OFF
-    
-    on_turn_on:
-      - micro_wake_word.start:
-    
-    on_turn_off:
-    - micro_wake_word.stop:

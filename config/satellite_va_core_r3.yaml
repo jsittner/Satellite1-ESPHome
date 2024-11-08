@@ -14,6 +14,12 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'true'
+  # Global variable storing if user action causes warning
+  - id: warning
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
 
 
 esphome:
@@ -28,7 +34,7 @@ esphome:
     then:
       - logger.log: "Core-Rev ${core_revision}"
       # Run the script to refresh the LED status
-      - script.execute: update_leds
+      - script.execute: control_leds
       - delay: 1s
       
       # If after 10 minutes, the device is still initializing (It did not yet connect to Home Assistant), turn off the init_in_progress variable and run the script to refresh the LED status
@@ -38,7 +44,7 @@ esphome:
             lambda: return id(init_in_progress);
           then:
             - lambda: id(init_in_progress) = false;
-            - script.execute: update_leds
+            - script.execute: control_leds
 
 
 logger:
@@ -65,8 +71,11 @@ packages:
   wifi: !include common/wifi_improv.yaml
   
   sensors: !include common/hat_sensors.yaml
+  buttons: !include common/buttons.yaml
+  ha: !include common/home_assistant.yaml
   mp: !include common/media_player.yaml
   va: !include common/voice_assistant.yaml
+  
   led_ring: !include 
     file: common/led_ring.yaml
     vars:
@@ -77,14 +86,6 @@ packages:
 
 status_led:
   pin: GPIO45
-
-api:
-  id: api_id
-  on_client_connected:
-    - lambda: id(init_in_progress) = false;
-    - script.execute: update_leds
-  on_client_disconnected:
-    - script.execute: update_leds
 
 ota:
   - platform: satellite1
@@ -104,47 +105,6 @@ satellite1:
   xmos_rst_pin: GPIO12
   flash_sw_pin: GPIO14
 
-
-binary_sensor:
-  - platform: gpio
-    id: btn_volume_up
-    pin:
-      satellite1: 
-      port: INPUT_A
-      pin: 0
-      inverted: true
-    name: "Volume Up"
-    on_press:
-      - media_player.volume_up: nabu_media_player
-  
-  - platform: gpio
-    id: btn_volume_down
-    pin:
-      satellite1: 
-      port: INPUT_A
-      pin: 2
-      inverted: true
-    name: "Volume Down"
-    on_press:
-      - media_player.volume_down: nabu_media_player
-
-  - platform: gpio
-    id: btn_action
-    pin:
-      satellite1: 
-      port: INPUT_A
-      pin: 1
-      inverted: true
-    name: "Action"
-  
-  - platform: gpio
-    id: inp_hw_mute
-    pin:
-      satellite1: 
-      port: INPUT_A
-      pin: 3
-      inverted: false
-    name: "Mics Muted"
 
 
 light:
