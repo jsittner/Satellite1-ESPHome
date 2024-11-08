@@ -12,7 +12,7 @@ audio_dac:
 media_player:
   - platform: satellite1
     id: nabu_media_player
-    name: Media Player
+    name: Sat1 Media Player
     internal: false
     sample_rate: 48000
     i2s_dout_pin: GPIO10
