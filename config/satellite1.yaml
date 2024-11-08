@@ -1,11 +1,17 @@
 substitutions:
-  node_name: satellite-va
-  core_revision: "3"
-  led_ring_id: "satellite1_led_ring"
+  #Change to any preferred name
+  friendly_name: "Satellite1"  
 
+  #Recommend leaving the following unchanged
+  node_name: satellite1-r3
+  company_name: FutureProofHomes
+  project_name: Satellite1
+  component_name: Core
+  
+  esp32_fw_version: "v2.0.0-alpha.8"
   xmos_fw_version: "v1.0.1-alpha.27"
-  built_with_core_hw_version: "v1.0.0-beta.1"
-  built_with_hat_hw_version: "v1.0.0-beta.1"
+  built_for_core_hw_version: "v1.0.0-beta.1"
+  built_for_hat_hw_version: "v1.0.0-beta.1"
 
 
 globals:
@@ -26,31 +32,41 @@ globals:
     initial_value: 'false'
 
 
-
-
 esphome:
-  name: ${node_name}-rev${core_revision}
-  min_version: 2024.2.0
+  name: ${node_name}
+  name_add_mac_suffix: true
+  friendly_name: ${friendly_name}
+  min_version: 2024.9.0
+  
   project:
-    name: satellite1.voice_assistant_r${core_revision}
+    name: ${company_name}.${project_name}
     version: dev
   
   on_boot:
-    priority: 375
-    then:
-      - logger.log: "Core-Rev ${core_revision}"
-      # Run the script to refresh the LED status
-      - script.execute: control_leds
-      - delay: 1s
-      
-      # If after 10 minutes, the device is still initializing (It did not yet connect to Home Assistant), turn off the init_in_progress variable and run the script to refresh the LED status
-      - delay: 10min
-      - if:
-          condition:
-            lambda: return id(init_in_progress);
-          then:
-            - lambda: id(init_in_progress) = false;
-            - script.execute: control_leds
+    - priority: 375
+      then:
+        # Run the script to refresh the LED status
+        - script.execute: control_leds
+        - delay: 1s
+        
+        # If after 10 minutes, the device is still initializing (It did not yet connect to Home Assistant), turn off the init_in_progress variable and run the script to refresh the LED status
+        - delay: 10min
+        - if:
+            condition:
+              lambda: return id(init_in_progress);
+            then:
+              - lambda: id(init_in_progress) = false;
+              - script.execute: control_leds
+    
+    - priority: 600
+      then:
+        - logger.log: "${company_name} ${project_name} ${component_name} version ${built_for_core_hw_version} running ESP firmware: ${esp32_fw_version} and XMOS firmware: ${xmos_fw_version}"
+        - delay: 30s
+        - if:
+            condition:
+              lambda: return id(init_in_progress);
+            then:
+              - lambda: id(init_in_progress) = false;
 
 
 logger:
@@ -91,11 +107,6 @@ packages:
   
   debug: !include common/debug.yaml
 
-
-
-status_led:
-  pin: GPIO45
-
 ota:
   - platform: satellite1
     id: ota_satellite1_xmos
@@ -104,6 +115,8 @@ ota:
 
 http_request:
 
+status_led:
+  pin: GPIO45
 
 
 satellite1:

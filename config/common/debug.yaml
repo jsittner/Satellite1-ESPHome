@@ -34,14 +34,14 @@ text_sensor:
     entity_category: "diagnostic"
     icon: "mdi:chip"
     lambda: |-
-      return std::string("${built_with_core_hw_version}");
+      return std::string("${built_for_core_hw_version}");
 
   - platform: template
     name: "Compat. w/ HAT hw"
     entity_category: "diagnostic"
     icon: "mdi:chip"
     lambda: |-
-      return std::string("${built_with_hat_hw_version}");
+      return std::string("${built_for_hat_hw_version}");
 
 sensor:
   - platform: debug
