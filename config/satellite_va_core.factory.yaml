@@ -1,0 +1,89 @@
+substitutions:
+  #Change to any preferred name
+  friendly_name: "Satellite1"  
+
+  #Recommend leaving the following unchanged
+  node_name: satellite1-r4
+  company_name: FutureProofHomes
+  project_name: Satellite1
+  component_name: Core
+  esp32_fw_version: "v2.0.0-alpha.8"
+  xmos_fw_version: "v1.0.1-alpha.27"
+  built_with_core_hw_version: "v1.0.0-beta.1"
+  built_with_hat_hw_version: "v1.0.0-beta.1"
+
+  #Change to enable/disable debug mode in logs and esp device info 
+  #Firmware must be rebuilt and uploaded for changes to take effect
+  #TODO: Conditionally setting loggers and debug settings are coming!  https://github.com/esphome/esphome/pull/7604/commits
+  debug_enabled: "true"  # Set to "false" to disable debug
+
+packages:
+  # This is an inline package to prefix the on_client_connected with the wait_until action
+  # It must appear before the actual package so it becomes the orignal config and the
+  # on_client_connected list from the package config is appended onto this one.
+  va_connected_wait_for_ble:
+    voice_assistant:
+      on_client_connected:
+        - wait_until:
+            not: ble.enabled
+        - delay: 2s
+    wifi:
+      on_disconnect:
+        - ble.enable:
+  satellite1_va_core: !include satellite_va_core_r4.yaml
+
+esphome:
+  project:
+    name: ${company_name}.${project_name}
+    version: ${esp32_fw_version}
+
+ota:
+  - platform: http_request
+    id: ota_http_request
+
+http_request:
+
+# update:
+#   - platform: http_request
+#     name: None
+#     id: update_http_request
+#     source: https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest.json
+
+# dashboard_import:
+#   package_import_url: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml
+
+wifi:
+  on_connect:
+    - delay: 5s  # Gives time for improv results to be transmitted
+    - ble.disable:
+    - script.execute: control_leds
+
+improv_serial:
+
+esp32_improv:
+  authorizer: btn_action
+  on_start:
+    - lambda: id(improv_ble_in_progress) = true;
+    - script.execute: control_leds
+  on_provisioned:
+    - lambda: id(improv_ble_in_progress) = false;
+    - script.execute: control_leds
+  on_stop:
+    - lambda: id(improv_ble_in_progress) = false;
+    - script.execute: control_leds
+
+# switch:
+#   - platform: template
+#     id: beta_firmware
+#     name: Beta firmware
+#     icon: "mdi:test-tube"
+#     disabled_by_default: true
+#     entity_category: diagnostic
+#     optimistic: true
+#     restore_mode: RESTORE_DEFAULT_OFF
+#     on_turn_on:
+#       - logger.log: "OTA updates set to use Beta firmware"
+#       - lambda: id(update_http_request).set_source_url("https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest-beta.json");
+#     on_turn_off:
+#       - logger.log: "OTA updates set to use Production firmware"
+#       - lambda: id(update_http_request).set_source_url("https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest.json");

@@ -1,22 +1,3 @@
-substitutions:
-  #Change to any preferred name
-  friendly_name: "Satellite1"  
-
-  #Recommend leaving the following unchanged
-  node_name: satellite1-r4
-  company_name: FutureProofHomes
-  project_name: Satellite1
-  component_name: Core
-  esp32_fw_version: "v2.0.0-alpha.8"
-  xmos_fw_version: "v1.0.1-alpha.27"
-  built_with_core_hw_version: "v1.0.0-beta.1"
-  built_with_hat_hw_version: "v1.0.0-beta.1"
-
-  #Change to enable/disable debug mode in logs and esp device info 
-  #Firmware must be rebuilt and uploaded for changes to take effect
-  #TODO: Conditionally setting loggers and debug settings are coming!  https://github.com/esphome/esphome/pull/7604/commits
-  debug_enabled: "true"  # Set to "false" to disable debug
-
 esphome:
   name: ${node_name}
   name_add_mac_suffix: true
@@ -24,10 +5,6 @@ esphome:
   min_version: 2024.9.0
   platformio_options:
     board_build.flash_mode: dio
-
-  project:
-    name: ${company_name}.${project_name}
-    version: ${esp32_fw_version}
   
   on_boot:
     - priority: 375
