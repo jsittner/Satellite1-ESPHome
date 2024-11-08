@@ -117,8 +117,6 @@ binary_sensor:
         then:
           - if:
               condition:
-                # what does this condition on color_changed do/mean?
-                #lambda: return !id(init_in_progress) && !id(color_changed);
                 lambda: return !id(init_in_progress);
               then:
                 - script.execute:
@@ -140,7 +138,6 @@ binary_sensor:
         then:
           - if:
               condition:
-                #lambda: return !id(init_in_progress) && !id(color_changed);
                 lambda: return !id(init_in_progress);
               then:
                 - script.execute:
@@ -157,7 +154,6 @@ binary_sensor:
         then:
           - if:
               condition:
-                #lambda: return !id(init_in_progress) && !id(color_changed);
                 lambda: return !id(init_in_progress);
               then:
                 - script.execute:
