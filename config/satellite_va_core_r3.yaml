@@ -75,6 +75,8 @@ packages:
   ha: !include common/home_assistant.yaml
   mp: !include common/media_player.yaml
   va: !include common/voice_assistant.yaml
+  # timer requires voice_assistant.yaml
+  timer: !include common/timer.yaml
   
   led_ring: !include 
     file: common/led_ring.yaml
