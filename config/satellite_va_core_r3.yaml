@@ -19,6 +19,12 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+  # Global variable tracking if the XMOS flash button was recently touched.
+  - id: xmos_flashing_started
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
 
 
 

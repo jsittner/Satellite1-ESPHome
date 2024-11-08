@@ -1,3 +1,9 @@
+globals:
+  - id: improv_ble_in_progress
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
 wifi:
   id: wifi_id
   ap:

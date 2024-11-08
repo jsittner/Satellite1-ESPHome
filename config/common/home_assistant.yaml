@@ -27,6 +27,22 @@ button:
     entity_category: diagnostic
     internal: true
 
+  # Flashes Satellite1 with most recent XMOS firmware
+  #TODO: This needs to grab the latest firmware and not hardcoded version
+  #TODO: The LED ring does not show a visual status when flashing because we connect to the LEDs via XMOS and can't connect during flashing.  Hrmmmmmm....
+  - platform: template
+    id: flash_satellite
+    name: "Flash XMOS ${xmos_fw_version}"
+    entity_category: diagnostic
+    on_press:
+      then:
+        - lambda: id(xmos_flashing_started) = true;
+        - script.execute: control_leds
+        - ota.satellite1.flash:
+            url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_adec.factory.bin
+            md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_adec.factory.md5
+
+
 switch:
     # Wake Word Sound Switch.
   - platform: template
