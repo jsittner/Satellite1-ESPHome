@@ -1,5 +1,8 @@
 #include "pd.h"
 
+#include <iostream>
+#include <sstream>
+#include <string>
 #include "esphome/core/defines.h"
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
@@ -21,6 +24,7 @@ bool PowerDelivery::handle_data_message_(const PDMsg &msg){
   switch( msg.type ){
     case PD_DATA_SOURCE_CAP:
         this->active_ams_ = true;
+        this->wait_src_cap_ = false;
         if( PDMsg::spec_rev_ == pd_spec_revision_t::PD_SPEC_REV_1 ){
           if( msg.spec_rev >= pd_spec_revision_t::PD_SPEC_REV_3 ){
             PDMsg::spec_rev_ = pd_spec_revision_t::PD_SPEC_REV_3;
@@ -30,6 +34,8 @@ bool PowerDelivery::handle_data_message_(const PDMsg &msg){
         }
         PDMsg::spec_rev_ = msg.spec_rev;
         this->respond_to_src_cap_msg_(msg);   
+      break;
+    case PD_DATA_ALERT:
       break;
     default:
      break;  
@@ -43,11 +49,21 @@ bool PowerDelivery::handle_cntrl_message_(const PDMsg &msg){
         ESP_LOGD(TAG, "recieved good crc msg");
         PDMsg::msg_cnter_++;
       break;
+    case PD_CNTRL_ACCEPT:
+      if( this->active_ams_){
+        if( this->requested_contract_ != this->accepted_contract_ ){
+          this->set_state_(PD_STATE_TRANSITION);
+        }
+        this->set_contract_(this->requested_contract_);
+      }
+      break;
     case PD_CNTRL_PS_RDY:
       this->active_ams_ = false;
+      this->set_state_(PD_STATE_EXPLICIT_SPR_CONTRACT);
       break; 
     case PD_CNTRL_SOFT_RESET:
       this->send_message_(PDMsg(pd_control_msg_type::PD_CNTRL_ACCEPT));
+      this->set_state_(PD_STATE_DEFAULT_CONTRACT);
       PDMsg::msg_cnter_ = 0;
       break;
     default:
@@ -59,9 +75,9 @@ bool PowerDelivery::handle_cntrl_message_(const PDMsg &msg){
 
 
 
-pd_power_info_t pd_parse_power_info( const pd_pdo_t &pdo )
+pd_contract_t pd_parse_power_info( const pd_pdo_t &pdo )
 {
-  pd_power_info_t power_info;
+  pd_contract_t power_info;
   power_info.type = static_cast<pd_power_data_obj_type>(pdo >> 30);
   switch (power_info.type) {
   case PD_PDO_TYPE_FIXED_SUPPLY:
@@ -97,14 +113,14 @@ pd_power_info_t pd_parse_power_info( const pd_pdo_t &pdo )
 }
 
 
-static PDMsg build_source_cap_response( pd_power_info_t pwr_info, uint8_t pos )
+static PDMsg build_source_cap_response( pd_contract_t pwr_info, uint8_t pos )
 {
   
   /* Reference: 6.4.2 Request Message */
   uint32_t data[1];
   if (pwr_info.type != PD_PDO_TYPE_AUGMENTED_PDO) {
-      //uint32_t req = pwr_info.max_i ? pwr_info.max_i : pwr_info.max_p;
-      uint32_t req = 10;
+      uint32_t req = pwr_info.max_i ? pwr_info.max_i : pwr_info.max_p;
+      //uint32_t req = 10;
       data[0] = ((uint32_t) req <<  0) |   /* B9 ...0    Max Operating Current 10mA units / Max Operating Power in 250mW units */
                 ((uint32_t) req << 10) |   /* B19...10   Operating Current 10mA units / Operating Power in 250mW units */
                 //((uint32_t)   1 << 25) |   /* B25        USB Communication Capable */
@@ -142,11 +158,11 @@ PDMsg PowerDelivery::create_fallback_request_message() const {
 
 bool PowerDelivery::respond_to_src_cap_msg_( const PDMsg &msg ){
   // {.limit = 100,  .use_voltage = 1, .use_current = 0},    /* PD_POWER_OPTION_MAX_20V */
-  pd_power_info_t selected_info;
-  memset( &selected_info, 0 , sizeof(pd_power_info_t) );
+  pd_contract_t selected_info;
+  memset( &selected_info, 0 , sizeof(pd_contract_t) );
   uint8_t selected = 255;
   for(int idx=0; idx < msg.num_of_obj; idx++){
-    pd_power_info_t pwr_info = pd_parse_power_info( msg.data_objects[idx] );
+    pd_contract_t pwr_info = pd_parse_power_info( msg.data_objects[idx] );
     ESP_LOGD(TAG, "SRC_CAP: type: %d V(%d - %d) I(%d) P(%d)",
         pwr_info.type,
         pwr_info.min_v,
@@ -160,12 +176,13 @@ bool PowerDelivery::respond_to_src_cap_msg_( const PDMsg &msg ){
         uint8_t v = true  ? pwr_info.max_v >> 2 : 1;
         uint8_t i = false ? pwr_info.max_i >> 2 : 1;
         uint16_t power = (uint16_t)v * i;  /* reduce 10-bit power info to 8-bit and use 8-bit x 8-bit multiplication */
-        if ( pwr_info.max_v * 50 / 1000 <= 20 || selected == 255) {
+        if ( pwr_info.max_v * 50 / 1000 <= this->request_voltage_ || selected == 255) {
             selected_info = pwr_info;
             selected = idx;
         }
     }
   }
+  this->requested_contract_ = selected_info;
   //PDMsg response = create_fallback_request_message();
   PDMsg response = build_source_cap_response(selected_info, selected + 1);
   this->send_message_( response );
@@ -173,8 +190,33 @@ bool PowerDelivery::respond_to_src_cap_msg_( const PDMsg &msg ){
   return true;
 }
 
+std::string PowerDelivery::get_contract_string(pd_contract_t contract) const{
+  std::ostringstream oss;
+  oss.precision(3); 
+  oss << (contract.max_i / 100 );
+  oss << "A @ ";
+  oss << contract.max_v * 5 / 100;
+  oss << "V";
+  return oss.str();
+}
+
+void PowerDelivery::set_contract_(pd_contract_t contract){
+  this->accepted_contract_ = contract;
+  this->contract = this->get_contract_string(contract);
+  this->contract_voltage = contract.max_v;
+}
 
 
+bool PowerDelivery::request_voltage(int voltage){
+  if(!this->active_ams_){
+    this->set_request_voltage(voltage);
+    this->wait_src_cap_ = true;
+    get_src_cap_retry_count_ = 0;
+    return true;
+  }
+  
+  return false;
+}
 
 pd_spec_revision_t PDMsg::spec_rev_ = pd_spec_revision_t::PD_SPEC_REV_1;
 uint8_t PDMsg::msg_cnter_ = 0;
@@ -233,6 +275,11 @@ void PDMsg::debug_log() const{
   ESP_LOGD(TAG, "  coded: %d", this->get_coded_header());
   ESP_LOGD(TAG, "Current Cnter: %d", this->msg_cnter_);
 }
+
+void PowerDelivery::add_on_state_callback(std::function<void()> &&callback) {
+  this->state_callback_.add(std::move(callback));
+}
+
 
 
 }

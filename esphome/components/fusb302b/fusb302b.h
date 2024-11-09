@@ -29,6 +29,9 @@ public:
   bool read_message_(PDMsg &msg) override;
   void read_status_();
 
+  void set_irq_pin(int irq_pin){this->irq_pin_ = irq_pin;}
+
+
 typedef union {
     uint8_t bytes[7];
     struct {
@@ -53,18 +56,12 @@ public:
   
   void check_status_();
   
-  
-
-  
 
   FUSB302_state_t state_{FUSB302_STATE_UNATTACHED};
 
-  bool wait_src_cap_{true};
-  int get_src_cap_retry_count_{0};
-  uint32_t get_src_cap_time_stamp_;
   uint32_t response_timer_{0};
-  uint32_t startup_delay_{0};    
-  HighFrequencyLoopRequester high_freq_;
+  uint32_t startup_delay_{0};
+  int irq_pin_{0};    
 };
 
 }
