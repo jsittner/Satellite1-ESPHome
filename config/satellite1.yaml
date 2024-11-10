@@ -3,15 +3,15 @@ substitutions:
   friendly_name: "Satellite1"  
 
   #Recommend leaving the following unchanged
-  node_name: satellite1-r3
+  node_name: satellite1
   company_name: FutureProofHomes
   project_name: Satellite1
   component_name: Core
   
-  esp32_fw_version: "v2.0.0-alpha.8"
+  esp32_fw_version: "v2.0.0-alpha.14"
   xmos_fw_version: "v1.0.1-alpha.27"
-  built_for_core_hw_version: "v1.0.0-beta.1"
-  built_for_hat_hw_version: "v1.0.0-beta.1"
+  built_for_core_hw_version: "R2024.11.5.RC2"
+  built_for_hat_hw_version: "R2024.11.5.RC1"
 
 
 globals:
@@ -69,10 +69,14 @@ esphome:
               - lambda: id(init_in_progress) = false;
 
 
+dashboard_import:
+  package_import_url: github://futureproofhomes/satellite1-esphome/config/satellite1.yaml
+
+
 logger:
   deassert_rts_dtr: true
   hardware_uart : USB_SERIAL_JTAG
-  level: debug
+  level: warn
 
 
 external_components:
@@ -110,8 +114,11 @@ packages:
 ota:
   - platform: satellite1
     id: ota_satellite1_xmos
+  - platform: http_request
+    id: ota_http_request
   
   - platform: esphome
+    id: ota_esphome
 
 http_request:
 
@@ -126,9 +133,3 @@ satellite1:
   spi_mode: MODE3
   xmos_rst_pin: GPIO12
   flash_sw_pin: GPIO14
-
-
-
-   
-
-

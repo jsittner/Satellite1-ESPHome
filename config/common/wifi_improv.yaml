@@ -6,13 +6,48 @@ globals:
 
 wifi:
   id: wifi_id
-  ap:
   on_connect:
+    - delay: 5s  # Gives time for improv results to be transmitted
+    - ble.disable:
+    - lambda: id(improv_ble_in_progress) = false;
     - script.execute: control_leds
   on_disconnect:
     - script.execute: control_leds
 
 improv_serial:
 
-#esp32_improv:
-#  authorizer: none
+esp32_improv:
+  authorizer: btn_action
+  on_start:
+    - lambda: id(improv_ble_in_progress) = true;
+    - script.execute: control_leds
+  on_provisioned:
+    - lambda: id(improv_ble_in_progress) = false;
+    - script.execute: control_leds
+  on_stop:
+    - lambda: id(improv_ble_in_progress) = false;
+    - script.execute: control_leds
+
+#TODO: @qnlbnsl we need a way to fetch the latest firmware manifest.json
+# update:
+#   - platform: http_request
+#     name: None
+#     id: update_http_request
+#     source: https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest.json
+
+#TODO: @qnlbnsl we need a way to fetch the latest RC firmware manifest.json
+# switch:
+#   - platform: template
+#     id: beta_firmware
+#     name: Beta firmware
+#     icon: "mdi:test-tube"
+#     disabled_by_default: true
+#     entity_category: diagnostic
+#     optimistic: true
+#     restore_mode: RESTORE_DEFAULT_OFF
+#     on_turn_on:
+#       - logger.log: "OTA updates set to use Beta firmware"
+#       - lambda: id(update_http_request).set_source_url("https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest-beta.json");
+#     on_turn_off:
+#       - logger.log: "OTA updates set to use Production firmware"
+#       - lambda: id(update_http_request).set_source_url("https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest.json");

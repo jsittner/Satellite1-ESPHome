@@ -160,6 +160,17 @@ voice_assistant:
     - script.execute: control_leds
 
 
+va_connected_wait_for_ble:
+    voice_assistant:
+      on_client_connected:
+        - wait_until:
+            not: ble.enabled
+        - delay: 2s
+    wifi:
+      on_disconnect:
+        - ble.enable:
+
+
 script:
   # Script used activate the stop word if the TTS step is long.
   # Why is this wrapped on a script?

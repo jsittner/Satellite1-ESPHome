@@ -432,6 +432,10 @@ script:
   - id: control_leds
     then:
       - lambda: |
+          id(check_if_timers_active).execute();
+          if (id(is_timer_active)){
+            id(fetch_first_active_timer).execute();
+          }
           if (id(improv_ble_in_progress)) {
             id(control_leds_improv_ble_state).execute();
           } else if (id(init_in_progress)) {
@@ -677,5 +681,3 @@ script:
           brightness: !lambda return min ( max( id(satellite1_led_ring).current_values.get_brightness() , 0.2f ) + 0.1f , 1.0f );
           id: satellite1_led_ring
           effect: "Flashing XMOS"
-
-  
