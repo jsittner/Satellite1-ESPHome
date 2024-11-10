@@ -12,6 +12,7 @@ wifi:
     - lambda: id(improv_ble_in_progress) = false;
     - script.execute: control_leds
   on_disconnect:
+    - ble.enable:
     - script.execute: control_leds
 
 improv_serial:

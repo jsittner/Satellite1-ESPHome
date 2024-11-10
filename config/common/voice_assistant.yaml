@@ -87,6 +87,9 @@ voice_assistant:
   auto_gain: 0 dbfs
   volume_multiplier: 1
   on_client_connected:
+    - wait_until:
+        not: ble.enabled
+    - delay: 2s
     - lambda: id(init_in_progress) = false;
     - micro_wake_word.start:
     - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
@@ -158,17 +161,6 @@ voice_assistant:
     - script.execute: control_leds
   on_timer_tick:
     - script.execute: control_leds
-
-
-va_connected_wait_for_ble:
-    voice_assistant:
-      on_client_connected:
-        - wait_until:
-            not: ble.enabled
-        - delay: 2s
-    wifi:
-      on_disconnect:
-        - ble.enable:
 
 
 script:
