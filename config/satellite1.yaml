@@ -116,11 +116,17 @@ ota:
     id: ota_satellite1_xmos
   - platform: http_request
     id: ota_http_request
-  
   - platform: esphome
     id: ota_esphome
 
 http_request:
+
+update:
+  #TODO: Need an endpoint to GET the latest production firmware @qnlbnsl
+  - platform: http_request
+    name: None
+    id: update_http_request
+    # source: https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest.json
 
 status_led:
   pin: GPIO45
