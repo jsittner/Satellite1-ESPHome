@@ -8,7 +8,7 @@ substitutions:
   project_name: Satellite1
   component_name: Core
   
-  esp32_fw_version: "v2.0.0-alpha.14"
+  core_fw_version: "v2.0.0-alpha.14"
   xmos_fw_version: "v1.0.1-alpha.27"
   built_for_core_hw_version: "R2024.11.5.RC2"
   built_for_hat_hw_version: "R2024.11.5.RC1"
@@ -40,7 +40,7 @@ esphome:
   
   project:
     name: ${company_name}.${project_name}
-    version: dev
+    version: ${core_fw_version}
   
   on_boot:
     - priority: 375
@@ -60,7 +60,7 @@ esphome:
     
     - priority: 600
       then:
-        - logger.log: "${company_name} ${project_name} ${component_name} version ${built_for_core_hw_version} running ESP firmware: ${esp32_fw_version} and XMOS firmware: ${xmos_fw_version}"
+        - logger.log: "${company_name} ${project_name} ${component_name} version ${built_for_core_hw_version} running ESP firmware: ${core_fw_version} and XMOS firmware: ${xmos_fw_version}"
         - delay: 30s
         - if:
             condition:
@@ -123,10 +123,10 @@ http_request:
 
 update:
   #TODO: Need an endpoint to GET the latest production firmware @qnlbnsl
-  - platform: http_request
-    name: None
-    id: update_http_request
-    # source: https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest.json
+  # - platform: http_request
+  #   name: None
+  #   id: update_http_request
+  #   source: https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest.json
 
 status_led:
   pin: GPIO45
