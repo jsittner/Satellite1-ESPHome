@@ -96,3 +96,19 @@ switch:
       - script.execute: control_leds
     on_turn_off:
       - script.execute: control_leds
+
+  - platform: template
+    id: beta_firmware
+    name: Beta firmware
+    icon: "mdi:test-tube"
+    entity_category: diagnostic
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - logger.log: "OTA updates set to use Beta firmware"
+      #TODO: Need an endpoint to GET the latest beta firmware @qnlbnsl
+      # - lambda: id(update_http_request).set_source_url("https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest-beta.json");
+    on_turn_off:
+      - logger.log: "OTA updates set to use Production firmware"
+      #TODO: Need an endpoint to GET the latest production firmware @qnlbnsl
+      # - lambda: id(update_http_request).set_source_url("https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest.json");
