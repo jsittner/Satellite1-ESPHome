@@ -67,7 +67,7 @@ esphome:
     
     - priority: 600
       then:
-        - logger.log: "${company_name} ${project_name} ${component_name} version ${built_for_core_hw_version} running ESP firmware: ${esp32_fw_version} and XMOS firmware: ${xmos_fw_version}"
+        - logger.log: "${company_name} ${project_name} ${component_name} version ${built_for_core_hw_version} running ESP firmware: ${core_fw_version} and XMOS firmware: ${xmos_fw_version}"
         - delay: 30s
         - if:
             condition:
@@ -79,7 +79,7 @@ esphome:
 logger:
   deassert_rts_dtr: true
   hardware_uart : USB_SERIAL_JTAG
-  level: debug
+  level: warn
 
 
 external_components:
