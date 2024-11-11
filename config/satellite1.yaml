@@ -75,6 +75,10 @@ logger:
   level: debug
 
 
+dashboard_import:
+  package_import_url: github://futureproofhomes/satellite1-esphome/config/satellite1.yaml
+
+
 external_components:
   - source:
       type: git
