@@ -28,10 +28,10 @@
     <img src="assets/images/logo.png" alt="Logo" width="80" height="80" style="border-radius:10%">
   </a>
 
-<h3 align="center">Satellite1 Core Board ESP32 Firmware</h3>
+<h3 align="center">Satellite1 Core Board ESPHome Firmware</h3>
 
   <p align="center">
-    Open-Source ESPHome Firmware for Your Private and AI-Powered Satellite1 Voice Assistant & Multisensor
+    Open-Source ESPHome Firmware for Your Private AI-Powered Satellite1 Voice Assistant & Multisensor
     <br />
     <a href="https://docs.futureproofhomes.net"><strong>Explore the docs »</strong></a>
     <br />
@@ -75,31 +75,31 @@
 
 
 <!-- ABOUT THE PROJECT -->
-## About The Project
-The Satellite1 ESP32 firmware should be installed on the FutureProofHomes Core Board that can be purchased at [FutureProofHomes.net](https://futureproofhomes.net). To install the firmware visit [Docs.FutureProofHomes.net](https://docs.futureproofhomes.net)  After flasing your Core Board you can then mount our Satellite1 HAT board on top and arrive at a functioning voice assistant.
-
-## Why Open Source?
-The Satellite1 is a very powerful device - and with great power, comes great responsibility.  We believe it is irresponsible to ask customers to trust a "microphone and AI in-a-box".  To hold ourselves and the whole world accountable it is prudent to open-source the invention so we all benefit from this amazing technology.  Let's build together.
-
-## Why Purchase from FutureProofHomes?
-Put simply, your purchase helps fund our team and further innovation (...and, oh man, do we have ton of big ideas).  Also, the FutureProofHomes team will work hard to give you top-quality products that are tested, fully-functional, in stock (as often as possible) and lead with great community support.  You can purchase Satellite1 components individually, or purchase the entire devkit as a package.  Help us, help you!
+## About the Project
+The Satellite1 ESPHome firmware should be flashed on your [FutureProofHomes Core Board](https://futureproofhomes.net/products/satellite1-core-board). For flashing instructions please visit [Docs.FutureProofHomes.net](https://docs.futureproofhomes.net).  After the firmware is successfully flashed and your Core Board is connected to your Wifi it will appear in your Home Assistant as a new device called "Satellite1".
 
 ## Key Features of the Firmware
-- [ ] Works with the Home Assistant smart home platform so you can control your home.
-- [ ] Enables your ESP32 Core Board to work closely with our HAT board to give you access to:
+- [ ] Works with the Home Assistant Platform so you can control your home.
+- [ ] Optionally connect the Satellite1 to [Local AI Ollama](https://www.home-assistant.io/integrations/ollama/) or [OpenAI ChatGPT](https://www.home-assistant.io/integrations/openai_conversation/) to chat with an  AI and control your home.  Do this at your own risk.
+- [ ] This firmware enables your FutureProofHomes Core Board to mount with our [HAT board](https://futureproofhomes.net/products/satellite1-top-microphone-board) which then unlocks:
+- [ ] On-Demand flashing of our open source XMOS firmware for audio echo cancellation and other audio processing algorithms.
+- [ ] [On-Device WakeWord support.](https://github.com/kahrendt/microWakeWord)
+- [ ] Temperature/Humidity/Light sensor readings of the room
+- [ ] Attachable mmWave Radar for Human Presence Detection
+- [ ] Music streaming via HA Media Browser or [Music Assistant](https://music-assistant.io/)
 - [ ] Volume Up/Down & Action Buttons
-- [ ] Hardware Mute Button
-- [ ] On-Device WakeWord support.  Choose your own WakeWord or [create your own Wakeword](https://www.home-assistant.io/voice_control/create_wake_word/).  "Hey, Jarvis", "Alexa", "Alfred".
-- [ ] Supports TTS Announcements via Home Assistant
-- [ ] Supports music streaming to your HAT board via HA Media Browser or [Music Assistant](https://music-assistant.io/)
-- [ ] LEDs & Light Animations
-- [ ] Temperature/Humidity/Light Sensor
-- [ ] (OPTIONAL) mmWave Radar For Motion & Motion(less) Human Presence Detection
-- [ ] (OPTIONAL) Bluetooth Room Presense Detection
-- [ ] Flashes the XMOS chip on our HAT board so the voice assistant can perform audio echo cancellation.
+- [ ] Hardware & Software Mute Buttons
+- [ ] 360 degree LEDs & Notification Animations
+- [ ] Support for TTS Announcements via Home Assistant
 - [ ] USB-C Power Delivery for easy power input
-- [ ] (Expandable) GPIO for Hackability and Additional Functionality
+- [ ] GPIO expansion ports for to quickly add accessories like speakers, sensors, radios, amplifiers, etc.
+- [ ] (COMING SOON) Bluetooth Room Presense Detection (currently this feature is crashing)
 
+## Why Open Source?
+We believe it is irresponsible to ask customers to trust that our microphone and AI in-a-box protects your privacy.  To hold ourselves and the whole world accountable it is prudent to open-source our work so that we can all benefit from this amazing technology.  Let's build together.
+
+## Why Purchase from FutureProofHomes?
+Put simply, your purchase helps fund our team and further innovation.  Also, the FutureProofHomes team will work hard to give you top-quality products that are tested, fully-functional, in stock (as often as possible) and lead with great community support.  You can purchase Satellite1 components individually, or purchase the entire devkit as a package.  Help us, help you!
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -115,7 +115,7 @@ Put simply, your purchase helps fund our team and further innovation (...and, oh
 <!-- GETTING STARTED -->
 ## Getting Started
 
-Go to [Docs.FutureProofHomes.net](https://docs.futureproofhomes.net) and follow the instructions to install on your Core Board.
+Go to [Docs.FutureProofHomes.net](https://docs.futureproofhomes.net) and follow the instructions to assemble, flash and set up your Core Board.
 
 <!-- This is an example of how you may give instructions on setting up your project locally.
 To get a local copy up and running follow these simple example steps. -->
@@ -123,6 +123,7 @@ To get a local copy up and running follow these simple example steps. -->
 ### Prerequisites
 
 - FutureProofHomes Core Board & USB-C cable to plug into your computer.
+- Highly recommend our FutureProofHomes HAT board to unlock all the features.
 
 <!-- This is an example of how to list things you need to use the software and how to install them.
 * npm
@@ -143,7 +144,7 @@ _For more examples, please refer to the [Documentation](https://docs.futureproof
 
 
 <!-- ROADMAP -->
-## Core Board ESP32 Roadmap
+## Core Board Roadmap
 
 - [ ] TBD
 
@@ -170,6 +171,39 @@ Don't forget to give the project a star! Thanks again!
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
+## Developing, Testing & Debugging
+Create/activate environment by running from project root:
+```bash
+source scripts/setup_build_env.sh
+```
+
+Build firmware on your local machine:
+```bash
+esphome compile config/satellite1.factory.yaml
+```
+
+Upload firmware to your Core Board:
+```bash
+esphome upload config/satellite1.factory.yaml
+```
+
+Connect the device to your wifi network:
+1. Go to: [web.esphome.io](https://web.esphome.io)
+2. Click on "Connect" and select the correct JTAG/serial debug unit
+3. Click on the three dots and select 'Configure WiFi'
+
+Tail the Core Board's Logs:
+1. Go to: [web.esphome.io](https://web.esphome.io) and connect then click logs... or
+2. Tail the ESPHome logs of the Core Board's running firmware from the command line:
+```bash
+esphome logs config/satellite1.factory.yaml
+```
+
+## Home Assistant Voice Assistant Debugging
+
+1. [Set up you local pipeline](https://www.home-assistant.io/voice_control/voice_remote_local_assistant/)
+2. [Troubleshoot your pipeline](https://www.home-assistant.io/voice_control/troubleshooting/)
+
 
 <!-- LICENSE -->
 ## License
@@ -182,8 +216,7 @@ Distributed under the ESPHOME License. See `LICENSE.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
-FutureProofHomes  - [Website](https://futureproofhomes.net/) - hello@futureproofhomes.net
-
+FutureProofHomes  - [Website](https://futureproofhomes.net/)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -200,7 +233,7 @@ Checkout out our growing YouTube Channel  - [YouTube.com/@FutureProofHomes](http
 
 * @gnumpi for all the amazing C code
 * @qnlbnsl for all the Github Action & automated release work
-* Nabu Casa for making this all possible.
+* [Nabu Casa](https://nabucasa.com) for making this all possible
 * Your name here soon...
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -227,4 +260,3 @@ Checkout out our growing YouTube Channel  - [YouTube.com/@FutureProofHomes](http
 [kicad-url]: https://www.kicad.org/
 [esphome.io]: https://img.shields.io/badge/-ESPHome-000000?style=for-the-badge&logo=esphome&logoColor=white
 [esphome-url]: https://esphome.io/
-
