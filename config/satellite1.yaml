@@ -119,6 +119,8 @@ ota:
 
 http_request:
 
+safe_mode:
+
 status_led:
   pin: GPIO45
 
