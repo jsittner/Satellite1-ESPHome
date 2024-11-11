@@ -179,12 +179,12 @@ source scripts/setup_build_env.sh
 
 Build firmware on your local machine:
 ```bash
-esphome compile config/satellite1.factory.yaml
+esphome compile config/satellite1.yaml
 ```
 
 Upload firmware to your Core Board:
 ```bash
-esphome upload config/satellite1.factory.yaml
+esphome upload config/satellite1.yaml
 ```
 
 Connect the device to your wifi network:
@@ -196,7 +196,7 @@ Tail the Core Board's Logs:
 1. Go to: [web.esphome.io](https://web.esphome.io) and connect then click logs... or
 2. Tail the ESPHome logs of the Core Board's running firmware from the command line:
 ```bash
-esphome logs config/satellite1.factory.yaml
+esphome logs config/satellite1.yaml
 ```
 
 ## Home Assistant Voice Assistant Debugging
