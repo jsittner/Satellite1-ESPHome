@@ -30,14 +30,14 @@ text_sensor:
       return std::string("${xmos_fw_version}");
 
   - platform: template
-    name: "Compat. w/ CORE hw"
+    name: "Works w/ CORE hw"
     entity_category: "diagnostic"
     icon: "mdi:chip"
     lambda: |-
       return std::string("${built_for_core_hw_version}");
 
   - platform: template
-    name: "Compat. w/ HAT hw"
+    name: "Works w/ HAT hw"
     entity_category: "diagnostic"
     icon: "mdi:chip"
     lambda: |-
