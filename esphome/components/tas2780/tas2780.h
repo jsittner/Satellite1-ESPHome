@@ -16,6 +16,8 @@ class TAS2780 : public audio_dac::AudioDac, public Component, public i2c::I2CDev
   float get_setup_priority() const override { return setup_priority::DATA; }
   void loop() override;
   
+  void reset();
+
   bool set_mute_off() override;
   bool set_mute_on() override;
   bool set_volume(float volume) override;
