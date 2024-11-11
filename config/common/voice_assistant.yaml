@@ -32,7 +32,7 @@ microphone:
     channel: right_left
     pdm: false
     adc_type: external
-    gain_log2: 4
+    gain_log2: 6
 
 
 micro_wake_word:
