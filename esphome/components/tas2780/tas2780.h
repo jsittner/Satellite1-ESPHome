@@ -17,6 +17,8 @@ class TAS2780 : public audio_dac::AudioDac, public Component, public i2c::I2CDev
   void loop() override;
   
   void reset();
+  void activate();
+  void deactivate();
 
   bool set_mute_off() override;
   bool set_mute_on() override;

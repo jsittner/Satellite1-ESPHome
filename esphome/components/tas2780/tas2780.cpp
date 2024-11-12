@@ -79,6 +79,20 @@ void TAS2780::setup(){
 
   }
 
+
+void TAS2780::activate(){
+  // activate 
+  //uint8_t reg2 = this->reg(0x02).get();
+  this->reg(0x02) = 0x80;
+}
+
+void TAS2780::deactivate(){
+  // activate 
+  //uint8_t reg2 = this->reg(0x02).get();
+  this->reg(0x02) = 0x80;
+}
+
+
 void TAS2780::reset(){
   // select page 0
   this->reg(TAS2780_REG00_PAGE_SELECT) = 0x00;
