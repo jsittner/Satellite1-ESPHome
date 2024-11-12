@@ -6,6 +6,8 @@ globals:
 
 wifi:
   id: wifi_id
+  #TODO: For some reason our FW needs this when Nabu doesn't.  AP should not be necessary.
+  ap:
   on_connect:
     - lambda: id(improv_ble_in_progress) = false;
     - script.execute: control_leds
