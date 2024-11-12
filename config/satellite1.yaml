@@ -3,12 +3,12 @@ substitutions:
   friendly_name: "Satellite1"  
 
   #Recommend leaving the following unchanged
-  node_name: satellite1-r3
+  node_name: satellite1
   company_name: FutureProofHomes
   project_name: Satellite1
   component_name: Core
   
-  esp32_fw_version: "v2.0.0-alpha.8"
+  esp32_fw_version: "v2.0.0-alpha.26"
   xmos_fw_version: "v1.0.1-alpha.28"
   built_for_core_hw_version: "v1.0.0-beta.1"
   built_for_hat_hw_version: "v1.0.0-beta.1"
@@ -75,10 +75,6 @@ logger:
   level: debug
 
 
-dashboard_import:
-  package_import_url: github://futureproofhomes/satellite1-esphome/config/satellite1.yaml
-
-
 external_components:
   - source:
       type: git
@@ -114,8 +110,8 @@ packages:
 ota:
   - platform: satellite1
     id: ota_satellite1_xmos
-  
   - platform: esphome
+    id: ota_esphome
 
 http_request:
 
