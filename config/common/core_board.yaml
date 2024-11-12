@@ -32,5 +32,3 @@ spi:
     mosi_pin: GPIO39
     miso_pin: GPIO41
     interface: SPI3
-
-
