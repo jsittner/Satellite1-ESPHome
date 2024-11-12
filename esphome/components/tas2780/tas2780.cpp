@@ -9,11 +9,19 @@ namespace tas2780 {
 
 static const char *const TAG = "tas2780";
 
-static const uint8_t TAS2780_REG00_PAGE_SELECT = 0x00;        // Page Select
+static const uint8_t TAS2780_PAGE_SELECT = 0x00;        // Page Select
+
+static const uint8_t TAS2780_MODE_CTRL = 0x02;        
+static const uint8_t TAS2780_MODE_CTRL_BOP_SRC__PVDD_UVLO  = 0x80;
+static const uint8_t TAS2780_MODE_CTRL_MODE_MASK  = 0x07;
+static const uint8_t TAS2780_MODE_CTRL_MODE__ACTIVE  = 0x00;
+static const uint8_t TAS2780_MODE_CTRL_MODE__ACTIVE_MUTED  = 0x01;
+static const uint8_t TAS2780_MODE_CTRL_MODE__SFTW_SHTDWN  = 0x02;
+
 
 void TAS2780::setup(){
   // select page 0
-  this->reg(TAS2780_REG00_PAGE_SELECT) = 0x00;
+  this->reg(TAS2780_PAGE_SELECT) = 0x00;
    
   // software reset
   this->reg(0x01) = 0x01;
@@ -34,24 +42,24 @@ void TAS2780::setup(){
     return;
   }
   
-  this->reg(TAS2780_REG00_PAGE_SELECT) = 0x00;
+  this->reg(TAS2780_PAGE_SELECT) = 0x00;
   this->reg(0x0e) = 0x44;
   this->reg(0x0f) = 0x40;
 
 
-  this->reg(TAS2780_REG00_PAGE_SELECT) = 0x01;
+  this->reg(TAS2780_PAGE_SELECT) = 0x01;
   this->reg(0x17) = 0xc0;
   this->reg(0x19) = 0x00;
   this->reg(0x21) = 0x00;
   this->reg(0x35) = 0x74;
 
-  this->reg(TAS2780_REG00_PAGE_SELECT) = 0xFD;
+  this->reg(TAS2780_PAGE_SELECT) = 0xFD;
   this->reg(0x0d) = 0x0d;
   this->reg(0x3e) = 0x4a;
   this->reg(0x0d) = 0x00;
 
 
-  this->reg(TAS2780_REG00_PAGE_SELECT) = 0x00;
+  this->reg(TAS2780_PAGE_SELECT) = 0x00;
   //Power Mode 2 (no external VBAT)
   this->reg(0x03) = 0xe8;
   this->reg(0x04) = 0xa1;
@@ -59,7 +67,7 @@ void TAS2780::setup(){
   
 
   //Set interrupt masks
-  this->reg(TAS2780_REG00_PAGE_SELECT) = 0x00;
+  this->reg(TAS2780_PAGE_SELECT) = 0x00;
   //mask VBAT1S Under Voltage
   this->reg(0x3d) = 0xFF;
   //mask all PVDD and VBAT1S interrupts
@@ -73,29 +81,28 @@ void TAS2780::setup(){
   uint8_t reg_0x5c = this->reg(0x5c).get();
   this->reg(0x5c) = (reg_0x5c & ~0x03) | 0x00;   
 
-    // activate 
-  //uint8_t reg2 = this->reg(0x02).get();
-  this->reg(0x02) = 0x80;
-
+  //set to software shutdown
+  this->reg(TAS2780_MODE_CTRL) = (TAS2780_MODE_CTRL_BOP_SRC__PVDD_UVLO & ~TAS2780_MODE_CTRL_MODE_MASK) | TAS2780_MODE_CTRL_MODE__SFTW_SHTDWN;
   }
 
 
 void TAS2780::activate(){
+  // clear interrupt latches
+    this->reg(0x5c) = 0x19 | (1 << 2);
   // activate 
-  //uint8_t reg2 = this->reg(0x02).get();
-  this->reg(0x02) = 0x80;
+  this->reg(TAS2780_MODE_CTRL) = (TAS2780_MODE_CTRL_BOP_SRC__PVDD_UVLO & ~TAS2780_MODE_CTRL_MODE_MASK) | TAS2780_MODE_CTRL_MODE__ACTIVE;
 }
 
 void TAS2780::deactivate(){
   // activate 
-  //uint8_t reg2 = this->reg(0x02).get();
-  this->reg(0x02) = 0x80;
+  //set to software shutdown
+  this->reg(TAS2780_MODE_CTRL) = (TAS2780_MODE_CTRL_BOP_SRC__PVDD_UVLO & ~TAS2780_MODE_CTRL_MODE_MASK) | TAS2780_MODE_CTRL_MODE__SFTW_SHTDWN;
 }
 
 
 void TAS2780::reset(){
   // select page 0
-  this->reg(TAS2780_REG00_PAGE_SELECT) = 0x00;
+  this->reg(TAS2780_PAGE_SELECT) = 0x00;
    
   // software reset
   this->reg(0x01) = 0x01;
@@ -116,24 +123,24 @@ void TAS2780::reset(){
     return;
   }
   
-  this->reg(TAS2780_REG00_PAGE_SELECT) = 0x00;
+  this->reg(TAS2780_PAGE_SELECT) = 0x00;
   this->reg(0x0e) = 0x44;
   this->reg(0x0f) = 0x40;
 
 
-  this->reg(TAS2780_REG00_PAGE_SELECT) = 0x01;
+  this->reg(TAS2780_PAGE_SELECT) = 0x01;
   this->reg(0x17) = 0xc0;
   this->reg(0x19) = 0x00;
   this->reg(0x21) = 0x00;
   this->reg(0x35) = 0x74;
 
-  this->reg(TAS2780_REG00_PAGE_SELECT) = 0xFD;
+  this->reg(TAS2780_PAGE_SELECT) = 0xFD;
   this->reg(0x0d) = 0x0d;
   this->reg(0x3e) = 0x4a;
   this->reg(0x0d) = 0x00;
 
 
-  this->reg(TAS2780_REG00_PAGE_SELECT) = 0x00;
+  this->reg(TAS2780_PAGE_SELECT) = 0x00;
   //Power Mode 2 (no external VBAT)
   this->reg(0x03) = 0xe8;
   this->reg(0x04) = 0xa1;
@@ -141,7 +148,7 @@ void TAS2780::reset(){
   
 
   //Set interrupt masks
-  this->reg(TAS2780_REG00_PAGE_SELECT) = 0x00;
+  this->reg(TAS2780_PAGE_SELECT) = 0x00;
   //mask VBAT1S Under Voltage
   this->reg(0x3d) = 0xFF;
   //mask all PVDD and VBAT1S interrupts
@@ -155,16 +162,14 @@ void TAS2780::reset(){
   uint8_t reg_0x5c = this->reg(0x5c).get();
   this->reg(0x5c) = (reg_0x5c & ~0x03) | 0x00;   
 
-    // activate 
-  //uint8_t reg2 = this->reg(0x02).get();
-  this->reg(0x02) = 0x80;
+  this->activate();
 }
 
 
 void TAS2780::loop(){
   static uint32_t last_call = millis();
   if ( millis() - last_call > 4000 ){
-#if 1  
+#if 0  
     last_call = millis();
     uint8_t reg2 = this->reg(0x02).get();
     ESP_LOGD(TAG, "Reg 0x02: %d.", reg2 );

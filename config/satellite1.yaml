@@ -89,7 +89,7 @@ external_components:
   - source:
       type: local
       path: ../esphome/components
-    components: [ i2s_audio, satellite1, pcm5122, tas2780 ]
+    components: [ i2s_audio, satellite1, pcm5122, fusb302b, tas2780 ]
 
 
 packages:
@@ -109,7 +109,7 @@ packages:
     vars:
       led_ring_platform: satellite1
   
-  debug: !include common/debug.yaml
+  #debug: !include common/debug.yaml
 
 ota:
   - platform: satellite1
