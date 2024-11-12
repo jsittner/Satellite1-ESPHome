@@ -169,7 +169,7 @@ void TAS2780::reset(){
 void TAS2780::loop(){
   static uint32_t last_call = millis();
   if ( millis() - last_call > 4000 ){
-#if 0  
+#if 1  
     last_call = millis();
     uint8_t reg2 = this->reg(0x02).get();
     ESP_LOGD(TAG, "Reg 0x02: %d.", reg2 );
