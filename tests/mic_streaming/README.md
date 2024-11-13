@@ -21,6 +21,7 @@ Audio files from the wake-word-benchmark are played on this machine while the mi
 
 4. install additional requirements:
     ```sh
+    brew install portaudio
     pip install -r tests/mic_streaming/requirements.txt
     ```
 

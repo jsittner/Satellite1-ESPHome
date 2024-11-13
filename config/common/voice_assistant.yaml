@@ -38,7 +38,13 @@ microphone:
 micro_wake_word:
   models:
     - model: hey_jarvis
+      id: hey_jarvis
+    #- model: https://github.com/kahrendt/microWakeWord/releases/download/stop/stop.json
+    #  id: stop
+    #  internal: true
   vad:
+  microphone:
+  
   on_wake_word_detected:
     # If the wake word is detected when the device is muted (Possible with the software mute switch): Do nothing
     - if:

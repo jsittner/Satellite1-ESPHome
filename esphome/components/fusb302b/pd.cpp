@@ -64,6 +64,7 @@ bool PowerDelivery::handle_cntrl_message_(const PDMsg &msg){
     case PD_CNTRL_SOFT_RESET:
       this->send_message_(PDMsg(pd_control_msg_type::PD_CNTRL_ACCEPT));
       this->set_state_(PD_STATE_DEFAULT_CONTRACT);
+      this->active_ams_ = false;
       PDMsg::msg_cnter_ = 0;
       break;
     default:

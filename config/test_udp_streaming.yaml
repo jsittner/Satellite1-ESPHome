@@ -3,12 +3,12 @@ substitutions:
   friendly_name: "Satellite1"  
 
   #Recommend leaving the following unchanged
-  node_name: satellite1
+  node_name: satellite1-r3
   company_name: FutureProofHomes
   project_name: Satellite1
   component_name: Core
   
-  esp32_fw_version: "v2.0.0-alpha.26"
+  esp32_fw_version: "v2.0.0-alpha.8"
   xmos_fw_version: "v1.0.1-alpha.28"
   built_for_core_hw_version: "v1.0.0-beta.1"
   built_for_hat_hw_version: "v1.0.0-beta.1"
@@ -75,6 +75,7 @@ logger:
   level: debug
 
 
+
 external_components:
   - source:
       type: git
@@ -85,7 +86,7 @@ external_components:
   - source:
       type: local
       path: ../esphome/components
-    components: [ i2s_audio, satellite1, pcm5122, fusb302b, tas2780 ]
+    components: [ i2s_audio, satellite1, pcm5122, fusb302b, tas2780, udp_stream ]
   
   - source:
       type: git
@@ -94,38 +95,44 @@ external_components:
     components: [ microphone, micro_wake_word ]
 
 
+micro_wake_word:
+  id: mww
+  models:
+    - model: hey_jarvis
+      id: hey_jarvis
+    - model: https://github.com/kahrendt/microWakeWord/releases/download/stop/stop.json
+      id: stop
+      internal: true
+  vad:
+  microphone:
+
+
+microphone:
+  - platform: satellite1
+    id: mic0
+    sample_rate: 48000
+    i2s_din_pin: GPIO11
+    bits_per_sample: 32bit
+    i2s_clock_mode: external
+    channel: right_left
+    pdm: false
+    adc_type: external
+    gain_log2: 6
+
+
+
+api:
+
 packages:
   core_board: !include common/core_board.yaml
   wifi: !include common/wifi_improv.yaml
   
-  #sensors: !include common/hat_sensors.yaml
-  buttons: !include common/buttons.yaml
-  ha: !include common/home_assistant.yaml
-  mp: !include common/media_player.yaml
-  va: !include common/voice_assistant.yaml
-  # timer requires voice_assistant.yaml
-  timer: !include common/timer.yaml
-  
-  led_ring: !include 
-    file: common/led_ring.yaml
-    vars:
-      led_ring_platform: satellite1
-  
   #debug: !include common/debug.yaml
 
-ota:
-  - platform: satellite1
-    id: ota_satellite1_xmos
-  - platform: esphome
-    id: ota_esphome
-
-http_request:
-
-safe_mode:
-
-status_led:
-  pin: GPIO45
-
+script:
+  - id: control_leds
+    then:
+    
 
 satellite1:
   spi_id: spi_0
@@ -136,7 +143,71 @@ satellite1:
   flash_sw_pin: GPIO14
 
 
+i2s_audio:
+  - id: i2s_shared
+    i2s_lrclk_pin: GPIO07
+    i2s_bclk_pin: GPIO08
+    i2s_mclk_pin: GPIO09
+    access_mode: duplex
 
-   
+audio_dac:
+  - platform: pcm5122
+    address: 0x4D
+
+  - platform: tas2780
+    address: 0x38
+
+fusb302b:
+  id: pd_fusb302b
+  irq_pin: GPIO1
+  request_voltage: 9
+  on_power_ready:
+    then:
+      - logger.log: 
+          format: "PD contract got accepted: %s"
+          args: [ 'id(pd_fusb302b).contract.c_str()' ]
+      - if:
+          condition:
+            lambda: |-
+              return id(pd_fusb302b).contract_voltage >= 9;
+          then:
+            - tas2780.activate:
+  on_disconnect:
+    then:
+      - tas2780.deactivate:
 
 
+media_player:
+  - platform: satellite1
+    id: nabu_media_player
+    name: Sat1 Media Player
+    internal: false
+    sample_rate: 48000
+    i2s_dout_pin: GPIO10
+    bits_per_sample: 32bit
+    i2s_clock_mode: external
+    channel: right_left
+    i2s_audio_id: i2s_shared
+    volume_increment: 0.05
+    volume_min: 0.4
+    volume_max: 0.85
+
+
+
+udp_stream:
+
+switch:
+  - platform: template
+    name: Stream Mic via UDP
+    id: stream_mic_udp
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:assistant
+    
+    on_turn_on:
+      - logger.log: "switch udp stream on"
+      - udp_stream.start
+      
+    on_turn_off:
+      - logger.log: "switch udp stream off"
+      - udp_stream.stop

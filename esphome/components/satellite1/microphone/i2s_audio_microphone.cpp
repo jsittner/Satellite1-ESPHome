@@ -88,10 +88,13 @@ void I2SAudioMicrophone::stop_() {
   this->high_freq_.stop();
 }
 
-size_t I2SAudioMicrophone::read(int16_t *buf, size_t len) {
+size_t I2SAudioMicrophone::read(int16_t *buf, size_t len, TickType_t ticks_to_wait) {
+  if( this->state_ != microphone::STATE_RUNNING ){
+    return 0;
+  }
   assert( len * 6 <= BUFFER_SIZE );
   size_t bytes_read = 0;
-  esp_err_t err = i2s_read(this->parent_->get_port(), &local_buffer, len * 6, &bytes_read, (1 / portTICK_PERIOD_MS));
+  esp_err_t err = i2s_read(this->parent_->get_port(), &local_buffer, len * 6, &bytes_read, ticks_to_wait);
   if (err != ESP_OK) {
     ESP_LOGW(TAG, "Error reading from I2S microphone: %s", esp_err_to_name(err));
     this->status_set_warning();
@@ -106,7 +109,7 @@ size_t I2SAudioMicrophone::read(int16_t *buf, size_t len) {
     return bytes_read;
   } else if (this->bits_per_sample_ == I2S_BITS_PER_SAMPLE_32BIT) {
     std::vector<int16_t> samples;
-    size_t samples_read = bytes_read / sizeof(int32_t) / 6;
+    size_t samples_read = bytes_read / sizeof(int16_t) / 6;
     uint8_t shift = 16 - this->gain_log2_ ;
     samples.resize(samples_read );
     for (size_t i = 0; i < samples_read ; i++) {
@@ -143,6 +146,8 @@ void I2SAudioMicrophone::loop() {
       break;
     case microphone::STATE_STOPPING:
       this->stop_();
+      break;
+    case microphone::STATE_MUTED:
       break;
   }
 }

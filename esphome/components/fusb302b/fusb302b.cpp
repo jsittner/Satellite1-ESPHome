@@ -60,6 +60,10 @@ static void trigger_task(void *params){
       uint8_t status0 = fusb302b->reg(FUSB_STATUS0).get();
       uint8_t status1 = fusb302b->reg(FUSB_STATUS1).get();
       uint8_t status1a = fusb302b->reg(FUSB_STATUS1A).get();
+      if( fusb302b->state_ == FUSB302_STATE_UNATTACHED){
+        continue;
+      }
+    
 #if 0      
       ESP_LOGD(TAG, "Interrupt: %d",  interrupt);
       ESP_LOGD(TAG, "Interrupta: %d", interrupta);
@@ -75,8 +79,10 @@ static void trigger_task(void *params){
         
         if( interrupta & FUSB_INTERRUPTA_I_HARDRST ){
           ESP_LOGE(TAG, "FUSB_STATUS0A_HARDRST");
+          fusb302b->fusb_reset_();
         }
         
+        void taskENTER_CRITICAL( void );
         if( interrupt & FUSB_INTERRUPT_I_CRC_CHK ){
           if( status0 & FUSB_STATUS0_CRC_CHK ){
             PDMsg msg;
@@ -85,8 +91,10 @@ static void trigger_task(void *params){
             } else {
               ESP_LOGD(TAG, "reading sop message failed.");
             }
+            
           }
         }
+        void taskEXIT_CRITICAL( void );
         
         interrupt = fusb302b->reg(FUSB_INTERRUPT).get();
         interrupta = fusb302b->reg(FUSB_INTERRUPTA).get();
@@ -233,6 +241,7 @@ void FUSB302B::fusb_reset_(){
   this->read_status_();
   
   PDMsg::msg_cnter_ = 0;
+  this->active_ams_ = false;
 }
 
 void FUSB302B::fusb_hard_reset_(){
@@ -253,15 +262,24 @@ void FUSB302B::read_status_(){
 
 
 void FUSB302B::check_status_(){
+  static uint32_t last_check_for_connection = millis();
+  
   switch( this->state_){
     case FUSB302_STATE_UNATTACHED:
       {
+      //check only once per second
+      if( millis() - last_check_for_connection < 1000 ){
+          return;
+      }
+      last_check_for_connection = millis();
+      
       uint8_t status0 = this->reg(FUSB_STATUS0).get();
       if( status0 & FUSB_STATUS0_VBUSOK )
       {
         if( this->startup_delay_ && millis() - this->startup_delay_ < 3000){
           return; 
         }
+        
         /* enable internal oscillator */
         this->reg(FUSB_POWER) = PWR_BANDGAP | PWR_RECEIVER | PWR_MEASURE | PWR_INT_OSC;
 

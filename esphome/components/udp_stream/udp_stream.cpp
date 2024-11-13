@@ -15,11 +15,11 @@ static const char *const TAG = "udp_streamer";
 #endif
 
 static const size_t SAMPLE_RATE_HZ = 16000;
-static const size_t INPUT_BUFFER_SIZE = 32 * SAMPLE_RATE_HZ / 1000;  // 32ms * 16kHz / 1000ms
-static const size_t BUFFER_SIZE = 512 * SAMPLE_RATE_HZ / 1000;
-static const size_t SEND_BUFFER_SIZE = INPUT_BUFFER_SIZE * sizeof(int16_t);
-static const size_t RECEIVE_SIZE = 1024;
-static const size_t SPEAKER_BUFFER_SIZE = 16 * RECEIVE_SIZE;
+static const size_t INPUT_BUFFER_SIZE = 16 * SAMPLE_RATE_HZ / 1000;  // 32ms * 16kHz / 1000ms
+static const size_t SEND_BUFFER_SIZE = INPUT_BUFFER_SIZE * sizeof(int16_t); // 512 samples
+
+static const size_t BUFFER_SIZE = 96 * SAMPLE_RATE_HZ / 1000; // 3 * INPUT_BUFFER_SIZE
+
 
 float UDPStreamer::get_setup_priority() const { return setup_priority::AFTER_CONNECTION; }
 
