@@ -166,31 +166,27 @@ void TAS2780::reset(){
 }
 
 
-void TAS2780::loop(){
+void TAS2780::loop() {
   static uint32_t last_call = millis();
-  if ( millis() - last_call > 4000 ){
-#if 1  
+  const uint32_t interval = 4000; // Interval in milliseconds
+
+  if (millis() - last_call > interval) {
     last_call = millis();
-    uint8_t reg2 = this->reg(0x02).get();
-    ESP_LOGD(TAG, "Reg 0x02: %d.", reg2 );
 
-    reg2 = this->reg(0x49).get();
-    ESP_LOGD(TAG, "Reg 0x49: %d.", reg2 );
-    reg2 = this->reg(0x4A).get();
-    ESP_LOGD(TAG, "Reg 0x4A: %d.", reg2 );
-    reg2 = this->reg(0x4B).get();
-    ESP_LOGD(TAG, "Reg 0x4B: %d.", reg2 );
-    reg2 = this->reg(0x4F).get();
-    ESP_LOGD(TAG, "Reg 0x4F: %d.", reg2 );
-    reg2 = this->reg(0x50).get();
-    ESP_LOGD(TAG, "Reg 0x50: %d.\n", reg2 );
+    // Register addresses to read and log
+    const uint8_t reg_addresses[] = {0x02, 0x49, 0x4A, 0x4B, 0x4F, 0x50};
 
-    // clear interrupt latches
+    // Log each register value in the list
+    for (uint8_t reg_addr : reg_addresses) {
+      uint8_t reg_val = this->reg(reg_addr).get();
+      ESP_LOGD(TAG, "Reg 0x%02X: %d.", reg_addr, reg_val);
+    }
+
+    // Clear interrupt latches
     this->reg(0x5c) = 0x19 | (1 << 2);
-    
-    // activate 
+
+    // Activate
     this->reg(0x02) = 0x80;
-#endif
   }
 }
 
