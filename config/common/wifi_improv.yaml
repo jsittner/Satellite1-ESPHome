@@ -8,23 +8,10 @@ wifi:
   id: wifi_id
   on_connect:
     - delay: 5s  # Gives time for improv results to be transmitted
-    - ble.disable:
     - lambda: id(improv_ble_in_progress) = false;
     - script.execute: control_leds
   on_disconnect:
-    - ble.enable:
     - script.execute: control_leds
 
 improv_serial:
 
-esp32_improv:
-  authorizer: btn_action
-  on_start:
-    - lambda: id(improv_ble_in_progress) = true;
-    - script.execute: control_leds
-  on_provisioned:
-    - lambda: id(improv_ble_in_progress) = false;
-    - script.execute: control_leds
-  on_stop:
-    - lambda: id(improv_ble_in_progress) = false;
-    - script.execute: control_leds
