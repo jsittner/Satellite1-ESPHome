@@ -109,7 +109,7 @@ packages:
     vars:
       led_ring_platform: satellite1
   
-  debug: !include common/debug.yaml
+  #debug: !include common/debug.yaml
 
 ota:
   - platform: satellite1
