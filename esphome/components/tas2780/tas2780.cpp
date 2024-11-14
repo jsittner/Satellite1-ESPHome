@@ -172,7 +172,7 @@ void TAS2780::loop() {
 
   if (millis() - last_call > interval) {
     last_call = millis();
-
+#if 0
     // Register addresses to read and log
     const uint8_t reg_addresses[] = {0x02, 0x49, 0x4A, 0x4B, 0x4F, 0x50};
 
@@ -181,7 +181,7 @@ void TAS2780::loop() {
       uint8_t reg_val = this->reg(reg_addr).get();
       ESP_LOGD(TAG, "Reg 0x%02X: %d.", reg_addr, reg_val);
     }
-
+#endif
     // Clear interrupt latches
     this->reg(0x5c) = 0x19 | (1 << 2);
 
