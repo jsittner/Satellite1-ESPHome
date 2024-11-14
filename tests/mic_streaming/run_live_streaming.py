@@ -4,13 +4,14 @@ import wave
 import os
 from datetime import datetime
 
+
 """
 Listen on udp port 6055 for audio data and stream directly to output speaker.
 """
 FORMAT = pyaudio.paInt16  # Format of sampling
 CHANNELS = 1              # Number of audio channels (1 for mono, 2 for stereo)
 RATE = 16000              # Sampling rate (samples per second)
-CHUNK = 2048              # Number of audio frames per buffer
+CHUNK = 512              # Number of audio frames per buffer
 RECORD_SECONDS = 10       # Duration of recording
 PORT = 6055
 
@@ -26,6 +27,7 @@ print( f"Additional streaming delay: { CHUNK / RATE * 1000  } ms" )
 
 # Create a UDP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 3 * CHUNK)
 sock.bind(("0.0.0.0", PORT))
 
 # Create an audio object
@@ -39,9 +41,6 @@ chunks = []
 while True:
     try:
         data, addr = sock.recvfrom(CHUNK)
-        
-                
-        #print("received message: %s" % data)
         stream.write(data)
     except KeyboardInterrupt:
         break
