@@ -20,3 +20,4 @@ sdkconfig.esp32-s3-idf
 **/secrets.yaml
 
 /testdata
+/wake-word-benchmark/
