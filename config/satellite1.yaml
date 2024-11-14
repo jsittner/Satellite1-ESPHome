@@ -91,7 +91,7 @@ external_components:
       type: git
       url: https://github.com/esphome/voice-kit
       ref: dev
-    components: [ microphone, micro_wake_word ]
+    components: [ microphone, micro_wake_word, voice_assistant ]
 
 
 packages:
