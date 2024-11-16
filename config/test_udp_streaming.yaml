@@ -13,6 +13,11 @@ substitutions:
   built_for_core_hw_version: "v1.0.0-beta.1"
   built_for_hat_hw_version: "v1.0.0-beta.1"
 
+http_request:
+
+ota:
+  - platform: satellite1
+    id: ota_satellite1_xmos
 
 globals:
   # Global initialisation variable. Initialized to true and set to false once everything is connected. Only used to have a smooth "plugging" experience
@@ -119,10 +124,10 @@ microphone:
     i2s_audio_id: i2s_shared
     channel_0:
       id: asr_mic
-      amplify_shift: 6
+      amplify_shift: 0
     channel_1:
       id: comm_mic
-      amplify_shift: 6
+      amplify_shift: 4
 
 api:
 
@@ -157,60 +162,115 @@ audio_dac:
   - platform: pcm5122
     address: 0x4D
 
-#  - platform: tas2780
-#    address: 0x38
+  - platform: tas2780
+    address: 0x38
 
-#fusb302b:
-#  id: pd_fusb302b
-#  irq_pin: GPIO1
-#  request_voltage: 9
-#  on_power_ready:
-#    then:
-#      - logger.log: 
-#          format: "PD contract got accepted: %s"
-#          args: [ 'id(pd_fusb302b).contract.c_str()' ]
-#      - if:
-#          condition:
-#            lambda: |-
-#              return id(pd_fusb302b).contract_voltage >= 9;
-#          then:
-#            - tas2780.activate:
-#  on_disconnect:
-#    then:
-#      - tas2780.deactivate:
+fusb302b:
+  id: pd_fusb302b
+  irq_pin: GPIO1
+  request_voltage: 9
+  on_power_ready:
+    then:
+      - logger.log: 
+          format: "PD contract got accepted: %s"
+          args: [ 'id(pd_fusb302b).contract.c_str()' ]
+      - if:
+          condition:
+            lambda: |-
+              return id(pd_fusb302b).contract_voltage >= 9;
+          then:
+            - tas2780.activate:
+  on_disconnect:
+    then:
+      - tas2780.deactivate:
 
 
-#media_player:
-#  - platform: satellite1
-#    id: nabu_media_player
-#    name: Sat1 Media Player
-#    internal: false
-#    sample_rate: 48000
-#    i2s_dout_pin: GPIO10
-#    bits_per_sample: 32bit
-#    channel: right_left
-#    i2s_audio_id: i2s_shared
-#    volume_increment: 0.05
-#    volume_min: 0.4
-#    volume_max: 0.85
+media_player:
+  - platform: satellite1
+    id: nabu_media_player
+    name: Sat1 Media Player
+    internal: false
+    sample_rate: 48000
+    i2s_dout_pin: GPIO10
+    bits_per_sample: 32bit
+    channel: right_left
+    i2s_clock_mode: external
+    i2s_audio_id: i2s_shared
+    volume_increment: 0.05
+    volume_min: 0.4
+    volume_max: 0.85
 
 
 
 udp_stream:
+  id: udp_streamer
   microphone: asr_mic
 
 switch:
   - platform: template
-    name: Stream Mic via UDP
-    id: stream_mic_udp
-    optimistic: true
+    name: "Use ASR Mic"
+    id: use_asr_mic
+    icon: mdi:microphone
     restore_mode: RESTORE_DEFAULT_OFF
-    icon: mdi:assistant
-    
+    optimistic: true
     on_turn_on:
-      - logger.log: "switch udp stream on"
-      - udp_stream.start
-      
+      - logger.log: "Switching to ASR Mic for UDP stream"
+      - lambda: |-
+          if (id(udp_streamer).is_running()) {
+            id(udp_streamer).request_stop();  // Stop current stream
+            delay(500);  // Wait for stream to stop
+          }
+          id(udp_streamer).set_microphone(id(asr_mic));  // Set ASR mic
+          id(udp_streamer).request_start(true);  // Start stream with ASR mic
+      - switch.turn_off: use_comm_mic         # Turn off the other switch
+
     on_turn_off:
-      - logger.log: "switch udp stream off"
-      - udp_stream.stop
+      - logger.log: "Turning off ASR Mic UDP stream"
+      - lambda: |-
+          if (id(udp_streamer).is_running()) {
+            id(udp_streamer).request_stop();  // Stop the stream when ASR mic is turned off
+          }
+
+  - platform: template
+    name: "Use Comm Mic"
+    id: use_comm_mic
+    icon: mdi:microphone
+    restore_mode: RESTORE_DEFAULT_OFF
+    optimistic: true
+    on_turn_on:
+      - logger.log: "Switching to Comm Mic for UDP stream"
+      - lambda: |-
+          if (id(udp_streamer).is_running()) {
+            id(udp_streamer).request_stop();  // Stop current stream
+            delay(500);  // Wait for stream to stop
+          }
+          id(udp_streamer).set_microphone(id(comm_mic));  // Set Comm mic
+          id(udp_streamer).request_start(true);  // Start stream with Comm mic
+      - switch.turn_off: use_asr_mic           # Turn off the other switch
+
+    on_turn_off:
+      - logger.log: "Turning off Comm Mic UDP stream"
+      - lambda: |-
+          if (id(udp_streamer).is_running()) {
+            id(udp_streamer).request_stop();  // Stop the stream when Comm mic is turned off
+          }
+ 
+ 
+button: 
+ #Flashes Satellite1 with most recent XMOS firmware
+  #TODO: This needs to grab the latest firmware and not hardcoded version
+  #TODO: The LED ring does not show a visual status when flashing because we connect to the LEDs via XMOS and can't connect during flashing.  Hrmmmmmm....
+  - platform: template
+    id: flash_satellite
+    name: "Flash XMOS ${xmos_fw_version}"
+    entity_category: diagnostic
+    on_press:
+      then:
+        - lambda: id(xmos_flashing_started) = true;
+        - script.execute: control_leds
+        - ota.satellite1.flash:
+            #url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_fixed_delay.factory.bin
+            #md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_fixed_delay.factory.md5
+            url: http://192.168.178.101:8080/satellite1_firmware_fixed_delay.factory.bin
+            md5_url: http://192.168.178.101:8080/satellite1_firmware_fixed_delay.factory.md5
+

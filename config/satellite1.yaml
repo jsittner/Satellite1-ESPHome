@@ -116,8 +116,7 @@ packages:
 ota:
   - platform: satellite1
     id: ota_satellite1_xmos
-  - platform: esphome
-    id: ota_esphome
+  
 
 http_request:
 
