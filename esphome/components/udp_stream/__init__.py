@@ -38,11 +38,19 @@ IsRunningCondition = udp_stream_ns.class_(
     "IsRunningCondition", automation.Condition, cg.Parented.template(UDPStreamer)
 )
 
-def get_local_ip() -> str :
-    local_hostname = socket.gethostname()
-    ip_addresses = socket.gethostbyname_ex(local_hostname)[2]
-    filtered_ips = [ip for ip in ip_addresses if not ip.startswith("127.")]
-    return filtered_ips[0] if len(filtered_ips) else None
+def get_local_ip() -> str:
+    try:
+        # Use a dummy connection to a known public IP address to determine the local IP
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            # Connect to an external IP and port (Google's public DNS in this case)
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]  # Get the local IP used for the connection
+        return local_ip
+    except Exception as e:
+        print(f"Error determining local IP: {e}")
+        return None
+
+
 
 def safe_ip(ip):
     if ip is None:
