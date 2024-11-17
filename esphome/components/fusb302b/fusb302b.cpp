@@ -67,7 +67,7 @@ static void trigger_task(void *params){
       ESP_LOGD(TAG, "status0: %d", status0);
       ESP_LOGD(TAG, "status1: %d", status1);
 #endif      
-      while( (interrupt & FUSB_INTERRUPT_I_CRC_CHK) || ( interrupta &  FUSB_INTERRUPTA_I_HARDRST) )
+      while( (interrupt & FUSB_INTERRUPT_I_CRC_CHK) || ( interrupta &  FUSB_INTERRUPTA_I_HARDRST) || ( interrupta &  FUSB_INTERRUPTA_I_SOFTRST) )
       {
         if( interrupta & FUSB_INTERRUPTA_I_SOFTRST ){
           ESP_LOGW(TAG, "SOFT_RESET_REQUEST");
@@ -79,11 +79,17 @@ static void trigger_task(void *params){
         
         if( interrupt & FUSB_INTERRUPT_I_CRC_CHK ){
           if( status0 & FUSB_STATUS0_CRC_CHK ){
-            PDMsg msg;
-            if( fusb302b->read_message_(msg) ){
-              fusb302b->handle_message_(msg);
-            } else {
-              ESP_LOGD(TAG, "reading sop message failed.");
+            while( !(status1 & FUSB_STATUS1_RX_EMPTY) ){
+              PDMsg msg;
+              if( fusb302b->read_message_(msg) ){
+                fusb302b->handle_message_(msg);
+              } else {
+                ESP_LOGD(TAG, "reading sop message failed.");
+                /* Flush the RX buffer */
+                fusb302b->reg(FUSB_CONTROL1) = FUSB_CONTROL1_RX_FLUSH;
+                break;
+              }
+              status1 = fusb302b->reg(FUSB_STATUS1).get();
             }
           }
         }
@@ -95,6 +101,7 @@ static void trigger_task(void *params){
         status1 = fusb302b->reg(FUSB_STATUS1).get();
         status1a = fusb302b->reg(FUSB_STATUS1A).get();
       }
+      ESP_LOGD(TAG, "Exit while loop.");
     }
   }
 }
@@ -292,7 +299,7 @@ void FUSB302B::check_status_(){
           gpio_isr_handler_add( irq_gpio_pin, fusb302b_isr_handler, NULL);
 
           // Create the task that will wait for notifications
-          xTaskCreatePinnedToCore(trigger_task, "fusb3202b_task", 4096, this , configMAX_PRIORITIES - 1 , &xTaskHandle, 1);
+          xTaskCreatePinnedToCore(trigger_task, "fusb3202b_task", 4096, this , configMAX_PRIORITIES, &xTaskHandle, 0);
           delay(1);
         }  
         

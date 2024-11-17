@@ -155,7 +155,7 @@ protected:
   void set_state_(PowerDeliveryState new_state){
     this->prev_state_ = this->state; 
     this->state = new_state; 
-    this->state_callback_.call();
+    //this->state_callback_.call();
   }
   
   
