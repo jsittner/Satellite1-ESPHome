@@ -60,6 +60,10 @@ media_player:
         file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/factory_reset_initiated.mp3
       - id: factory_reset_cancelled_sound
         file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/factory_reset_cancelled.mp3
+      - id: jack_connected_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/jack_connected.flac
+      - id: jack_disconnected_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/jack_disconnected.flac
       - id: mute_switch_on_sound
         file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/mute_switch_on.flac
       - id: mute_switch_off_sound
@@ -68,6 +72,10 @@ media_player:
         file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
       - id: wake_word_triggered_sound
         file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/wake_word_triggered.flac
+      - id: easter_egg_tick_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/easter_egg_tick.mp3
+      - id: easter_egg_tada_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/easter_egg_tada.mp3
 
 
 

@@ -72,10 +72,18 @@ binary_sensor:
           condition:
             binary_sensor.is_off: btn_left
           then:
+            - script.execute:
+                id: play_sound
+                priority: false
+                sound_file: !lambda return id(mute_switch_off_sound);
             - switch.template.publish:
                 id: master_mute_switch
                 state: OFF
           else:
+            - script.execute:
+                id: play_sound
+                priority: false
+                sound_file: !lambda return id(mute_switch_on_sound);
             - switch.template.publish:
                 id: master_mute_switch
                 state: ON
