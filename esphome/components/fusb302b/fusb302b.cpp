@@ -260,9 +260,17 @@ void FUSB302B::read_status_(){
 
 
 void FUSB302B::check_status_(){
+  static uint32_t last_check_for_connection = millis();
+  
   switch( this->state_){
     case FUSB302_STATE_UNATTACHED:
       {
+      //check only once per second
+      if( millis() - last_check_for_connection < 1000 ){
+          return;
+      }
+      last_check_for_connection = millis();
+      
       uint8_t status0 = this->reg(FUSB_STATUS0).get();
       if( status0 & FUSB_STATUS0_VBUSOK )
       {
