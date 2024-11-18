@@ -11,7 +11,15 @@ static const char *const TAG = "pcm5122";
 
 static const uint8_t PCM5122_REG00_PAGE_SELECT = 0x00; // Page Select
 
+#define ERROR_CHECK(err, msg)                                                  \
+  if (!(err)) {                                                                \
+    ESP_LOGE(TAG, msg);                                                        \
+    this->mark_failed();                                                       \
+    return;                                                                    \
+  }
+
 void PCM5122::setup() {
+  ESP_LOGCONFIG(TAG, "Setting up PCM5122...");
   // select page 0
   this->reg(PCM5122_REG00_PAGE_SELECT) = 0x00;
 
@@ -69,13 +77,32 @@ bool PCM5122::is_muted() { return this->is_muted_; }
 float PCM5122::volume() { return this->volume_; }
 
 bool PCM5122::write_mute_() {
-  // select page 0
-  this->reg(PCM5122_REG00_PAGE_SELECT) = 0x00;
-  this->reg(0x03) = 0x11;
+  if (!this->write_byte(PCM5122_REG00_PAGE_SELECT, 0x00) ||
+      !this->write_byte(0x03, 0x11)) {
+    ESP_LOGE(TAG, "Writing mute failed");
+    return false;
+  }
   return true;
 }
 
-bool PCM5122::write_volume_() { return true; }
+bool PCM5122::write_volume_() {
+  const int8_t dvc_min_byte = -127; // check for pcm5122
+  const int8_t dvc_max_byte = 48;
+
+  int8_t volume_byte =
+      dvc_min_byte + (this->volume_ * (dvc_max_byte - dvc_min_byte));
+  volume_byte = clamp<int8_t>(volume_byte, dvc_min_byte, dvc_max_byte);
+
+  ESP_LOGVV(TAG, "Setting volume to 0x%.2x", volume_byte & 0xFF);
+
+  if ((!this->write_byte(PCM5122_REG00_PAGE_SELECT, 0x00)) ||
+      (!this->write_byte(0x3D, volume_byte)) ||
+      (!this->write_byte(0x3E, volume_byte))) {
+    ESP_LOGE(TAG, "Writing volume failed");
+    return false;
+  }
+  return true;
+}
 
 } // namespace pcm5122
 } // namespace esphome
