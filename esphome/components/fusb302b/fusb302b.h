@@ -16,22 +16,6 @@ enum FUSB302_state_t {
     FUSB302_STATE_ATTACHED
 };
 
-
-
-class FUSB302B : public PowerDelivery, public Component, public i2c::I2CDevice {
-public:
-  void setup() override;
-  void dump_config() override;
-  float get_setup_priority() const override { return setup_priority::HARDWARE; }
-  void loop() override;
-  
-  bool send_message_(const PDMsg &msg) override;
-  bool read_message_(PDMsg &msg) override;
-  void read_status_();
-
-  void set_irq_pin(int irq_pin){this->irq_pin_ = irq_pin;}
-
-
 typedef union {
     uint8_t bytes[7];
     struct {
@@ -44,13 +28,34 @@ typedef union {
       uint8_t interrupt;
     };
   } fusb_status;
-  
-  fusb_status status_;
 
+
+
+class FUSB302B : public PowerDelivery, public Component, protected i2c::I2CDevice {
+public:
+  void setup() override;
+  void dump_config() override;
+  float get_setup_priority() const override { return setup_priority::HARDWARE; }
+  void loop() override;
+  
+  bool send_message_(const PDMsg &msg) override;
+  bool read_message_(PDMsg &msg) override;
+  bool read_status(){ fusb_status regs; return read_status(regs); }
+  bool read_status(fusb_status &status);
+  
+  bool read_status_register( uint8_t register, uint8_t &value);
+
+  
+  void set_irq_pin(int irq_pin){this->irq_pin_ = irq_pin;}
+  void set_i2c_address(uint8_t address) { i2c::I2CDevice::set_i2c_address(address); }
+  void set_i2c_bus( i2c::I2CBus *bus) { i2c::I2CDevice::set_i2c_bus(bus); }
+
+  bool check_chip_id();
+  bool enable_auto_crc();
+  bool disable_auto_crc();
 
 public:
   bool cc_line_selection_();
-  bool check_cc_line_();
   void fusb_reset_();
   void fusb_hard_reset_();
   
@@ -61,7 +66,17 @@ public:
 
   uint32_t response_timer_{0};
   uint32_t startup_delay_{0};
-  int irq_pin_{0};    
+  
+  
+  
+
+protected:
+  
+  bool init_fusb_settings_();
+  
+  SemaphoreHandle_t i2c_lock_;
+
+  int irq_pin_{0};
 };
 
 }

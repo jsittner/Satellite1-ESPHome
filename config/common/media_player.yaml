@@ -5,6 +5,8 @@ i2s_audio:
     i2s_mclk_pin: GPIO09
     access_mode: duplex
 
+
+
 audio_dac:
   - platform: pcm5122
     address: 0x4D
@@ -20,6 +22,9 @@ fusb302b:
       - logger.log: 
           format: "PD contract got accepted: %s"
           args: [ 'id(pd_fusb302b).contract.c_str()' ]
+      - text_sensor.template.publish:
+          id: pd_state_text
+          state: !lambda 'return id(pd_fusb302b).contract;'
       - if:
           condition:
             lambda: |-
