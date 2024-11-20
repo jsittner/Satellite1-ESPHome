@@ -167,27 +167,6 @@ void TAS2780::reset(){
 
 
 void TAS2780::loop() {
-  static uint32_t last_call = millis();
-  const uint32_t interval = 4000; // Interval in milliseconds
-
-  if (millis() - last_call > interval) {
-    last_call = millis();
-
-    // Register addresses to read and log
-    const uint8_t reg_addresses[] = {0x02, 0x49, 0x4A, 0x4B, 0x4F, 0x50};
-
-    // Log each register value in the list
-    for (uint8_t reg_addr : reg_addresses) {
-      uint8_t reg_val = this->reg(reg_addr).get();
-      ESP_LOGD(TAG, "Reg 0x%02X: %d.", reg_addr, reg_val);
-    }
-
-    // Clear interrupt latches
-    this->reg(0x5c) = 0x19 | (1 << 2);
-
-    // Activate
-    this->reg(0x02) = 0x80;
-  }
 }
 
 
