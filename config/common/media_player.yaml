@@ -20,6 +20,9 @@ fusb302b:
       - logger.log: 
           format: "PD contract got accepted: %s"
           args: [ 'id(pd_fusb302b).contract.c_str()' ]
+      - text_sensor.template.publish:
+          id: pd_state_text
+          state: !lambda 'return id(pd_fusb302b).contract;'
       - if:
           condition:
             lambda: |-
@@ -28,6 +31,9 @@ fusb302b:
             - tas2780.activate:
   on_disconnect:
     then:
+      - text_sensor.template.publish:
+          id: pd_state_text
+          state: "Detached"
       - tas2780.deactivate:
 
 
