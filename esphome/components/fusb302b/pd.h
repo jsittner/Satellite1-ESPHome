@@ -74,6 +74,16 @@ enum PowerDeliveryState : uint8_t {
   PD_STATE_ERROR
 };
 
+enum PowerDeliveryEvent : uint8_t {
+  PD_EVENT_ATTACHED,
+  PD_EVENT_DETACHED,  
+  PD_EVENT_RECEIVED_MSG,
+  PD_EVENT_SENDING_MSG_FAILED,
+  PD_EVENT_SOFT_RESET,
+  PD_EVENT_HARD_RESET
+};
+
+
 struct pd_contract_t{
     enum pd_power_data_obj_type type;
     uint16_t min_v;     /* Voltage in 50mV units */
@@ -90,6 +100,8 @@ struct pd_contract_t{
       return !( *this == other );
     }
 };
+
+
 
 class PDMsg {
 public:
@@ -115,6 +127,18 @@ public:
   static pd_spec_revision_t spec_rev_;
 };
 
+
+
+
+class PDEventInfo {
+public:
+  PowerDeliveryEvent event;
+  PDMsg msg;
+};
+
+
+
+
 typedef uint32_t pd_pdo_t;
 
 class PowerDelivery {
@@ -137,7 +161,11 @@ public:
   std::string get_contract_string(pd_contract_t contract) const;
   void add_on_state_callback(std::function<void()> &&callback);
 
+  void set_ams(bool ams);
+  bool check_ams();
+
 protected:
+  uint32_t active_ams_timer_{0};
   bool active_ams_{false};
   void protocol_reset_();
   
