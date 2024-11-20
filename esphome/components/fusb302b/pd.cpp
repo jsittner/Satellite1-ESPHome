@@ -23,7 +23,7 @@ bool PowerDelivery::handle_message_(const PDMsg &msg){
 bool PowerDelivery::handle_data_message_(const PDMsg &msg){
   switch( msg.type ){
     case PD_DATA_SOURCE_CAP:
-        this->active_ams_ = true;
+        this->set_ams(true);
         this->wait_src_cap_ = false;
         if( PDMsg::spec_rev_ == pd_spec_revision_t::PD_SPEC_REV_1 ){
           if( msg.spec_rev >= pd_spec_revision_t::PD_SPEC_REV_3 ){
@@ -50,7 +50,7 @@ bool PowerDelivery::handle_cntrl_message_(const PDMsg &msg){
         PDMsg::msg_cnter_++;
       break;
     case PD_CNTRL_ACCEPT:
-      if( this->active_ams_){
+      if( this->active_ams_ ){
         if( this->requested_contract_ != this->accepted_contract_ ){
           this->set_state_(PD_STATE_TRANSITION);
         }
@@ -58,7 +58,7 @@ bool PowerDelivery::handle_cntrl_message_(const PDMsg &msg){
       }
       break;
     case PD_CNTRL_PS_RDY:
-      this->active_ams_ = false;
+      this->set_ams(false);
       this->set_state_(PD_STATE_EXPLICIT_SPR_CONTRACT);
       break; 
     case PD_CNTRL_SOFT_RESET:
@@ -188,6 +188,20 @@ bool PowerDelivery::respond_to_src_cap_msg_( const PDMsg &msg ){
   this->send_message_( response );
 
   return true;
+}
+
+void PowerDelivery::set_ams(bool ams){
+  this->active_ams_ = ams;
+  if( ams ){
+    this->active_ams_timer_ = millis();
+  }
+}
+
+bool PowerDelivery::check_ams(){
+  if( millis() - this->active_ams_timer_ > 2000 ){
+    this->active_ams_ = false;
+  }
+  return this->active_ams_;
 }
 
 std::string PowerDelivery::get_contract_string(pd_contract_t contract) const{
