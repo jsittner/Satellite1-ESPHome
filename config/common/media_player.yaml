@@ -36,17 +36,24 @@ fusb302b:
       - tas2780.deactivate:
 
 
-media_player:
-  - platform: satellite1
-    id: nabu_media_player
-    name: Sat1 Media Player
-    internal: false
+speaker:
+  - platform: i2s_audio
     sample_rate: 48000
+    i2s_clock_mode: external
     i2s_dout_pin: GPIO10
     bits_per_sample: 32bit
-    i2s_clock_mode: external
-    channel: right_left
     i2s_audio_id: i2s_shared
+    dac_type: external
+    channel: right_left
+
+
+media_player:
+  - platform: nabu
+    id: nabu_media_player
+    name: Sat1 Media Player
+    sample_rate: 48000
+    internal: false
+    speaker:
     volume_increment: 0.05
     volume_min: 0.4
     volume_max: 0.85
