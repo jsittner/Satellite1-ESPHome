@@ -87,6 +87,7 @@ void TAS2780::setup(){
 
 
 void TAS2780::activate(){
+  ESP_LOGD(TAG, "Activating TAS2780");
   // clear interrupt latches
     this->reg(0x5c) = 0x19 | (1 << 2);
   // activate 
@@ -94,7 +95,7 @@ void TAS2780::activate(){
 }
 
 void TAS2780::deactivate(){
-  // activate 
+  ESP_LOGD(TAG, "Dectivating TAS2780");
   //set to software shutdown
   this->reg(TAS2780_MODE_CTRL) = (TAS2780_MODE_CTRL_BOP_SRC__PVDD_UVLO & ~TAS2780_MODE_CTRL_MODE_MASK) | TAS2780_MODE_CTRL_MODE__SFTW_SHTDWN;
 }
