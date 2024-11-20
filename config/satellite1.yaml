@@ -89,13 +89,13 @@ external_components:
   - source:
       type: local
       path: ../esphome/components
-    components: [ i2s_audio, satellite1, pcm5122, fusb302b ]
+    components: [ i2s_audio, satellite1, pcm5122, tas2780, fusb302b ]
   
   - source:
       type: git
       url: https://github.com/esphome/voice-kit
       ref: 24.10.17
-    components: [ microphone, micro_wake_word, tas2780, voice_assistant ]
+    components: [ microphone, micro_wake_word, voice_assistant ]
 
 
 packages:
