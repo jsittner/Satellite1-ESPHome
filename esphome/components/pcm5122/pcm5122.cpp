@@ -3,6 +3,7 @@
 #include "esphome/core/defines.h"
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
+#include <cstdint>
 
 namespace esphome {
 namespace pcm5122 {
@@ -77,8 +78,10 @@ bool PCM5122::is_muted() { return this->is_muted_; }
 float PCM5122::volume() { return this->volume_; }
 
 bool PCM5122::write_mute_() {
+  ESP_LOGD(TAG, "DEBUG TEST is_muted_ is %d", is_muted());
+  uint8_t mute_byte = this->is_muted() ? 0x11 : 0x00;
   if (!this->write_byte(PCM5122_REG00_PAGE_SELECT, 0x00) ||
-      !this->write_byte(0x03, 0x11)) {
+      !this->write_byte(0x03, mute_byte)) {
     ESP_LOGE(TAG, "Writing mute failed");
     return false;
   }
@@ -86,14 +89,15 @@ bool PCM5122::write_mute_() {
 }
 
 bool PCM5122::write_volume_() {
-  const int8_t dvc_min_byte = -127; // check for pcm5122
-  const int8_t dvc_max_byte = 48;
+  const uint8_t dvc_min_byte = 0x00; // check for pcm5122
+  const uint8_t dvc_max_byte = 0xFF;
 
-  int8_t volume_byte =
-      dvc_min_byte + (this->volume_ * (dvc_max_byte - dvc_min_byte));
-  volume_byte = clamp<int8_t>(volume_byte, dvc_min_byte, dvc_max_byte);
+  // uint8_t volume_byte =
+  // dvc_min_byte + (this->volume_ * (dvc_max_byte - dvc_min_byte));
+  // volume_byte = clamp<uint8_t>(volume_byte, dvc_min_byte, dvc_max_byte);
+  uint8_t volume_byte = 0xFF - this->volume_ * 0xFF;
 
-  ESP_LOGVV(TAG, "Setting volume to 0x%.2x", volume_byte & 0xFF);
+  ESP_LOGD(TAG, "Setting volume to 0x%.2x", volume_byte & 0xFF);
 
   if ((!this->write_byte(PCM5122_REG00_PAGE_SELECT, 0x00)) ||
       (!this->write_byte(0x3D, volume_byte)) ||

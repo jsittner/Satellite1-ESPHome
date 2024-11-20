@@ -20,9 +20,10 @@ media_player:
     i2s_clock_mode: external
     channel: right_left
     i2s_audio_id: i2s_shared
-    volume_increment: 0.05
-    volume_min: 0.4
-    volume_max: 0.85
+    audio_dac:
+    # volume_increment: 0.05
+    # volume_min: 0.4
+    # volume_max: 0.85
     on_mute:
       - script.execute: control_leds
     on_unmute:
