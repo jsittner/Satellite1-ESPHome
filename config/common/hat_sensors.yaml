@@ -1,11 +1,11 @@
 sensor:
-  # - platform: aht10
-  #   address: 0x38
-  #   variant: AHT20
-  #   temperature:
-  #     name: "Living Room Temperature"
-  #   humidity:
-  #     name: "Living Room Humidity"
+  - platform: aht10
+    address: 0x38
+    variant: AHT20
+    temperature:
+       name: "Living Room Temperature"
+    humidity:
+       name: "Living Room Humidity"
   #   update_interval: 60s
 
   - platform: ltr_als_ps

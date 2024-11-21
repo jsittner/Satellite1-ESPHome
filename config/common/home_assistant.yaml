@@ -42,6 +42,14 @@ button:
             url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_fixed_delay.factory.bin
             md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_fixed_delay.factory.md5
 
+  - platform: template
+    id: activate_tas2780
+    name: "Activate TAS2780"
+    entity_category: diagnostic
+    on_press:
+      then:
+        - tas2780.activate:
+
 
 switch:
     # Wake Word Sound Switch.

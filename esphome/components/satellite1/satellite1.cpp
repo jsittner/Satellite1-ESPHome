@@ -104,7 +104,7 @@ bool Satellite1::transfer( uint8_t resource_id, uint8_t command, uint8_t* payloa
 
 void Satellite1::set_spi_flash_direct_access_mode(bool enable){
   this->xmos_rst_pin_->digital_write(enable);
-  this->flash_sw_pin_->digital_write(enable);
+  //this->flash_sw_pin_->digital_write(enable);
   this->spi_flash_direct_access_enabled_ = enable;
 }
 

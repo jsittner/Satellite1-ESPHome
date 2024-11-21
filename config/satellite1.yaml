@@ -136,8 +136,8 @@ satellite1:
   cs_pin: GPIO38
   data_rate: 4000000
   spi_mode: MODE3
-  xmos_rst_pin: GPIO12
-  flash_sw_pin: GPIO14
+  xmos_rst_pin: GPIO4
+  
 
 
 
