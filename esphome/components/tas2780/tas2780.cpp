@@ -61,7 +61,8 @@ void TAS2780::setup(){
 
   this->reg(TAS2780_PAGE_SELECT) = 0x00;
   //Power Mode 2 (no external VBAT)
-  this->reg(0x03) = 0xe8;
+  //this->reg(0x03) = 0xe8;
+  this->reg(0x03) = 0xa8;
   this->reg(0x04) = 0xa1;
   this->reg(0x71) = 0x12; 
   
@@ -143,7 +144,7 @@ void TAS2780::reset(){
 
   this->reg(TAS2780_PAGE_SELECT) = 0x00;
   //Power Mode 2 (no external VBAT)
-  this->reg(0x03) = 0xe8;
+  this->reg(0x03) = 0xa8;
   this->reg(0x04) = 0xa1;
   this->reg(0x71) = 0x12; 
   
@@ -175,7 +176,7 @@ void TAS2780::loop() {
     last_call = millis();
 
     // Register addresses to read and log
-    const uint8_t reg_addresses[] = {0x02, 0x49, 0x4A, 0x4B, 0x4F, 0x50};
+    const uint8_t reg_addresses[] = {0x02, 0x49, 0x4A, 0x4B, 0x4F, 0x50, 0x42};
 
     // Log each register value in the list
     for (uint8_t reg_addr : reg_addresses) {
@@ -183,23 +184,36 @@ void TAS2780::loop() {
       ESP_LOGD(TAG, "Reg 0x%02X: %d.", reg_addr, reg_val);
     }
     
+    ESP_LOGD(TAG, "''" );
+    
     this->reg(TAS2780_PAGE_SELECT) = 0x04;
-    const uint8_t reg_page04_addresses[] = {0x4c, 0x4d, 0x4e, 0x4f };
-
+    const uint8_t reg_page04_addresses[] = {0x4c, 0x4d, 0x4e };
     ESP_LOGD(TAG, "PAGE 0x04:");
-    // Log each register value in the list
+    uint32_t impedance = 0;
+    uint8_t byte_cnt = 2;
     for (uint8_t reg_addr : reg_page04_addresses) {
       uint8_t reg_val = this->reg(reg_addr).get();
       ESP_LOGD(TAG, "Reg 0x%02X: %d.", reg_addr, reg_val);
+      impedance |= reg_val << (byte_cnt * 8);
+      byte_cnt--;
     }
-    
+    ESP_LOGD(TAG, "Impedance: %4.2f", 16./5. * impedance / (1 << 14) );
     
     this->reg(TAS2780_PAGE_SELECT) = 0x00;
+    ESP_LOGD(TAG, "Amp Volume: %d:", (this->reg(0x03).get() >> 1) & 31);
+    ESP_LOGD(TAG, "Digital Volume: %d:", this->reg(0x1a).get() );
+    ESP_LOGD(TAG, "''" );
+    
+    
+    
     // Clear interrupt latches
     this->reg(0x5c) = 0x19 | (1 << 2);
-
+    
     // Activate
-    this->reg(0x02) = 0x80;
+    this->reg(0x02) = 0x80 | (1 << 4) | (1 << 3) | 0 ;
+    // Digital Volume Control
+    //this->reg(0x1a) = 0;
+    this->reg(0x03) = (3 << 6) | (10 < 1);
   }
 }
 
