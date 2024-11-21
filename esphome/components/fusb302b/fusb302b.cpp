@@ -419,7 +419,8 @@ bool FUSB302B::check_chip_id(){
   }
   uint8_t dev_id = this->reg(FUSB_DEVICE_ID).get();
   xSemaphoreGive(this->i2c_lock_);
-  return dev_id == 0x81; 
+  ESP_LOGD(TAG, "reported device id: %d", dev_id );
+  return (dev_id == 0x81) || (dev_id == 0x91); 
 }
 
 bool FUSB302B::enable_auto_crc(){
