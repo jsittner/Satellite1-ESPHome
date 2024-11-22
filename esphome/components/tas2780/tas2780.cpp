@@ -46,6 +46,7 @@ void TAS2780::setup(){
   this->reg(0x0e) = 0x44;
   this->reg(0x0f) = 0x40;
 
+  this->reg(0x0a) = (2 << 4) | (3 << 2) | 2 ;
 
   this->reg(TAS2780_PAGE_SELECT) = 0x01;
   this->reg(0x17) = 0xc0;
@@ -128,7 +129,7 @@ void TAS2780::reset(){
   this->reg(TAS2780_PAGE_SELECT) = 0x00;
   this->reg(0x0e) = 0x44;
   this->reg(0x0f) = 0x40;
-
+  this->reg(0x0a) = (2 << 4) | (3 << 2) | 2 ;
 
   this->reg(TAS2780_PAGE_SELECT) = 0x01;
   this->reg(0x17) = 0xc0;
@@ -169,6 +170,7 @@ void TAS2780::reset(){
 
 
 void TAS2780::loop() {
+#if 0  
   static uint32_t last_call = millis();
   const uint32_t interval = 4000; // Interval in milliseconds
 
@@ -200,6 +202,7 @@ void TAS2780::loop() {
     ESP_LOGD(TAG, "Impedance: %4.2f", 16./5. * impedance / (1 << 14) );
     
     this->reg(TAS2780_PAGE_SELECT) = 0x00;
+    
     ESP_LOGD(TAG, "Amp Volume: %d:", (this->reg(0x03).get() >> 1) & 31);
     ESP_LOGD(TAG, "Digital Volume: %d:", this->reg(0x1a).get() );
     ESP_LOGD(TAG, "''" );
@@ -208,13 +211,15 @@ void TAS2780::loop() {
     
     // Clear interrupt latches
     this->reg(0x5c) = 0x19 | (1 << 2);
-    
+#if 1    
     // Activate
     this->reg(0x02) = 0x80 | (1 << 4) | (1 << 3) | 0 ;
     // Digital Volume Control
     //this->reg(0x1a) = 0;
-    this->reg(0x03) = (3 << 6) | (10 < 1);
+    //this->reg(0x03) = (3 << 6) | (10 << 1);
+#endif
   }
+#endif
 }
 
 
