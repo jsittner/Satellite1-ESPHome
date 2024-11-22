@@ -147,7 +147,9 @@ http_request:
 safe_mode:
 
 status_led:
-  pin: GPIO45
+  pin: 
+    number: GPIO45
+    ignore_strapping_warning: true
 
 
 satellite1:
