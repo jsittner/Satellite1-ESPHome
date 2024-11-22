@@ -71,6 +71,9 @@ public:
   
 
 protected:
+  void publish_() override {
+    this->defer([this]() { this->state_callback_.call(); });
+  }
   
   bool init_fusb_settings_();
   

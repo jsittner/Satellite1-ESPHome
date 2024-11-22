@@ -183,9 +183,10 @@ protected:
   void set_state_(PowerDeliveryState new_state){
     this->prev_state_ = this->state; 
     this->state = new_state; 
-    this->state_callback_.call();
+    this->publish_();
   }
   
+  virtual void publish_(){}
   
   pd_spec_revision_t spec_revision_{pd_spec_revision_t::PD_SPEC_REV_2};
 
