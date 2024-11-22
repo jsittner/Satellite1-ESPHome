@@ -9,7 +9,7 @@ globals:
     initial_value: '0'
 
 light:
-  - platform: ${led_ring_platform}
+  - platform: satellite1
     id: satellite1_led_ring
     name: LED Ring
     entity_category: config

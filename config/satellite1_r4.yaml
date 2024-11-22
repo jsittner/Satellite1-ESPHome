@@ -1,0 +1,165 @@
+substitutions:
+  #Change to any preferred name
+  friendly_name: "Satellite1"  
+
+  #Recommend leaving the following unchanged
+  node_name: satellite1
+  company_name: FutureProofHomes
+  project_name: Satellite1
+  component_name: Core
+  
+  esp32_fw_version: "v2.0.0-alpha.8"
+  xmos_fw_version: "v1.0.1-alpha.32"
+  built_for_core_hw_version: "v1.0.0-beta.1"
+  built_for_hat_hw_version: "v1.0.0-beta.1"
+
+
+globals:
+  # Global initialisation variable. Initialized to true and set to false once everything is connected. Only used to have a smooth "plugging" experience
+  - id: init_in_progress
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+  # Global variable storing if user action causes warning
+  - id: warning
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  # Global variable tracking if the XMOS flash button was recently touched.
+  - id: xmos_flashing_started
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+
+esphome:
+  name: ${node_name}
+  name_add_mac_suffix: true
+  friendly_name: ${friendly_name}
+  min_version: 2024.10.0
+  
+  project:
+    name: ${company_name}.${project_name}
+    version: dev
+  
+  on_boot:
+    - priority: 375
+      then:
+        # Run the script to refresh the LED status
+        - script.execute: control_leds
+        - delay: 1s
+        
+        # If after 10 minutes, the device is still initializing (It did not yet connect to Home Assistant), turn off the init_in_progress variable and run the script to refresh the LED status
+        - delay: 10min
+        - if:
+            condition:
+              lambda: return id(init_in_progress);
+            then:
+              - lambda: id(init_in_progress) = false;
+              - script.execute: control_leds
+    
+    - priority: 600
+      then:
+        - logger.log: "${company_name} ${project_name} ${component_name} version ${built_for_core_hw_version} running ESP firmware: ${esp32_fw_version} and XMOS firmware: ${xmos_fw_version}"
+        - delay: 30s
+        - if:
+            condition:
+              lambda: return id(init_in_progress);
+            then:
+              - lambda: id(init_in_progress) = false;
+
+
+logger:
+  deassert_rts_dtr: true
+  hardware_uart : USB_SERIAL_JTAG
+  level: debug
+
+
+dashboard_import:
+  package_import_url: github://futureproofhomes/satellite1-esphome/config/satellite1.yaml
+
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/gnumpi/nabu-voice-kit
+      ref: dev
+    components: [ audio_dac, media_player ]
+
+  - source:
+      type: local
+      path: ../esphome/components
+    components: [ i2s_audio, satellite1, pcm5122, tas2780, fusb302b ]
+  
+  - source:
+      type: git
+      url: https://github.com/esphome/voice-kit
+      ref: 24.10.17
+    components: [ microphone, micro_wake_word, voice_assistant ]
+
+
+packages:
+  core_board: !include common/core_board_r4.yaml
+  wifi: !include common/wifi_improv.yaml
+  
+  sensors: !include common/hat_sensors.yaml
+  buttons: !include common/buttons.yaml
+  ha: !include common/home_assistant.yaml
+  mp: !include common/media_player.yaml
+  va: !include common/voice_assistant.yaml
+  # timer requires voice_assistant.yaml
+  timer: !include common/timer.yaml
+  led_ring: !include common/led_ring.yaml  
+  
+  #debug: !include common/debug.yaml
+
+
+light:
+  - id: !extend satellite1_led_ring
+    platform: esp32_rmt_led_strip
+    pin: GPIO21
+    rmt_channel: 1
+    num_leds: 24
+    rgb_order: GRB
+    chipset: WS2812
+
+microphone:
+  - id: !extend mic_interface
+    i2s_din_pin: GPIO15
+
+audio_dac:
+  - id: !extend dac_tas2780
+    address: 0x3F
+
+media_player:
+  - id: !extend nabu_media_player
+    i2s_dout_pin: GPIO9
+
+
+ota:
+  - platform: satellite1
+    id: ota_satellite1_xmos
+  
+  - platform: esphome
+
+http_request:
+
+safe_mode:
+
+status_led:
+  pin: GPIO45
+
+
+satellite1:
+  spi_id: spi_0
+  cs_pin: GPIO10
+  data_rate: 4000000
+  spi_mode: MODE3
+  xmos_rst_pin: GPIO4
+  flash_sw_pin: GPIO14
+
+
+
+   
+
+

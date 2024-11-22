@@ -30,3 +30,11 @@ spi:
     mosi_pin: GPIO39
     miso_pin: GPIO41
     interface: SPI3
+
+
+i2s_audio:
+  - id: i2s_shared
+    i2s_lrclk_pin: GPIO07
+    i2s_bclk_pin: GPIO08
+    i2s_mclk_pin: GPIO09
+    access_mode: duplex

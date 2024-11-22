@@ -1,15 +1,12 @@
-i2s_audio:
-  - id: i2s_shared
-    i2s_lrclk_pin: GPIO07
-    i2s_bclk_pin: GPIO08
-    i2s_mclk_pin: GPIO09
-    access_mode: duplex
-
-
 
 audio_dac:
   - platform: pcm5122
+    id: dac_pcm5122
     address: 0x4D
+  - platform: tas2780
+    id: dac_tas2780
+    address: 0x3F
+
 fusb302b:
   id: pd_fusb302b
   irq_pin: GPIO1
