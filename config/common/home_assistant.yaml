@@ -115,3 +115,11 @@ text_sensor:
       } else {
         return id(pd_fusb302b).contract;
       }
+
+  - platform: template
+    id: xmos_firmware_version_text
+    name: "XMOS Firmware"
+    icon: "mdi:memory"
+    entity_category: "diagnostic"
+    lambda: return id(satellite1_id).xmos_firmware_version();
+      

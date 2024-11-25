@@ -19,7 +19,8 @@ void Satellite1::setup(){
     }  
     if( this->flash_sw_pin_ ){
       this->flash_sw_pin_->setup();
-    }  
+    }
+    this->dfu_get_version_();  
 }   
 
 
@@ -106,6 +107,21 @@ void Satellite1::set_spi_flash_direct_access_mode(bool enable){
   this->xmos_rst_pin_->digital_write(enable);
   //this->flash_sw_pin_->digital_write(enable);
   this->spi_flash_direct_access_enabled_ = enable;
+}
+
+bool Satellite1::dfu_get_version_(){
+  uint8_t version_resp[3];
+  if( !this->transfer(DC_RESOURCE::DFU_CONTROLLER, DC_DFU_CMD::GET_VERSION, version_resp, 3 ) ){
+    ESP_LOGW(TAG, "Requesting XMOS version failed");
+    return false;    
+  }
+
+  ESP_LOGI(TAG, "XMOS Firmware Version: %u.%u.%u", version_resp[0], version_resp[1], version_resp[2]);
+  this->xmos_firmware_version_major_ = version_resp[0];
+  this->xmos_firmware_version_minor_ = version_resp[1];
+  this->xmos_firmware_version_patch_ = version_resp[2];
+
+  return true;
 }
 
 

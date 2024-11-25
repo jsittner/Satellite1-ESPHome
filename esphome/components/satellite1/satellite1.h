@@ -7,9 +7,8 @@
 namespace esphome {
 namespace satellite1 {
 
-//static const uint8_t CONTROL_STATUS_REGISTER_LEN = 4;
-
 static const uint8_t CONTROL_RESOURCE_CNTRL_ID   = 1;
+static const uint8_t CONTROL_CMD_READ_BIT = 0x80;
 
 static const uint8_t RET_STATUS_PAYLOAD_AVAIL = 23;
 
@@ -19,10 +18,13 @@ static const uint8_t GPIO_SERVICER_RESID_PORT_IN_A = 211;
 static const uint8_t GPIO_SERVICER_RESID_PORT_IN_B = 212;
 static const uint8_t GPIO_SERVICER_RESID_PORT_OUT_A = 221;
 
+static const uint8_t DFU_CONTROLLER_SERVICER_RESID = 240; 
+
 
 namespace DC_RESOURCE {
 enum dc_resource_enum {
     CNTRL_ID   = 1,
+    DFU_CONTROLLER = DFU_CONTROLLER_SERVICER_RESID,
     GPIO_PORT_IN_A = GPIO_SERVICER_RESID_PORT_IN_A,
     GPIO_PORT_IN_B = GPIO_SERVICER_RESID_PORT_IN_B,
     GPIO_PORT_OUT_A = GPIO_SERVICER_RESID_PORT_OUT_A
@@ -48,11 +50,29 @@ enum register_id {
 };
 }
 
+namespace DC_DFU_CMD {
+enum dc_dfu_cmd_id {
+   GET_VERSION = (88 | CONTROL_CMD_READ_BIT),
+};  
+}
+
+
+
 
 class Satellite1 : public Component,
                    public spi::SPIDevice <spi::BIT_ORDER_MSB_FIRST, spi::CLOCK_POLARITY_LOW,
                                           spi::CLOCK_PHASE_LEADING, spi::DATA_RATE_1KHZ> {
  public:
+  std::string xmos_firmware_version(){
+    if( this->xmos_firmware_version_major_  || this->xmos_firmware_version_minor_ ||  this->xmos_firmware_version_patch_ ){
+       
+       return  (   "v" + std::to_string(this->xmos_firmware_version_major_)
+                +  "." + std::to_string(this->xmos_firmware_version_minor_) 
+                +  "." + std::to_string(this->xmos_firmware_version_patch_));
+    }
+    return "No Firmware Found.";
+  }
+
   void setup() override;
   void dump_config() override;
   float get_setup_priority() const override { return setup_priority::IO; }
@@ -72,6 +92,11 @@ protected:
   
   GPIOPin* xmos_rst_pin_{nullptr};
   GPIOPin* flash_sw_pin_{nullptr};
+
+  bool dfu_get_version_();
+  uint8_t xmos_firmware_version_major_{0};
+  uint8_t xmos_firmware_version_minor_{0};
+  uint8_t xmos_firmware_version_patch_{0};
 };
 
 
