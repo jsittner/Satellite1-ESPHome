@@ -95,7 +95,7 @@ def _resolve_local_file(file_conf:dict) -> Path:
     """
     if file_conf[CONF_TYPE] == TYPE_LOCAL:
         local_file = Path(CORE.relative_config_path(file_conf[CONF_PATH]))
-        if not local_file.exists(local_file):
+        if not local_file.exists():
             raise cv.Invalid( f"Can't locate {local_file}.")
         return local_file
     elif file_conf[CONF_TYPE] == TYPE_WEB:
