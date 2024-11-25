@@ -402,10 +402,16 @@ void FUSB302B::check_status_(){
           this->send_message_(PDMsg( pd_control_msg_type::PD_CNTRL_GET_SOURCE_CAP));
         } else {
           ESP_LOGD(TAG, "send get_source_cap reached max count.");
-          this->fusb_reset_();
-          this->send_message_(PDMsg( pd_control_msg_type::PD_CNTRL_SOFT_RESET));
-          this->get_src_cap_retry_count_ = 3;
-          this->wait_src_cap_ = true;
+          if( !this->tried_soft_reset_ ){
+            this->fusb_reset_();
+            this->send_message_(PDMsg( pd_control_msg_type::PD_CNTRL_SOFT_RESET));
+            this->get_src_cap_retry_count_ = 2;
+            this->tried_soft_reset_ = true;
+          } else {
+            ESP_LOGD(TAG, "PD-Negotiaton failed. Staying with default 5V supply.");
+            this->wait_src_cap_ = false;
+            this->active_ams_ = false;
+          }
         } 
       }
     break;

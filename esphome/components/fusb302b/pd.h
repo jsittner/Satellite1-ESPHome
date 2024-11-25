@@ -191,8 +191,10 @@ protected:
   pd_spec_revision_t spec_revision_{pd_spec_revision_t::PD_SPEC_REV_2};
 
   bool wait_src_cap_{true};
+  bool tried_soft_reset_{false};
   int get_src_cap_retry_count_{0};
   uint32_t get_src_cap_time_stamp_;
+  
   int request_voltage_{5};
   
   CallbackManager<void()> state_callback_{};
