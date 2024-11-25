@@ -54,6 +54,10 @@ void PCM5122::setup() {
   pll_ref &= ~(7 << 4);
   pll_ref |= (1 << 4);
   this->reg(0x0D) = pll_ref;
+
+  // testing GPIO read
+  uint8_t gpioREG = this->reg(0x77).get();
+  ESP_LOGD(TAG, "GPIO register value is 0x%x", gpioREG);
 }
 
 void PCM5122::dump_config() {}

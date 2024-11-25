@@ -15,15 +15,11 @@ public:
   void digital_write(bool value) override;
   std::string dump_summary() const override { return ""; };
 
-  void set_pin(XMOSPort port, uint8_t pin) {
-    this->port_ = port;
-    this->pin_ = pin;
-  }
+  void set_pin(uint8_t pin) { this->pin_ = pin; }
   void set_inverted(bool inverted) { this->inverted_ = inverted; }
   void set_flags(gpio::Flags flags) { this->flags_ = flags; }
 
 protected:
-  XMOSPort port_;
   uint8_t pin_;
   bool inverted_;
   gpio::Flags flags_;

@@ -9,8 +9,10 @@
 namespace esphome {
 namespace pcm5122 {
 
-class PCM5122 : public audio_dac::AudioDac, public Component, public i2c::I2CDevice {
- public:
+class PCM5122 : public audio_dac::AudioDac,
+                public Component,
+                public i2c::I2CDevice {
+public:
   void setup() override;
   void dump_config() override;
   float get_setup_priority() const override { return setup_priority::DATA; }
@@ -22,12 +24,12 @@ class PCM5122 : public audio_dac::AudioDac, public Component, public i2c::I2CDev
   bool is_muted() override;
   float volume() override;
 
- protected:
+protected:
   bool write_mute_();
   bool write_volume_();
 
   float volume_{0};
 };
 
-}
-}
+} // namespace pcm5122
+} // namespace esphome
