@@ -1,4 +1,4 @@
-#include "flashing.h"
+#include "xmos_flashing.h"
 #include "esphome/core/log.h"
 
 #include <endian.h>
@@ -12,14 +12,8 @@ static const char *const TAG = "xmos_flasher";
 static const size_t FLASH_PAGE_SIZE = 256;
 static const size_t FLASH_SECTOR_SIZE = 4096;
 
-void SatelliteFlasher::setup() {
-}
 
-void SatelliteFlasher::dump_config(){
-}
-
-
-void SatelliteFlasher::dump_flash_info(){
+void XMOSFlasher::dump_flash_info(){
   esph_log_config(TAG, "Satellite1-Flasher:");
   esph_log_config(TAG, "	JEDEC-manufacturerID %hhu", this->_manufacturerID);
   esph_log_config(TAG, "	JEDEC-memoryTypeID %hhu", this->_memoryTypeID);
@@ -27,7 +21,7 @@ void SatelliteFlasher::dump_flash_info(){
 }
 
 
-bool SatelliteFlasher::init_flasher(){
+bool XMOSFlasher::init_flasher(){
   ESP_LOGD(TAG, "Setting up XMOS flasher...");
   this->parent_->set_spi_flash_direct_access_mode(true);
   this->read_JEDECID_();
@@ -35,19 +29,109 @@ bool SatelliteFlasher::init_flasher(){
   return true;
  }
 
-bool SatelliteFlasher::deinit_flasher(){
+bool XMOSFlasher::deinit_flasher(){
   ESP_LOGD(TAG, "Stopping XMOS flasher...");
   this->parent_->set_spi_flash_direct_access_mode(false);
   return true;
  }
 
+void XMOSFlasher::flash_remote_image(){
+  if (this->state != XMOS_FLASHER_IDLE){
+    ESP_LOGE(TAG, "XMOS flasher is busy, can't inititate new flash");
+    this->set_state_(XMOS_FLASHER_ERROR_STATE);
+    return;
+  }
+  
+  this->set_state_(XMOS_FLASHER_RECEIVING_IMG_INFO);
+  ESP_LOGI(TAG, "Starting flashing...");
+  
+  if (this->url_.empty()) {
+    ESP_LOGE(TAG, "URL not set; cannot start flashing");
+    this->set_state_(XMOS_FLASHER_ERROR_STATE);
+    return;
+  }
 
-void SatelliteFlasher::read_JEDECID_(){
+  if (this->md5_expected_.empty() && !this->http_get_md5_()) {
+    ESP_LOGE(TAG, "XMOS flasher is busy, can't inititate new flash");
+    this->set_state_(XMOS_FLASHER_ERROR_STATE);
+    return;
+  }
+  
+  ESP_LOGD(TAG, "MD5 expected: %s", this->md5_expected_.c_str());
+
+  HttpImageReader http_reader = HttpImageReader(this->http_request_, this->url_);
+  this->set_state_(XMOS_FLASHER_INITIALIZING);
+  if (this->init_flasher()){
+    this->set_state_(XMOS_FLASHER_FLASHING);
+    
+    if ( this->write_to_flash_(http_reader) != XMOS_FLASHING_OK ){
+      this->set_state_(XMOS_FLASHER_ERROR_STATE);
+    }
+    else {
+      this->set_state_(XMOS_FLASHER_SUCCESS_STATE);
+    }
+  }
+  else {
+    this->set_state_(XMOS_FLASHER_ERROR_STATE);
+  }
+
+  this->md5_computed_.clear();  // will be reset at next attempt
+  this->md5_expected_.clear();  // will be reset at next attempt
+      
+  delay(5);
+  this->deinit_flasher();
+}
+
+
+void XMOSFlasher::flash_embedded_image(){
+  if (this->state != XMOS_FLASHER_IDLE){
+    ESP_LOGE(TAG, "XMOS flasher is busy, can't inititate new flash");
+    this->set_state_(XMOS_FLASHER_ERROR_STATE);
+    return;
+  }
+  
+  ESP_LOGI(TAG, "Starting flashing...");
+
+  if (this->embedded_image_.length == 0) {
+    ESP_LOGE(TAG, "Didn't find embedded image!");
+    this->set_state_(XMOS_FLASHER_ERROR_STATE);
+    return;
+  }
+
+  this->md5_expected_ = this->embedded_image_.md5;
+  ESP_LOGD(TAG, "MD5 expected: %s", this->md5_expected_.c_str());
+
+  EmbeddedImageReader embedded_reader = EmbeddedImageReader(this->embedded_image_);
+  this->set_state_(XMOS_FLASHER_INITIALIZING);
+  if (this->init_flasher()){
+    this->set_state_(XMOS_FLASHER_FLASHING);  
+    
+    if( this->write_to_flash_(embedded_reader) == XMOS_FLASHING_OK )
+    {
+      this->set_state_(XMOS_FLASHER_SUCCESS_STATE);
+    }
+    else {
+      this->set_state_(XMOS_FLASHER_ERROR_STATE);
+    }
+  }
+  else {
+    this->set_state_(XMOS_FLASHER_ERROR_STATE);
+  }
+  
+  this->md5_computed_.clear();  // will be reset at next attempt
+  this->md5_expected_.clear();  // will be reset at next attempt
+  
+  delay(5);
+  this->deinit_flasher();
+}
+
+
+void XMOSFlasher::read_JEDECID_(){
   /*
 	_beginSPI(JEDECID); { _nextByte(WRITE, 0x9F);}
  	_chip.manufacturerID = _nextByte(READ);		// manufacturer id
  	_chip.memoryTypeID =   _nextByte(READ);		// memory type
- 	_chip.capacityID =     _nextByte(READ);		   // capacity
+ 	_chip.capacityID =     _nextByte(READ);	  // capacity
   */
   this->enable();
   this->transfer_byte(0x9F);
@@ -58,7 +142,7 @@ void SatelliteFlasher::read_JEDECID_(){
 }
 
 
-bool SatelliteFlasher::http_get_md5_(){
+bool XMOSFlasher::http_get_md5_(){
   if (this->md5_url_.empty()) {
     return false;
   }
@@ -93,11 +177,11 @@ bool SatelliteFlasher::http_get_md5_(){
   return read_len == MD5_SIZE;
 }
 
-bool SatelliteFlasher::validate_url_(const std::string &url){
+bool XMOSFlasher::validate_url_(const std::string &url){
   return true;
 }
 
-void SatelliteFlasher::set_url(const std::string &url) {
+void XMOSFlasher::set_url(const std::string &url) {
   if (!this->validate_url_(url)) {
     this->url_.clear();  // URL was not valid; prevent flashing until it is
     return;
@@ -105,7 +189,7 @@ void SatelliteFlasher::set_url(const std::string &url) {
   this->url_ = url;
 }
 
-void SatelliteFlasher::set_md5_url(const std::string &url) {
+void XMOSFlasher::set_md5_url(const std::string &url) {
   if (!this->validate_url_(url)) {
     this->md5_url_.clear();  // URL was not valid; prevent flashing until it is
     return;
@@ -114,50 +198,9 @@ void SatelliteFlasher::set_md5_url(const std::string &url) {
   this->md5_expected_.clear();  // to be retrieved later
 }
 
-void SatelliteFlasher::flash(){
-  if (this->url_.empty()) {
-    ESP_LOGE(TAG, "URL not set; cannot start update");
-    return;
-  }
-
-  ESP_LOGI(TAG, "Starting update...");
-#ifdef USE_OTA_STATE_CALLBACK
-  this->state_callback_.call(ota::OTA_STARTED, 0.0f, 0);
-#endif
-
-  uint8_t ota_status;
-  if (this->init_flasher() ){
-    ota_status = this->write_to_flash_();
-  }
-  else {
-    ota_status = OTA_CONNECTION_ERROR;
-  }
-  
-  ESP_LOGD(TAG, "flashing return status: %d", ota_status);
- 
-  switch (ota_status) {
-    case ota::OTA_RESPONSE_OK:
-#ifdef USE_OTA_STATE_CALLBACK
-      this->state_callback_.call(ota::OTA_COMPLETED, 100.0f, ota_status);
-#endif
-      // delay(10);
-      // App.safe_reboot();
-      break;
-
-    default:
-#ifdef USE_OTA_STATE_CALLBACK
-      this->state_callback_.call(ota::OTA_ERROR, 0.0f, ota_status);
-#endif
-      this->md5_computed_.clear();  // will be reset at next attempt
-      this->md5_expected_.clear();  // will be reset at next attempt
-      break;
-  }
-  delay(5);
-  this->deinit_flasher();
-}
 
 
-bool SatelliteFlasher::wait_while_flash_busy_(uint32_t timeout_ms){
+bool XMOSFlasher::wait_while_flash_busy_(uint32_t timeout_ms){
   int32_t timeout_invoke = millis();
   const uint8_t WEL  = 2;
   const uint8_t BUSY = 1;
@@ -174,7 +217,7 @@ bool SatelliteFlasher::wait_while_flash_busy_(uint32_t timeout_ms){
   return false;
 }
 
-bool SatelliteFlasher::enable_writing_(){
+bool XMOSFlasher::enable_writing_(){
   //enable writing
   this->enable();
   this->transfer_byte(0x06);
@@ -191,7 +234,7 @@ bool SatelliteFlasher::enable_writing_(){
   return true;
 }
 
-bool SatelliteFlasher::disable_writing_(){
+bool XMOSFlasher::disable_writing_(){
   //disable writing
   this->enable();
   this->transfer_byte(0x04);
@@ -199,7 +242,7 @@ bool SatelliteFlasher::disable_writing_(){
   return true;
 }
 
-bool SatelliteFlasher::erase_sector_(int sector){
+bool XMOSFlasher::erase_sector_(int sector){
   //erase 4kB sector
   assert( FLASH_SECTOR_SIZE == 4096 );
   uint32_t u32 = htole32(sector * FLASH_SECTOR_SIZE);
@@ -224,7 +267,7 @@ bool SatelliteFlasher::erase_sector_(int sector){
   return true;
 }  
 
-bool SatelliteFlasher::write_page_( uint32_t byte_addr, uint8_t* buffer ){
+bool XMOSFlasher::write_page_( uint32_t byte_addr, uint8_t* buffer ){
   if ((byte_addr & (FLASH_PAGE_SIZE - 1)) != 0){
     ESP_LOGE(TAG, "Address needs to be page aligned (%d).", FLASH_PAGE_SIZE);
     return false;
@@ -254,7 +297,7 @@ bool SatelliteFlasher::write_page_( uint32_t byte_addr, uint8_t* buffer ){
   return true;
 }
 
-bool SatelliteFlasher::read_page_( uint32_t byte_addr, uint8_t* buffer ){
+bool XMOSFlasher::read_page_( uint32_t byte_addr, uint8_t* buffer ){
   if ((byte_addr & (FLASH_PAGE_SIZE - 1)) != 0){
     return false;
   }
@@ -275,89 +318,59 @@ bool SatelliteFlasher::read_page_( uint32_t byte_addr, uint8_t* buffer ){
 
 
 
-uint8_t SatelliteFlasher::write_to_flash_() {
+
+uint8_t XMOSFlasher::write_to_flash_(XMOSImageReader &reader) {
+  this->flashing_progress = 0;
   uint32_t last_progress = 0;
   uint32_t update_start_time = millis();
   md5::MD5Digest md5_receive;
   std::unique_ptr<char[]> md5_receive_str(new char[33]);
 
-  if (this->md5_expected_.empty() && !this->http_get_md5_()) {
-    return OTA_MD5_INVALID;
-  }
-
-  ESP_LOGD(TAG, "MD5 expected: %s", this->md5_expected_.c_str());
-
-  auto url_with_auth = this->url_;
-  if (url_with_auth.empty()) {
-    return OTA_BAD_URL;
-  }
-
   // we will compute MD5 on the fly for verification
   md5_receive.init();
   ESP_LOGV(TAG, "MD5Digest initialized");
-
-  ESP_LOGVV(TAG, "url_with_auth: %s", url_with_auth.c_str());
-  ESP_LOGI(TAG, "Connecting to: %s", this->url_.c_str());
-
-  auto container = this->http_request_->get(url_with_auth);
-
-  if (container == nullptr) {
-    return OTA_CONNECTION_ERROR;
-  }
-
-  ESP_LOGV(TAG, "OTA begin");
   
-  size_t size_in_pages = ((container->content_length + FLASH_PAGE_SIZE - 1) / FLASH_PAGE_SIZE);
+  reader.init_reader();
+  size_t size_in_bytes = reader.get_image_size();
+  size_t size_in_pages = ((size_in_bytes + FLASH_PAGE_SIZE - 1) / FLASH_PAGE_SIZE);
   size_t size_in_sectors = ((size_in_pages * FLASH_PAGE_SIZE + FLASH_SECTOR_SIZE - 1) / FLASH_SECTOR_SIZE);
 
   
   for( int sector = 0; sector < size_in_sectors; sector++ ){
     if( !this->erase_sector_(sector) ){
       ESP_LOGE(TAG, "Error while erasing sector %d", sector );
-      return OTA_INIT_FLASH_ERROR;
+      return XMOS_INIT_FLASH_ERROR;
     }
   }
   
   uint8_t dnload_req[HTTP_RECV_BUFFER]; 
   uint8_t cmp_buf[HTTP_RECV_BUFFER];
  
-  this->read_page_(0, &cmp_buf[0] );
-  for(int pos=0; pos < 10 ; pos++){
-    ESP_LOGD(TAG, "%.2x", cmp_buf[pos] );
-  }
-
   size_t page_pos = 0;
-  while (container->get_bytes_read() < container->content_length) {
+  size_t bytes_read = 0;
+  while ( bytes_read < size_in_bytes ) {
 
     // read a maximum of chunk_size bytes into buf. (real read size returned)
-    int bufsize = container->read(&dnload_req[0], HTTP_RECV_BUFFER);
-    ESP_LOGVV(TAG, "bytes_read_ = %u, body_length_ = %u, bufsize = %i", container->get_bytes_read(),
-              container->content_length, bufsize);
+    int bufsize = reader.read_image_block(dnload_req, HTTP_RECV_BUFFER);
+    bytes_read += bufsize;
+    //ESP_LOGD( TAG, "read %d from %d (current: %d)", bytes_read, size_in_bytes, bufsize );
 
     if (bufsize < 0) {
       ESP_LOGE(TAG, "Stream closed");
-      this->cleanup_(container);
-      return OTA_CONNECTION_ERROR;
+      reader.deinit_reader();
+      return XMOS_CONNECTION_ERROR;
     } else if (bufsize == FLASH_PAGE_SIZE) {
       md5_receive.add(&dnload_req[0], bufsize);
-      
-      //this->read_page_(page_pos, &dbg_buf[0] );
       
       if( !this->write_page_(page_pos, &dnload_req[0] )){
         ESP_LOGE(TAG, "writing page error");
       }
       
+      //read back the page that has just been written
       this->read_page_(page_pos, &cmp_buf[0] );
       
       if (memcmp(&dnload_req[0], &cmp_buf[0], FLASH_PAGE_SIZE) != 0){
-        //give it a second try
-        /*
-        for(int pos=0; pos < FLASH_PAGE_SIZE ; pos++){
-          if( cmp_buf[pos] != dnload_req[pos] ){
-             ESP_LOGD(TAG, "%d: %.2x - %.2x ", pos, cmp_buf[pos], dnload_req[pos] );
-          }
-        }
-        */
+        // not equal, give it a second try
         if( !this->write_page_(page_pos, &dnload_req[0] )){
           ESP_LOGE(TAG, "writing page error");
         } 
@@ -365,39 +378,41 @@ uint8_t SatelliteFlasher::write_to_flash_() {
         this->read_page_(page_pos, &cmp_buf[0] );
         if (memcmp(&dnload_req[0], &cmp_buf[0], FLASH_PAGE_SIZE) != 0){
           ESP_LOGE(TAG, "Read page mismatch, page addr: %d", page_pos );
-          return OTA_INIT_FLASH_ERROR;
+          return XMOS_INIT_FLASH_ERROR;
         }  
       }
       page_pos += FLASH_PAGE_SIZE;
 
     } else if (bufsize > 0 && bufsize < HTTP_RECV_BUFFER) {
       // add read bytes to MD5
-      if ( (container->get_bytes_read() != container->content_length) ){
-        return OTA_CONNECTION_ERROR;
+      if ( ( bytes_read != size_in_bytes) ){
+        return XMOS_CONNECTION_ERROR;
       }
+      
       md5_receive.add(&dnload_req[0], bufsize);
       memset(&dnload_req[bufsize], 0, HTTP_RECV_BUFFER - bufsize);
       this->write_page_(page_pos, &dnload_req[0] );
       this->read_page_(page_pos, &cmp_buf[0] );
       if (memcmp(&dnload_req[0], &cmp_buf[0], FLASH_PAGE_SIZE) != 0 ){
-        return OTA_INIT_FLASH_ERROR;
+        return XMOS_INIT_FLASH_ERROR;
       }
       page_pos += FLASH_PAGE_SIZE;
     }
+    
+    this->flashing_progress = bytes_read * 100 / size_in_bytes;
 
+    App.feed_wdt();
     uint32_t now = millis();
-    if ((now - last_progress > 1000) or (container->get_bytes_read() == container->content_length)) {
+    if ((now - last_progress > 1000) or (bytes_read == size_in_bytes)) {
       last_progress = now;
-      float percentage = container->get_bytes_read() * 100.0f / container->content_length;
+      float percentage = bytes_read * 100.0f / size_in_bytes;
+      this->flashing_progress = (uint8_t) percentage;
+      this->state_callback_.call();
       ESP_LOGD(TAG, "Progress: %0.1f%%", percentage);
-#ifdef USE_OTA_STATE_CALLBACK
-      this->state_callback_.call(ota::OTA_IN_PROGRESS, percentage, 0);
-#endif
     }
   }  // while
 
-
-  container->end();
+  reader.deinit_reader();
 
   ESP_LOGI(TAG, "Done in %.0f seconds", float(millis() - update_start_time) / 1000);
 
@@ -407,36 +422,47 @@ uint8_t SatelliteFlasher::write_to_flash_() {
   this->md5_computed_ = md5_receive_str.get();
   if (strncmp(this->md5_computed_.c_str(), this->md5_expected_.c_str(), MD5_SIZE) != 0) {
     ESP_LOGE(TAG, "MD5 computed: %s - Aborting due to MD5 mismatch", this->md5_computed_.c_str());
-    return ota::OTA_RESPONSE_ERROR_MD5_MISMATCH;
+    return XMOS_MD5_MISMATCH_ERROR;
+  } else {
+    ESP_LOGD(TAG, "MD5 computed: %s - Matches!", this->md5_computed_.c_str());
   }
 
-  /*
-  ESP_LOGI(TAG, "Rebooting XMOS SoC...");
-  if (!this->dfu_reboot_()) {
-    return OTA_COMMUNICATION_ERROR;
-  }
-
-  delay(100);  // NOLINT
-
-  while (!this->dfu_get_version_()) {
-    delay(250);  // NOLINT
-    // feed watchdog and give other tasks a chance to run
-    App.feed_wdt();
-    yield();
-  }
-
-  ESP_LOGI(TAG, "Update complete");
-  */
-  
-  return ota::OTA_RESPONSE_OK;
+    
+  return XMOS_FLASHING_OK;
 }
 
 
-void SatelliteFlasher::cleanup_(const std::shared_ptr<http_request::HttpContainer> &container) {
-  ESP_LOGV(TAG, "Aborting HTTP connection");
-  container->end();
-};
 
+bool HttpImageReader::init_reader(){
+  auto url_with_auth = this->url_;
+    if (url_with_auth.empty() || this->http_request_ == nullptr) {
+        return false;
+    }
+    
+    ESP_LOGVV(TAG, "url_with_auth: %s", url_with_auth.c_str());
+    ESP_LOGI(TAG, "Connecting to: %s", this->url_.c_str());
+    
+    this->container_ = this->http_request_->get(url_with_auth);
+    if (this->container_ == nullptr) {
+      return false;
+    }
+    return true;
+}
+
+bool HttpImageReader::deinit_reader(){
+    if( this->container_ != nullptr ){
+      this->container_->end();
+    }
+    return true;
+}
+
+
+int HttpImageReader::read_image_block(uint8_t *buffer, size_t block_size){
+    int bytes_read = this->container_->read(buffer, block_size);
+    ESP_LOGVV(TAG, "bytes_read_ = %u, body_length_ = %u, bufsize = %i", container->get_bytes_read(),
+              container->content_length, bytes_read);
+    return bytes_read;
+} 
 
 
 }
