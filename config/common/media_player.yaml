@@ -19,11 +19,20 @@ fusb302b:
       - text_sensor.template.publish:
           id: pd_state_text
           state: !lambda 'return id(pd_fusb302b).contract;'
+      - if:
+          condition:
+            lambda: |-
+              return id(pd_fusb302b).contract_voltage >= 9;
+          then:
+            - tas2780.activate:
   on_disconnect:
+    then:
       - text_sensor.template.publish:
           id: pd_state_text
           state: "Detached"
-  
+      - tas2780.deactivate:
+
+
 media_player:
   - platform: satellite1
     id: nabu_media_player
