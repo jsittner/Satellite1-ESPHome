@@ -18,6 +18,13 @@ static const uint8_t TAS2780_MODE_CTRL_MODE__ACTIVE  = 0x00;
 static const uint8_t TAS2780_MODE_CTRL_MODE__ACTIVE_MUTED  = 0x01;
 static const uint8_t TAS2780_MODE_CTRL_MODE__SFTW_SHTDWN  = 0x02;
 
+static const uint8_t TAS2780_INT_MASK0 = 0x3b;
+static const uint8_t TAS2780_INT_MASK1 = 0x3c;
+static const uint8_t TAS2780_INT_MASK4 = 0x3d;
+static const uint8_t TAS2780_INT_MASK2 = 0x40;
+static const uint8_t TAS2780_INT_MASK3 = 0x41;
+
+
 
 void TAS2780::setup(){
   // select page 0
@@ -71,10 +78,11 @@ void TAS2780::setup(){
   //Set interrupt masks
   this->reg(TAS2780_PAGE_SELECT) = 0x00;
   //mask VBAT1S Under Voltage
-  this->reg(0x3d) = 0xFF;
+  this->reg(TAS2780_INT_MASK4) = 0xFF;
   //mask all PVDD and VBAT1S interrupts
-  this->reg(0x40) = 0xFF;
-  this->reg(0x41) = 0xFF;
+  this->reg(TAS2780_INT_MASK2) = 0xFF;
+  this->reg(TAS2780_INT_MASK3) = 0xFF;
+  this->reg(TAS2780_INT_MASK1) = 0xFF;
   
   
   // set interrupt to trigger For 
