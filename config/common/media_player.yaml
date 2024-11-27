@@ -1,14 +1,38 @@
-i2s_audio:
-  - id: i2s_shared
-    i2s_lrclk_pin: GPIO07
-    i2s_bclk_pin: GPIO08
-    i2s_mclk_pin: GPIO09
-    access_mode: duplex
 
 audio_dac:
   - platform: pcm5122
+    id: dac_pcm5122
     address: 0x4D
-  
+  - platform: tas2780
+    id: dac_tas2780
+    address: 0x3F
+
+fusb302b:
+  id: pd_fusb302b
+  irq_pin: GPIO1
+  request_voltage: 9
+  on_power_ready:
+    then:
+      - logger.log: 
+          format: "PD contract got accepted: %s"
+          args: [ 'id(pd_fusb302b).contract.c_str()' ]
+      - text_sensor.template.publish:
+          id: pd_state_text
+          state: !lambda 'return id(pd_fusb302b).contract;'
+      - if:
+          condition:
+            lambda: |-
+              return id(pd_fusb302b).contract_voltage >= 9;
+          then:
+            - tas2780.activate:
+  on_disconnect:
+    then:
+      - text_sensor.template.publish:
+          id: pd_state_text
+          state: "Detached"
+      - tas2780.deactivate:
+
+
 media_player:
   - platform: satellite1
     id: nabu_media_player
@@ -20,10 +44,9 @@ media_player:
     i2s_clock_mode: external
     channel: right_left
     i2s_audio_id: i2s_shared
-    audio_dac:
-    # volume_increment: 0.05
-    # volume_min: 0.4
-    # volume_max: 0.85
+    volume_increment: 0.05
+    volume_min: 0.4
+    volume_max: 0.85
     on_mute:
       - script.execute: control_leds
     on_unmute:
@@ -70,7 +93,15 @@ media_player:
       - id: wake_word_triggered_sound
         file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/wake_word_triggered.flac
 
-
+binary_sensor:
+  - platform: gpio
+    id: jack_switch
+    pin:
+      pcm5122: 
+      pin: 0
+      inverted: false
+    name: "Jack Switch"
+    icon: "mdi:"
 
 script:
   # Script executed when we want to play sounds on the device.
