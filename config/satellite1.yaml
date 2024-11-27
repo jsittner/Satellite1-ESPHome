@@ -3,13 +3,13 @@ substitutions:
   friendly_name: "Satellite1"  
 
   #Recommend leaving the following unchanged
-  node_name: satellite1-r3
+  node_name: satellite1
   company_name: FutureProofHomes
   project_name: Satellite1
   component_name: Core
   
   esp32_fw_version: "v2.0.0-alpha.8"
-  xmos_fw_version: "v1.0.1-alpha.28"
+  xmos_fw_version: "v1.0.1-alpha.33"
   built_for_core_hw_version: "v1.0.0-beta.1"
   built_for_hat_hw_version: "v1.0.0-beta.1"
 
@@ -90,6 +90,12 @@ external_components:
       type: local
       path: ../esphome/components
     components: [ i2s_audio, satellite1, pcm5122 ]
+  
+  - source:
+      type: git
+      url: https://github.com/esphome/voice-kit
+      ref: 24.10.17
+    components: [ microphone, micro_wake_word, voice_assistant ]
 
 
 packages:
@@ -103,11 +109,8 @@ packages:
   va: !include common/voice_assistant.yaml
   # timer requires voice_assistant.yaml
   timer: !include common/timer.yaml
-  
-  led_ring: !include 
-    file: common/led_ring.yaml
-    vars:
-      led_ring_platform: satellite1
+  led_ring: !include common/led_ring.yaml 
+    
   
   #debug: !include common/debug.yaml
 
@@ -122,17 +125,18 @@ http_request:
 safe_mode:
 
 status_led:
-  pin: GPIO45
+  pin:
+    number: GPIO45
+    ignore_strapping_warning: true
 
 
 satellite1:
   spi_id: spi_0
-  cs_pin: GPIO38
-  data_rate: 4000000
+  cs_pin: GPIO10
+  data_rate: 8000000
   spi_mode: MODE3
-  xmos_rst_pin: GPIO12
-  flash_sw_pin: GPIO14
-
+  xmos_rst_pin: GPIO4
+  
 
 
    

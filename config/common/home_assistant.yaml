@@ -83,3 +83,4 @@ switch:
       - script.execute: control_leds
     on_turn_off:
       - script.execute: control_leds
+
