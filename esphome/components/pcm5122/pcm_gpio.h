@@ -7,7 +7,7 @@
 namespace esphome {
 namespace pcm5122 {
 
-class PCMGPIOPin : public GPIOPin {
+class PCMGPIOPin : public GPIOPin, public Parented<PCM5122> {
 public:
   void setup() override {};
   void pin_mode(gpio::Flags flags) override {}
