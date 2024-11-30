@@ -71,7 +71,10 @@ jobs:
 
       - name: Update YAML files
         run: |
-          files=$(echo "${{ steps.dump.outputs.files }}" | sed 's/^"//' | sed 's/"$//' | sed 's/\\n/\n/g')
+          files=$(echo ${{ steps.dump.outputs.files }} \
+                | sed 's/^"//' \
+                | sed 's/"$//' \
+                | sed 's/\\n/\n/g')
           tag="${{ steps.set_release_tag.outputs.release_tag }}"
           for file in $files; do
             echo "Updating $file"
