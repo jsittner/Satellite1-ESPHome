@@ -3,12 +3,8 @@ name: Build-Satellite-Firmware
 on:
   push:
     branches:
-      - main
       - develop
-  pull_request:
   workflow_dispatch:
-  release:
-    types: [published]
 
 env:
   DEFAULT_PYTHON: "3.9"
@@ -21,9 +17,9 @@ jobs:
       files: |
         config/satellite1.yaml
       esphome-version: 2024.11.2
-      release-summary: ${{ github.event_name == 'release' && github.event.release.body || '' }}
-      release-url: ${{ github.event_name == 'release' && github.event.release.html_url || '' }}
-      release-version: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
+      release-summary: develop-branch
+      release-url: 
+      release-version: 
   
   
   create_artifact_matrix:
@@ -50,36 +46,3 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT 
           echo "matrix=$(ls files | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
   
-  
-  upload_release_asset:
-    if: github.event_name == 'release'
-    name: Upload as release asset
-    needs:
-      - create_artifact_matrix
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix:
-        file: ${{fromJSON(needs.create_artifact_matrix.outputs.matrix) }}
-    steps:
-      - name: debug 
-        id: debug_matrix
-        run: |
-          echo ${{matrix.file}}
-      
-      - name: zip it # This would actually build your project, using zip for an example artifact
-        run: |
-          zip --junk-paths ${{matrix.file}} files/${{matrix.file}}/**
-      
-      - name: Upload Release Asset - Zip file
-        id: upload-release-asset-zip
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ matrix.file }}.zip
-          asset_name: ${{ matrix.file }}
-          asset_content_type: application/octet-stream  
-        
