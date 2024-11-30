@@ -129,7 +129,7 @@ jobs:
   create_release:
     name: Create Release
     # only build release for staging and main branches
-    if: github.ref_name == 'main' || github.ref_name == 'staging' 
+    # if: github.ref_name == 'main' || github.ref_name == 'staging' 
     needs:
       - push-tag
       - prepare
