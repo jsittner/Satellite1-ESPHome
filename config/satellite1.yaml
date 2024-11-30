@@ -110,7 +110,6 @@ packages:
   ha: !include common/home_assistant.yaml
   mp: !include common/media_player.yaml
   va: !include common/voice_assistant.yaml
-  # timer requires voice_assistant.yaml
   timer: !include common/timer.yaml
   led_ring: !include common/led_ring.yaml 
     
@@ -123,6 +122,7 @@ ota:
     id: ota_satellite1_xmos
   
   - platform: esphome
+    id: ota_esphome
 
 http_request:
 
@@ -140,9 +140,3 @@ satellite1:
   data_rate: 8000000
   spi_mode: MODE3
   xmos_rst_pin: GPIO4
-  
-
-
-   
-
-

@@ -12,6 +12,9 @@ esp32:
     version: recommended
     sdkconfig_options:
       CONFIG_ESP32_S3_BOX_BOARD: "y"
+      CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
 
 psram:
   mode: octal
