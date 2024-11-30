@@ -128,6 +128,8 @@ jobs:
 
   create_release:
     name: Create Release
+    # only build release for staging and main branches
+    # if: github.ref_name == 'main' || github.ref_name == 'staging' 
     needs:
       - push-tag
       - prepare
@@ -143,12 +145,11 @@ jobs:
           mkdir -p build
           echo "Copying all files to build directory"
           find files -name "*.bin" -exec cp {} build/ \;
-          zip -r build.zip build
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          files: build.zip
+          files: build/*.bin
           generate_release_notes: true
           append_body: true
           body: ${{ needs.push-tag.outputs.changelog }}
