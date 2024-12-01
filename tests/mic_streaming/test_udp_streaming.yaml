@@ -1,0 +1,196 @@
+substitutions:
+  #Change to any preferred name
+  friendly_name: "Satellite1 - UDP Streaming"  
+
+  #Recommend leaving the following unchanged
+  node_name: satellite1
+  company_name: FutureProofHomes
+  project_name: Satellite1
+  component_name: Core
+  
+  esp32_fw_version: "v2.0.0-alpha.8"
+  xmos_fw_version: "v1.0.1-alpha.28"
+  built_for_core_hw_version: "v1.0.0-beta.1"
+  built_for_hat_hw_version: "v1.0.0-beta.1"
+
+http_request:
+
+ota:
+  - platform: satellite1
+    id: ota_satellite1_xmos
+
+globals:
+  # Global initialisation variable. Initialized to true and set to false once everything is connected. Only used to have a smooth "plugging" experience
+  - id: init_in_progress
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+  # Global variable storing if user action causes warning
+  - id: warning
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  # Global variable tracking if the XMOS flash button was recently touched.
+  - id: xmos_flashing_started
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+
+esphome:
+  name: ${node_name}
+  name_add_mac_suffix: true
+  friendly_name: ${friendly_name}
+  min_version: 2024.10.0
+  
+  project:
+    name: ${company_name}.${project_name}
+    version: dev
+  
+  on_boot:
+    - priority: 375
+      then:
+        # Run the script to refresh the LED status
+        - script.execute: control_leds
+        - delay: 1s
+        
+        # If after 10 minutes, the device is still initializing (It did not yet connect to Home Assistant), turn off the init_in_progress variable and run the script to refresh the LED status
+        - delay: 10min
+        - if:
+            condition:
+              lambda: return id(init_in_progress);
+            then:
+              - lambda: id(init_in_progress) = false;
+              - script.execute: control_leds
+    
+    - priority: 600
+      then:
+        - logger.log: "${company_name} ${project_name} ${component_name} version ${built_for_core_hw_version} running ESP firmware: ${esp32_fw_version} and XMOS firmware: ${xmos_fw_version}"
+        - delay: 30s
+        - if:
+            condition:
+              lambda: return id(init_in_progress);
+            then:
+              - lambda: id(init_in_progress) = false;
+
+
+logger:
+  deassert_rts_dtr: true
+  hardware_uart : USB_SERIAL_JTAG
+  level: debug
+
+
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/gnumpi/nabu-voice-kit
+      ref: dev
+    components: [ audio_dac, media_player ]
+
+  - source:
+      type: local
+      path: ../../esphome/components
+    components: [ i2s_audio, satellite1, pcm5122, udp_stream ]
+  
+  - source:
+      type: git
+      url: https://github.com/esphome/voice-kit
+      ref: dev
+    components: [ microphone, micro_wake_word, voice_assistant ]
+
+
+
+
+api:
+
+packages:
+  core_board: !include ../../config/common/core_board.yaml
+  wifi: !include ../../config/common/wifi_improv.yaml
+  #debug: !include common/debug.yaml
+
+script:
+  - id: control_leds
+    then:
+    
+
+satellite1:
+  spi_id: spi_0
+  cs_pin: GPIO10
+  data_rate: 4000000
+  spi_mode: MODE3
+  xmos_rst_pin: GPIO4
+  
+
+microphone:
+  - platform: satellite1
+    sample_rate: 48000
+    i2s_din_pin: GPIO15
+    bits_per_sample: 32bit
+    i2s_clock_mode: external
+    channel: right_left
+    pdm: false
+    
+    i2s_audio_id: i2s_shared
+    channel_0:
+      id: asr_mic
+      amplify_shift: 0
+    channel_1:
+      id: comm_mic
+      amplify_shift: 6
+
+
+
+udp_stream:
+  id: udp_streamer
+  microphone: asr_mic
+
+switch:
+  - platform: template
+    name: "Use ASR Mic"
+    id: use_asr_mic
+    icon: mdi:microphone
+    restore_mode: RESTORE_DEFAULT_OFF
+    optimistic: true
+    on_turn_on:
+      - logger.log: "Switching to ASR Mic for UDP stream"
+      - lambda: |-
+          if (id(udp_streamer).is_running()) {
+            id(udp_streamer).request_stop();  // Stop current stream
+            delay(500);  // Wait for stream to stop
+          }
+          id(udp_streamer).set_microphone(id(asr_mic));  // Set ASR mic
+          id(udp_streamer).request_start(true);  // Start stream with ASR mic
+      - switch.turn_off: use_comm_mic         # Turn off the other switch
+
+    on_turn_off:
+      - logger.log: "Turning off ASR Mic UDP stream"
+      - lambda: |-
+          if (id(udp_streamer).is_running()) {
+            id(udp_streamer).request_stop();  // Stop the stream when ASR mic is turned off
+          }
+
+  - platform: template
+    name: "Use Comm Mic"
+    id: use_comm_mic
+    icon: mdi:microphone
+    restore_mode: RESTORE_DEFAULT_OFF
+    optimistic: true
+    on_turn_on:
+      - logger.log: "Switching to Comm Mic for UDP stream"
+      - lambda: |-
+          if (id(udp_streamer).is_running()) {
+            id(udp_streamer).request_stop();  // Stop current stream
+            delay(500);  // Wait for stream to stop
+          }
+          id(udp_streamer).set_microphone(id(comm_mic));  // Set Comm mic
+          id(udp_streamer).request_start(true);  // Start stream with Comm mic
+      - switch.turn_off: use_asr_mic           # Turn off the other switch
+
+    on_turn_off:
+      - logger.log: "Turning off Comm Mic UDP stream"
+      - lambda: |-
+          if (id(udp_streamer).is_running()) {
+            id(udp_streamer).request_stop();  // Stop the stream when Comm mic is turned off
+          }
+ 
