@@ -12,68 +12,6 @@ namespace power_delivery {
 
 static const char *const TAG = "PowerDelivery";
 
-bool PowerDelivery::handle_message_(const PDMsg &msg){
-  if( msg.num_of_obj  == 0){
-    return this->handle_cntrl_message_(msg);
-  } else {
-    return this->handle_data_message_(msg);
-  }
-}
-
-bool PowerDelivery::handle_data_message_(const PDMsg &msg){
-  switch( msg.type ){
-    case PD_DATA_SOURCE_CAP:
-        this->set_ams(true);
-        this->wait_src_cap_ = false;
-        if( PDMsg::spec_rev_ == pd_spec_revision_t::PD_SPEC_REV_1 ){
-          if( msg.spec_rev >= pd_spec_revision_t::PD_SPEC_REV_3 ){
-            PDMsg::spec_rev_ = pd_spec_revision_t::PD_SPEC_REV_3;
-          } else {
-            PDMsg::spec_rev_ = pd_spec_revision_t::PD_SPEC_REV_2;
-          }
-        }
-        PDMsg::spec_rev_ = msg.spec_rev;
-        this->respond_to_src_cap_msg_(msg);   
-      break;
-    case PD_DATA_ALERT:
-      break;
-    default:
-     break;  
-  }
-  return true;
-}
-
-bool PowerDelivery::handle_cntrl_message_(const PDMsg &msg){
-  switch( msg.type ){
-    case PD_CNTRL_GOODCRC:
-        ESP_LOGD(TAG, "recieved good crc msg");
-        PDMsg::msg_cnter_++;
-      break;
-    case PD_CNTRL_ACCEPT:
-      if( this->active_ams_ ){
-        if( this->requested_contract_ != this->accepted_contract_ ){
-          this->set_state_(PD_STATE_TRANSITION);
-        }
-        this->set_contract_(this->requested_contract_);
-      }
-      break;
-    case PD_CNTRL_PS_RDY:
-      this->set_ams(false);
-      this->set_state_(PD_STATE_EXPLICIT_SPR_CONTRACT);
-      break; 
-    case PD_CNTRL_SOFT_RESET:
-      this->send_message_(PDMsg(pd_control_msg_type::PD_CNTRL_ACCEPT));
-      this->set_state_(PD_STATE_DEFAULT_CONTRACT);
-      PDMsg::msg_cnter_ = 0;
-      break;
-    default:
-     break;  
-  }
-  return true;
-}
-
-
-
 
 pd_contract_t pd_parse_power_info( const pd_pdo_t &pdo )
 {
@@ -115,46 +53,46 @@ pd_contract_t pd_parse_power_info( const pd_pdo_t &pdo )
 
 static PDMsg build_source_cap_response( pd_contract_t pwr_info, uint8_t pos )
 {
-  
   /* Reference: 6.4.2 Request Message */
-  uint32_t data[1];
+  constexpr uint32_t templ = ( 
+        //((uint32_t)   1 << 22)  |   /* B22 EPR Mode Capable */
+        //((uint32_t)   1 << 23)  |   /* B23 Unchunked Extended Messages Supported */                                       
+          ((uint32_t)   1 << 24)  |   /* B24  No USB Suspend */
+          ((uint32_t)   1 << 25)      /* B25 USB Communication Capable */ 
+        //((uint32_t)   1 << 26)      /* B26 Capability Mismatch */
+        //((uint32_t)   1 << 27)      /* B27 GiveBack flag = 0 (depricated)*/              
+  );
+  uint32_t data = templ;
   if (pwr_info.type != PD_PDO_TYPE_AUGMENTED_PDO) {
       uint32_t req = pwr_info.max_i ? pwr_info.max_i : pwr_info.max_p;
       //uint32_t req = 10;
-      data[0] = ((uint32_t) req <<  0) |   /* B9 ...0    Max Operating Current 10mA units / Max Operating Power in 250mW units */
-                ((uint32_t) req << 10) |   /* B19...10   Operating Current 10mA units / Operating Power in 250mW units */
-                //((uint32_t)   1 << 25) |   /* B25        USB Communication Capable */
-                ((uint32_t) 1 << 24 ) |    /*B24  No USB Suspend */
-                ((uint32_t) pos << 28);    /* B30...28   Object position (000b is Reserved and Shall Not be used) */
+      data  |= ((uint32_t) req <<  0)  |   /* B9 ...0    Max Operating Current 10mA units / Max Operating Power in 250mW units */
+               ((uint32_t) req << 10)  |   /* B19...10   Operating Current 10mA units / Operating Power in 250mW units */                                            /* B21...20 Reserved - Shall be set to zero */
+               ((uint32_t) pos << 28);     /* B30...28   Object position (000b is Reserved and Shall Not be used) */   
   } else {
     ESP_LOGE(TAG, "Augmented PDO is not supported yet" );
   }
-  
-  return PDMsg(pd_data_msg_type::PD_DATA_REQUEST, data, 1);
+  return PDMsg(pd_data_msg_type::PD_DATA_REQUEST, &data, 1);
 }
 
 PDMsg PowerDelivery::create_fallback_request_message() const {
   //request first PDO, which is always the 5V Fixed Supply
-  uint8_t  pos = 1;
+  const uint8_t pos = 1;
   //set max and operational current to 500mA (default maximum for usb) 
-  uint32_t req = 10;
-  uint32_t data[1] = {
-    ((uint32_t) req <<  0)  |   /* B9 ...0    Max Operating Current 10mA units */
-    ((uint32_t) req << 10)  |   /* B19...10   Operating Current 10mA units */
+  constexpr uint32_t data[1] = {
+    ((uint32_t)  30 <<  0)  |   /* B9 ...0    Max Operating Current 10mA units */
+    ((uint32_t)  10 << 10)  |   /* B19...10   Operating Current 10mA units */
                                 /* B21...20 Reserved - Shall be set to zero */
   //((uint32_t)   1 << 22)  |   /* B22 EPR Mode Capable */
   //((uint32_t)   1 << 23)  |   /* B23 Unchunked Extended Messages Supported */                         
     ((uint32_t)   1 << 24)  |   /* B24 No USB Suspend */
-  //((uint32_t)   1 << 25)  |   /* B25 USB Communication Capable */
+    ((uint32_t)   1 << 25)  |   /* B25 USB Communication Capable */
   //((uint32_t)   1 << 26)  |   /* B26 Capability Mismatch */
-  //((uint32_t)   1 << 27)  |   /* B27 GiveBack flag = 0 */
-    ((uint32_t) pos << 28)      /* B31...28   Object position (000b is Reserved and Shall Not be used) */
+  //((uint32_t)   1 << 27)  |   /* B27 GiveBack flag = 0 (depricated)*/
+    ((uint32_t)   1 << 28)      /* B31...28   Object position (000b is Reserved and Shall Not be used) */
   };
   return PDMsg(pd_data_msg_type::PD_DATA_REQUEST, data, 1);
 }
-
-
-
 
 bool PowerDelivery::respond_to_src_cap_msg_( const PDMsg &msg ){
   // {.limit = 100,  .use_voltage = 1, .use_current = 0},    /* PD_POWER_OPTION_MAX_20V */
@@ -163,13 +101,13 @@ bool PowerDelivery::respond_to_src_cap_msg_( const PDMsg &msg ){
   uint8_t selected = 255;
   for(int idx=0; idx < msg.num_of_obj; idx++){
     pd_contract_t pwr_info = pd_parse_power_info( msg.data_objects[idx] );
-    ESP_LOGD(TAG, "SRC_CAP: type: %d V(%d - %d) I(%d) P(%d)",
-        pwr_info.type,
-        pwr_info.min_v,
-        (pwr_info.max_v * 50) / 1000,
-        pwr_info.max_i,
-        pwr_info.max_p
-     );
+    //  printf("SRC_CAP: type: %d V(%d - %d) I(%d) P(%d)\n",
+    //     pwr_info.type,
+    //     pwr_info.min_v,
+    //     (pwr_info.max_v * 50) / 1000,
+    //     pwr_info.max_i,
+    //     pwr_info.max_p
+    //  );
     if (pwr_info.type == PD_PDO_TYPE_AUGMENTED_PDO) {
         continue;
     } else {
@@ -183,6 +121,7 @@ bool PowerDelivery::respond_to_src_cap_msg_( const PDMsg &msg ){
     }
   }
   this->requested_contract_ = selected_info;
+  
   //PDMsg response = create_fallback_request_message();
   PDMsg response = build_source_cap_response(selected_info, selected + 1);
   this->send_message_( response );
@@ -218,6 +157,7 @@ void PowerDelivery::set_contract_(pd_contract_t contract){
   this->accepted_contract_ = contract;
   this->contract = this->get_contract_string(contract);
   this->contract_voltage = contract.max_v;
+  this->contract_timer_ = millis();
 }
 
 
@@ -241,7 +181,7 @@ PDMsg::PDMsg(uint16_t header){
 
 bool PDMsg::set_header(uint16_t header){
   this->type = static_cast<pd_data_msg_type>((header >> 0) & 0x1F);  /*   4...0  Message Type */
-  this->spec_rev = (pd_spec_revision_t) ((header >> 6) & 0x3);                              /*   7...6  Specification Revision */
+  this->spec_rev = (pd_spec_revision_t) ((header >> 6) & 0x3);       /*   7...6  Specification Revision */
   this->id = (header >> 9) & 0x7;                                    /*  11...9  MessageID */
   this->num_of_obj = (header >> 12) & 0x7;                           /* 14...12  Number of Data Objects */
   this->extended = (header >> 15);                                   /* */
@@ -256,15 +196,22 @@ PDMsg::PDMsg(pd_control_msg_type cntrl_msg_type){
    this->extended = false;
 }
 
+PDMsg::PDMsg(pd_control_msg_type cntrl_msg_type, uint8_t msg_id){
+   this->type = cntrl_msg_type;
+   this->spec_rev = this->spec_rev_;
+   this->id = msg_id;
+   this->num_of_obj = 0;
+   this->extended = false;
+}
 
-PDMsg::PDMsg(pd_data_msg_type msg_type, uint32_t* objects, uint8_t len){
+
+PDMsg::PDMsg(pd_data_msg_type msg_type, const uint32_t* objects, uint8_t len){
    assert( len > 0 && len < PD_MAX_NUM_DATA_OBJECTS );
    this->type = msg_type;
    this->spec_rev = this->spec_rev_;
    this->id = (this->msg_cnter_) % 8;
    this->num_of_obj = len;
    this->extended = false;
-   
    memcpy( this->data_objects, objects, len * sizeof(uint32_t) );
 }
 

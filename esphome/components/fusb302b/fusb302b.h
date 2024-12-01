@@ -57,7 +57,6 @@ public:
 public:
   bool cc_line_selection_();
   void fusb_reset_();
-  void fusb_hard_reset_();
   
   void check_status_();
   
@@ -71,6 +70,9 @@ public:
   
 
 protected:
+  void publish_() override {
+    this->defer([this]() { this->state_callback_.call(); });
+  }
   
   bool init_fusb_settings_();
   
