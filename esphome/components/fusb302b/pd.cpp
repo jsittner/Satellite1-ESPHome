@@ -172,7 +172,7 @@ bool PowerDelivery::request_voltage(int voltage){
   return false;
 }
 
-pd_spec_revision_t PDMsg::spec_rev_ = pd_spec_revision_t::PD_SPEC_REV_1;
+pd_spec_revision_t PDMsg::spec_rev_ = pd_spec_revision_t::PD_SPEC_REV_2;
 uint8_t PDMsg::msg_cnter_ = 0;
 
 PDMsg::PDMsg(uint16_t header){

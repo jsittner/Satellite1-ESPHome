@@ -109,7 +109,7 @@ static void trigger_task(void *params){
        vTaskDelay(pdMS_TO_TICKS(1));
        void taskENTER_CRITICAL( void );
        PDMsg &msg = event_info.msg;
-       printf( "PD-Received new message with id: %d (%d, %d) [%u].\n", msg.id, msg.type, msg.num_of_obj, millis());
+       //printf( "PD-Received new message with id: %d (%d, %d) [%u].\n", msg.id, msg.type, msg.num_of_obj, millis());
        fusb302b->handle_message_(msg);
        void taskEXIT_CRITICAL( void );
     }
@@ -499,9 +499,9 @@ bool FUSB302B::send_message_(const PDMsg &msg){
   if( err != i2c::ERROR_OK ){
     printf("Sending Message (%d) failed err: %d.\n", (int) msg.type, err );
   } 
-  else {
-     printf("Sent Message (%d) id: %d. [%d] \n", (int) msg.type, msg.id, millis() );
-  }
+  // else {
+  //    printf("Sent Message (%d) id: %d. [%d] \n", (int) msg.type, msg.id, millis() );
+  // }
   
   //msg.debug_log();  
   xSemaphoreGive(this->i2c_lock_);

@@ -242,6 +242,7 @@ inline bool PowerDelivery::handle_data_message_(const PDMsg &msg){
     case PD_DATA_SOURCE_CAP:
         this->set_ams(true);
         this->wait_src_cap_ = false;
+#if 0        
         if( PDMsg::spec_rev_ == pd_spec_revision_t::PD_SPEC_REV_1 ){
           if( msg.spec_rev >= pd_spec_revision_t::PD_SPEC_REV_3 ){
             PDMsg::spec_rev_ = pd_spec_revision_t::PD_SPEC_REV_3;
@@ -250,6 +251,7 @@ inline bool PowerDelivery::handle_data_message_(const PDMsg &msg){
           }
         }
         PDMsg::spec_rev_ = msg.spec_rev;
+#endif        
         this->respond_to_src_cap_msg_(msg);   
       break;
     case PD_DATA_ALERT:
