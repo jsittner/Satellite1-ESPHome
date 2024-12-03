@@ -3,7 +3,7 @@ substitutions:
   project_name: Satellite1
 
   #set this version by GHA at build time
-  esp32_fw_version: "v2.0.0-alpha.32"
+  esp32_fw_version: dev
 
 packages:
   # This is an inline package to prefix the on_client_connected with the wait_until action
@@ -36,11 +36,11 @@ update:
     name: None
     id: update_http_request
     # source: https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest.json
-    source: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/simulating-latest-manifest-json-http-endpoint/manifests/latest/satellite1-esp32s3.manifest.json
+    source: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/manifest.json
 
 dashboard_import:
   # package_import_url: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml
-  package_import_url: github://FutureProofHomes/Documentation/simulating-latest-manifest-json-http-endpoint/manifests/latest/satellite1.yaml
+  package_import_url: github://FutureProofHomes/Satellite1-ESPHome/config/satellite1.yaml
 
 wifi:
   on_connect:
@@ -74,8 +74,8 @@ switch:
     on_turn_on:
       - logger.log: "OTA updates set to use Beta firmware"
       # - lambda: id(update_http_request).set_source_url("https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest-beta.json");
-      - lambda: id(update_http_request).set_source_url("https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/simulating-latest-manifest-json-http-endpoint/manifests/latest/satellite1-beta-esp32s3.manifest.json");
+      - lambda: id(update_http_request).set_source_url("https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/manifest-beta.json");
     on_turn_off:
       - logger.log: "OTA updates set to use Production firmware"
       # - lambda: id(update_http_request).set_source_url("https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest.json");
-      - lambda: id(update_http_request).set_source_url("https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/simulating-latest-manifest-json-http-endpoint/manifests/latest/satellite1-esp32s3.manifest.json");
+      - lambda: id(update_http_request).set_source_url("https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/manifest.json");
