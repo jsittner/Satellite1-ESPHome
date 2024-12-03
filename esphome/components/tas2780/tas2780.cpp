@@ -1,0 +1,125 @@
+#include "tas2780.h"
+
+#include "esphome/core/defines.h"
+#include "esphome/core/helpers.h"
+#include "esphome/core/log.h"
+
+namespace esphome {
+namespace tas2780 {
+
+static const char *const TAG = "tas2780";
+
+static const uint8_t TAS2780_REG00_PAGE_SELECT = 0x00;        // Page Select
+
+void TAS2780::setup(){
+  // select page 0
+  this->reg(TAS2780_REG00_PAGE_SELECT) = 0x00;
+   
+  // software reset
+  this->reg(0x01) = 0x01;
+  
+  uint8_t chd1 = this->reg(0x05).get();
+  uint8_t chd2 = this->reg(0x68).get();
+  uint8_t chd3 = this->reg(0x02).get();
+
+  if( chd1 == 0x41 ){
+    ESP_LOGD(TAG, "TAS2780 chip found.");
+    ESP_LOGD(TAG, "Reg 0x68: %d.", chd2 );
+    ESP_LOGD(TAG, "Reg 0x02: %d.", chd3 );
+  }
+  else
+  {
+    ESP_LOGD(TAG, "TAS2780 chip not found.");
+    this->mark_failed();
+    return;
+  }
+  
+  this->reg(TAS2780_REG00_PAGE_SELECT) = 0x00;
+  this->reg(0x0e) = 0x44;
+  this->reg(0x0f) = 0x40;
+
+
+  this->reg(TAS2780_REG00_PAGE_SELECT) = 0x01;
+  this->reg(0x17) = 0xc0;
+  this->reg(0x19) = 0x00;
+  this->reg(0x21) = 0x00;
+  this->reg(0x35) = 0x74;
+
+  this->reg(TAS2780_REG00_PAGE_SELECT) = 0xFD;
+  this->reg(0x0d) = 0x0d;
+  this->reg(0x3e) = 0x4a;
+  this->reg(0x0d) = 0x00;
+
+
+  this->reg(TAS2780_REG00_PAGE_SELECT) = 0x00;
+  //Power Mode 2 (no external VBAT)
+  this->reg(0x03) = 0xe8;
+  this->reg(0x04) = 0xa1;
+  this->reg(0x71) = 0x12; 
+  
+    // activate 
+  //uint8_t reg2 = this->reg(0x02).get();
+  this->reg(0x02) = 0x80;
+
+  }
+
+void TAS2780::loop(){
+#if 1  
+  uint8_t reg2 = this->reg(0x02).get();
+  ESP_LOGD(TAG, "Reg 0x02: %d.", reg2 );
+
+  reg2 = this->reg(0x49).get();
+  ESP_LOGD(TAG, "Reg 0x49: %d.", reg2 );
+  reg2 = this->reg(0x4A).get();
+  ESP_LOGD(TAG, "Reg 0x4A: %d.", reg2 );
+  reg2 = this->reg(0x4B).get();
+  ESP_LOGD(TAG, "Reg 0x4B: %d.", reg2 );
+  reg2 = this->reg(0x4F).get();
+  ESP_LOGD(TAG, "Reg 0x4F: %d.", reg2 );
+  reg2 = this->reg(0x50).get();
+  ESP_LOGD(TAG, "Reg 0x50: %d.\n", reg2 );
+  delay(5);
+#endif
+}
+
+
+
+void TAS2780::dump_config(){
+
+}
+
+bool TAS2780::set_mute_off(){
+  this->is_muted_ = false;
+  return this->write_mute_();
+}
+
+bool TAS2780::set_mute_on(){
+  this->is_muted_ = true;
+  return this->write_mute_();
+}
+
+bool TAS2780::set_volume(float volume) {
+  this->volume_ = clamp<float>(volume, 0.0, 1.0);
+  return this->write_volume_();
+}
+
+bool TAS2780::is_muted() {
+  return this->is_muted_;
+}
+
+float TAS2780::volume() {
+  return this->volume_;
+}
+
+bool TAS2780::write_mute_() {
+  return true;
+}
+
+bool TAS2780::write_volume_() {
+  return true;
+}
+
+
+
+}
+}

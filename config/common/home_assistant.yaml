@@ -1,0 +1,100 @@
+api:
+  id: api_id
+  on_client_connected:
+    - lambda: id(init_in_progress) = false;
+    - script.execute: control_leds
+  on_client_disconnected:
+    - script.execute: control_leds
+
+
+button:
+  # Restarts Sat1 Device
+  - platform: restart
+    name: "Restart Sat1"
+    entity_category: diagnostic
+
+  # Restarts Sat1 to safe mode
+  - platform: safe_mode
+    name: "Restart Sat1 (Safe Mode)"
+    entity_category: diagnostic
+
+  # Restores the Sat1 ESP back to factory settings
+  #TODO: What buttons do we want to long press to initiate this
+  #TODO: Create the factory reset firmware
+  - platform: factory_reset
+    id: factory_reset_button
+    name: "Factory Reset ESP32 FW"
+    entity_category: diagnostic
+    internal: true
+
+  # Flashes Satellite1 with most recent XMOS firmware
+  #TODO: This needs to grab the latest firmware and not hardcoded version
+  #TODO: The LED ring does not show a visual status when flashing because we connect to the LEDs via XMOS and can't connect during flashing.  Hrmmmmmm....
+  - platform: template
+    id: flash_satellite
+    name: "Flash XMOS ${xmos_fw_version}"
+    entity_category: diagnostic
+    on_press:
+      then:
+        - lambda: id(xmos_flashing_started) = true;
+        - script.execute: control_leds
+        - ota.satellite1.flash:
+            url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_fixed_delay.factory.bin
+            md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_fixed_delay.factory.md5
+
+
+switch:
+    # Wake Word Sound Switch.
+  - platform: template
+    id: wake_sound
+    name: Wake sound
+    icon: "mdi:bullhorn"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
+    # This is the master mute switch. It is exposed to Home Assistant. The user can only turn it on and off if the hardware switch is off. (The hardware switch overrides the software one)
+  - platform: template
+    id: master_mute_switch
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: "mdi:microphone-off"
+    name: Mute Microphones
+    entity_category: config
+    turn_on_action:
+      - if:
+          condition:
+            binary_sensor.is_off: btn_left
+          then:
+            - switch.template.publish:
+                id: master_mute_switch
+                state: ON
+    turn_off_action:
+      - if:
+          condition:
+            binary_sensor.is_off: btn_left
+          then:
+            - switch.template.publish:
+                id: master_mute_switch
+                state: OFF
+          else:
+            - lambda: id(warning) = true;
+            - script.execute: control_leds
+    on_turn_on:
+      - script.execute: control_leds
+    on_turn_off:
+      - script.execute: control_leds
+
+text_sensor:
+  - platform: template
+    id: pd_state_text
+    name: "USB-C Power Draw"
+    icon: "mdi:usb-c-port"
+    entity_category: "diagnostic"
+    update_interval: never
+    lambda: |-
+      if( id(pd_fusb302b).state == power_delivery::PD_STATE_DISCONNECTED){
+        return std::string("Detached");
+      } else {
+        return id(pd_fusb302b).contract;
+      }
+

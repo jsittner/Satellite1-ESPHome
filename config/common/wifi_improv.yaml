@@ -1,0 +1,17 @@
+globals:
+  - id: improv_ble_in_progress
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+wifi:
+  id: wifi_id
+  on_connect:
+    - delay: 5s  # Gives time for improv results to be transmitted
+    - lambda: id(improv_ble_in_progress) = false;
+    - script.execute: control_leds
+  on_disconnect:
+    - script.execute: control_leds
+
+improv_serial:
+
