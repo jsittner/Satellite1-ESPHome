@@ -93,6 +93,9 @@ binary_sensor:
     pin:
       number: 0
       inverted: true
+      mode:
+        input: true
+        pullup: true
       ignore_strapping_warning: true
     name: "Button Right (Action)"
     icon: "mdi:gesture-tap"
