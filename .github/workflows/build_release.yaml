@@ -67,7 +67,7 @@ jobs:
           echo "long_version=${{ steps.set_release_tag.outputs.release_tag }}_$(date +%Y-%m-%d)_$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
           echo "label_version=$(echo "${{ steps.set_release_tag.outputs.release_tag }}" | sed 's/\./dot/g' | sed 's/-/dash/g')" >> $GITHUB_OUTPUT
           echo "previous_tag=$(git describe --abbrev=0 --tags)" >> $GITHUB_OUTPUT
-          echo "files=$(ls config/satellite*.yaml | jq --slurp --raw-input )" >> $GITHUB_OUTPUT     
+          echo "files=$(ls config/satellite*.factory.yaml | jq --slurp --raw-input )" >> $GITHUB_OUTPUT
 
       - name: Update YAML files
         run: |
@@ -129,7 +129,7 @@ jobs:
   create_release:
     name: Create Release
     # only build release for staging and main branches
-    # if: github.ref_name == 'main' || github.ref_name == 'staging' 
+    # if: github.ref_name == 'main' || github.ref_name == 'staging'
     needs:
       - push-tag
       - prepare
