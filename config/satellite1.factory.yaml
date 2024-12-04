@@ -67,7 +67,6 @@ switch:
     id: beta_firmware
     name: Beta firmware
     icon: "mdi:test-tube"
-    disabled_by_default: true
     entity_category: diagnostic
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
