@@ -270,6 +270,29 @@ light:
               brightness_decreasing = !brightness_decreasing;
             }
       - addressable_lambda:
+          name: "Success"
+          update_interval: 10ms
+          lambda: |-
+            static uint8_t brightness_step = 0;
+            static bool brightness_decreasing = true;
+            static uint8_t brightness_step_number = 10;
+            if (initial_run) {
+              brightness_step = 0;
+              brightness_decreasing = true;
+            }
+            Color error_color(0, 255, 0);
+            for (int i = 0; i < 24; i++) {
+              it[i] = error_color * uint8_t(255/brightness_step_number*(brightness_step_number-brightness_step));
+            }
+            if (brightness_decreasing) {
+              brightness_step++;
+            } else {
+              brightness_step--;
+            }
+            if (brightness_step == 0 || brightness_step == brightness_step_number) {
+              brightness_decreasing = !brightness_decreasing;
+            }
+      - addressable_lambda:
           name: "Warning"
           update_interval: 10ms
           lambda: |-
@@ -389,6 +412,23 @@ light:
             }
             index = (index + 1) % 24;
       - addressable_lambda:
+          name: "Flashing XMOS"
+          update_interval: 333ms
+          lambda: |-
+            static uint8_t index = 0;
+            Color color(255, 0, 0);
+            if (initial_run) {
+              index = 0;
+            }
+            for (int i = 0; i < 24; i++) {
+              if (i <= index ) {
+                it[i] = Color::BLACK;
+              } else {
+                it[i] = color;
+              }
+            }
+            index = id(global_led_animation_index) % 24;
+      - addressable_lambda:
           name: "Factory Reset Coming Up"
           update_interval: 500ms
           lambda: |-
@@ -471,6 +511,8 @@ script:
             id(control_leds_init_state).execute();
           } else if (!id(wifi_id).is_connected() || !id(api_id).is_connected()){
             id(control_leds_no_ha_connection_state).execute();
+          } else if (id(xmos_flashing_state) > 0) {
+            id(control_leds_xmos_flasher_state_update).execute();
           } else if (id(volume_buttons_touched)) {
             id(control_leds_volume_buttons_touched).execute();
           } else if (id(btn_action).state) {
@@ -700,4 +742,26 @@ script:
           id: voice_assistant_leds
           effect: "Timer tick"
 
-  
+  # Script executed when the timer is ticking, to control the LEDs
+  # The LEDs shows the remaining time as a fraction of the full ring.
+  - id: control_leds_xmos_flasher_state_update
+    then:
+      - if:
+          condition: 
+            lambda: 'return id(xmos_flashing_state) == 1;'
+          then:
+            - light.turn_on:
+                brightness: !lambda return min ( max( id(led_ring).current_values.get_brightness() , 0.2f ) + 0.1f , 1.0f );
+                id: voice_assistant_leds
+                effect: "Flashing XMOS"
+          else:
+            - light.turn_on:
+                brightness: !lambda return min ( max( id(led_ring).current_values.get_brightness() , 0.2f ) + 0.1f , 1.0f );
+                id: voice_assistant_leds
+                effect: !lambda 'return id(xmos_flashing_state) == 3 ? "Error" : "Success" ;'
+            - delay: 2s
+            - light.turn_off:
+                id: voice_assistant_leds 
+      
+      
+          

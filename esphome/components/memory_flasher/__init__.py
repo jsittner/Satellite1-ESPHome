@@ -51,6 +51,7 @@ CONF_FLASH_IMAGE_VERSION = "image_version"
 CONF_FLASHER_ID = "flasher_id"
 
 CONF_ON_PROGRESS_UPDATE = "on_progress_update"
+CONF_ON_FLASHING_START = "on_flashing_start"
 CONF_ON_FLASHING_SUCCESS = "on_flashing_success"
 CONF_ON_FLASHING_FAILED = "on_flashing_failed"
 
@@ -69,6 +70,10 @@ FlashAction = flasher_ns.class_(
 
 FlashEmbeddedAction = flasher_ns.class_(
     "FlashEmbeddedAction", automation.Action
+)
+
+FlashingStartedTrigger = flasher_ns.class_(
+    "FlashingStartedTrigger", automation.Trigger
 )
 
 FlashProgressUpdateTrigger = flasher_ns.class_(
@@ -235,6 +240,9 @@ FLASHER_CONFIG_SCHEMA = cv.Schema(
         cv.GenerateID(CONF_HTTP_REQUEST_ID): cv.use_id(HttpRequestComponent),
         cv.Optional(CONF_EMBED_FLASH_IMAGE): EMBED_FLASH_IMAGE_SCHEMA,
         
+        cv.Optional(CONF_ON_FLASHING_START): automation.validate_automation({
+            cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(FlashingStartedTrigger),
+        }),
         cv.Optional(CONF_ON_PROGRESS_UPDATE): automation.validate_automation({
             cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(FlashProgressUpdateTrigger),
         }),
@@ -281,6 +289,10 @@ async def register_memory_flasher(var, flasher_config):
         expected_md5_sum, hex_strings, num_of_bytes = _prepare_flash_image_pgm(image_conf)
         prog_arr = cg.progmem_array(image_conf[CONF_RAW_DATA_ID], hex_strings)
         cg.add( var.set_embedded_image(prog_arr, num_of_bytes, expected_md5_sum, _version_to_bytes(image_conf[CONF_FLASH_IMAGE_VERSION])) )
+
+    for conf in flasher_config.get(CONF_ON_FLASHING_START, []):
+        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var )
+        await automation.build_automation(trigger, [], conf)
 
     for conf in flasher_config.get(CONF_ON_PROGRESS_UPDATE, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var )

@@ -85,6 +85,7 @@ void XMOSFlasher::publish_progress_(){
       }
       this->last_published_ = now;
       ESP_LOGD(TAG, "Progress: %d%%", this->flashing_progress );
+      this->publish();
     }
 }
 
