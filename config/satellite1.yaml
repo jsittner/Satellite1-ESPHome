@@ -93,7 +93,7 @@ external_components:
   - source:
       type: local
       path: ../esphome/components
-    components: [ i2s_audio, satellite1, pcm5122, tas2780, fusb302b ]
+    components: [ i2s_audio, satellite1, memory_flasher, tas2780, pcm5122, fusb302b ]
   
   - source:
       type: git
@@ -118,9 +118,6 @@ packages:
   # debug: !include common/debug.yaml
 
 ota:
-  - platform: satellite1
-    id: ota_satellite1_xmos
-  
   - platform: esphome
     id: ota_esphome
 
@@ -135,8 +132,29 @@ status_led:
 
 
 satellite1:
+  id: satellite1_id
   spi_id: spi_0
   cs_pin: GPIO10
   data_rate: 8000000
   spi_mode: MODE3
   xmos_rst_pin: GPIO4
+  
+  on_xmos_no_response:
+    then:
+      - text_sensor.template.publish:
+          id: xmos_firmware_version_text
+          state: !lambda 'return id(satellite1_id).status_string();'
+  
+  on_xmos_connected:
+    then:
+      - text_sensor.template.publish:
+          id: xmos_firmware_version_text
+          state: !lambda 'return id(satellite1_id).status_string();'
+
+memory_flasher:
+  - platform: satellite1
+    id: xflash
+    embed_flash_image:
+      image_version: ${xmos_fw_version}
+      image_file: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_fixed_delay.factory.bin
+      md5_file: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_fixed_delay.factory.md5
