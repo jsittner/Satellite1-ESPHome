@@ -45,8 +45,6 @@ button:
     entity_category: diagnostic
     on_press:
       then:
-        # - lambda: id(xmos_flashing_started) = true;
-        # - script.execute: control_leds
         - memory_flasher.write_embedded_image:
             
   - platform: template

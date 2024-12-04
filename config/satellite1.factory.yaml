@@ -30,7 +30,6 @@ packages:
                 - lambda: return id(xflash).flash_accessible();
                 - lambda: return id(xflash).has_image_embedded();
               then:
-                - logger.log: "shouldn't get here"
                 - memory_flasher.write_embedded_image:
       
       on_xmos_connected:
