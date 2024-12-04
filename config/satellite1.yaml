@@ -67,7 +67,7 @@ esphome:
 logger:
   deassert_rts_dtr: true
   hardware_uart : USB_SERIAL_JTAG
-  level: verbose
+  level: debug
 
 
 dashboard_import:
