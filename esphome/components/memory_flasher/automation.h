@@ -73,6 +73,18 @@ protected:
   FlasherState last_reported_{FLASHER_IDLE};
 };
 
+class ErasingDoneTrigger : public Trigger<>{
+public:
+  explicit ErasingDoneTrigger(MemoryFlasher *xflash) {
+    xflash->add_on_state_callback([this, xflash]() {
+      if( xflash->state == FLASHER_SUCCESS_STATE && xflash->requested_action == ACTION_FULL_ERASE ){
+        this->trigger();
+      } 
+    });
+  }
+};
+
+
 
 class FlashingProgressUpdateTrigger : public Trigger<>{
 public:
@@ -89,6 +101,12 @@ protected:
 
 using FlasherSuccessTrigger = FlasherStateTrigger<FLASHER_SUCCESS_STATE>;
 using FlasherFailedTrigger = FlasherStateTrigger<FLASHER_ERROR_STATE>;
+
+template<typename... Ts> class InProgressCondition : public Condition<Ts...>, public Parented<MemoryFlasher> {
+ public:
+  bool check(Ts... x) override { return this->parent_->state != FLASHER_IDLE; }
+};
+
 
 
 }

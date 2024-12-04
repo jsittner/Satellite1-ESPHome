@@ -31,7 +31,7 @@ void XMOSFlasher::loop(){
       {
         int remaining = this->erasing_step_();
         this->publish_progress_();
-        if( remaining == 0 && this->requested_action_ == ACTION_FULL_ERASE ){
+        if( remaining == 0 && this->requested_action == ACTION_FULL_ERASE ){
           this->deinit_flashing_();
           this->state = FLASHER_SUCCESS_STATE;
         } else if( remaining == 0 ) {
@@ -75,7 +75,7 @@ void XMOSFlasher::publish_progress_(){
     uint32_t now = millis();
     
     if ( (now - this->last_published_) > 1000 ) {
-      if( this->requested_action_ == ACTION_FULL_ERASE ){
+      if( this->requested_action == ACTION_FULL_ERASE ){
         this->flashing_progress = this->current_sector_ * 100 / this->total_sectors_to_erase_;    
       } else {
           this->flashing_progress = (
@@ -121,7 +121,7 @@ void XMOSFlasher::erase_memory(){
     return;
   }
   
-  this->requested_action_ = ACTION_FULL_ERASE;
+  this->requested_action = ACTION_FULL_ERASE;
   this->state = FLASHER_INITIALIZING;
 }
 
@@ -146,7 +146,7 @@ void XMOSFlasher::flash_remote_image(){
     return;
   }
   
-  this->requested_action_ = ACTION_FLASH_REMOTE_IMAGE;
+  this->requested_action = ACTION_FLASH_REMOTE_IMAGE;
   this->state = FLASHER_INITIALIZING;
 }
 
@@ -165,7 +165,7 @@ void XMOSFlasher::flash_embedded_image(){
   }
 
   this->md5_expected_ = this->embedded_image_.md5;
-  this->requested_action_ = ACTION_FLASH_EMBEDDED_IMAGE;
+  this->requested_action = ACTION_FLASH_EMBEDDED_IMAGE;
   this->state = FLASHER_INITIALIZING;
 }
 
@@ -329,7 +329,7 @@ bool XMOSFlasher::init_flashing_() {
   
   this->flashing_start_time_ = millis();
 
-  switch( this->requested_action_ ){
+  switch( this->requested_action ){
     case ACTION_FLASH_EMBEDDED_IMAGE:
       this->reader_ = new EmbeddedImageReader(this->embedded_image_);
       break;

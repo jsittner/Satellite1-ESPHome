@@ -49,6 +49,7 @@ esphome:
   on_boot:
     - priority: 375
       then:
+        - logger.log: "${company_name} ${project_name} ${component_name} version ${built_for_core_hw_version} running ESP firmware: ${esp32_fw_version} and XMOS firmware: ${xmos_fw_version}"
         # Run the script to refresh the LED status
         - script.execute: control_leds
         - delay: 1s
@@ -62,21 +63,11 @@ esphome:
               - lambda: id(init_in_progress) = false;
               - script.execute: control_leds
     
-    - priority: 600
-      then:
-        - logger.log: "${company_name} ${project_name} ${component_name} version ${built_for_core_hw_version} running ESP firmware: ${esp32_fw_version} and XMOS firmware: ${xmos_fw_version}"
-        - delay: 30s
-        - if:
-            condition:
-              lambda: return id(init_in_progress);
-            then:
-              - lambda: id(init_in_progress) = false;
-
 
 logger:
   deassert_rts_dtr: true
   hardware_uart : USB_SERIAL_JTAG
-  level: debug
+  level: verbose
 
 
 dashboard_import:
@@ -150,6 +141,7 @@ satellite1:
       - text_sensor.template.publish:
           id: xmos_firmware_version_text
           state: !lambda 'return id(satellite1_id).status_string();'
+      
 
 memory_flasher:
   - platform: satellite1
@@ -167,13 +159,27 @@ memory_flasher:
     on_progress_update:
       then:
         - lambda: id(global_led_animation_index) = id(xflash).flashing_progress * 24 / 100;
-
-    on_flashing_success:
-      then:
-        - lambda: id(xmos_flashing_state) = 2;
         - script.execute: control_leds
     
+    on_flashing_success:
+      then:
+        - logger.log: "success called"
+        - lambda: id(xmos_flashing_state) = 2;
+        - script.execute: control_leds
+        - lambda: id(xmos_flashing_state) = 0;
+
     on_flashing_failed:
       then:
+        - logger.log: "failed called"
         - lambda: id(xmos_flashing_state) = 3;
         - script.execute: control_leds
+        - lambda: id(xmos_flashing_state) = 0;
+    
+    on_erasing_done:
+      then:
+        - if:
+            condition: 
+              lambda: return id(factory_reset_requested);
+            then:
+              - button.press: factory_reset_button
+

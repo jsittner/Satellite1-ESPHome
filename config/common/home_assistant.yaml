@@ -19,8 +19,6 @@ button:
     entity_category: diagnostic
 
   # Restores the Sat1 ESP back to factory settings
-  #TODO: What buttons do we want to long press to initiate this
-  #TODO: Create the factory reset firmware
   - platform: factory_reset
     id: factory_reset_button
     name: "Factory Reset ESP32 FW"

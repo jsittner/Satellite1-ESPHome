@@ -122,7 +122,8 @@ class MemoryFlasher : public Component {
 public:
   uint8_t flashing_progress{0};
   FlasherState state{FLASHER_IDLE};
-  FlasherError error_code{FLASHER_OK};  
+  FlasherError error_code{FLASHER_OK};
+  FlasherAction requested_action;  
   
   virtual void dump_config() override;
 
@@ -160,11 +161,11 @@ public:
     this->state_callback_.add(std::move(callback));
   }
   void publish(){
-    this->defer([this]() { this->state_callback_.call(); });
+    //this->defer([this]() { this->state_callback_.call(); });
+    this->state_callback_.call();
   }
 protected:
   virtual void publish_progress_(){}
-  FlasherAction requested_action_;
   CallbackManager<void()> state_callback_{};
 
   /* flashing embedded image*/

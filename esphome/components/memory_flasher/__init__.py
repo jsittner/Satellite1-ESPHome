@@ -54,6 +54,7 @@ CONF_ON_PROGRESS_UPDATE = "on_progress_update"
 CONF_ON_FLASHING_START = "on_flashing_start"
 CONF_ON_FLASHING_SUCCESS = "on_flashing_success"
 CONF_ON_FLASHING_FAILED = "on_flashing_failed"
+CONF_ON_ERASING_DONE = "on_erasing_done"
 
 flasher_ns = cg.esphome_ns.namespace("memory_flasher")
 FlashImage = flasher_ns.struct("FlashImage")
@@ -85,6 +86,17 @@ FlashProgressSuccessTrigger = flasher_ns.class_(
 FlashProgressFailedTrigger = flasher_ns.class_(
     "FlasherFailedTrigger", automation.Trigger
 )
+
+ErasingDoneTrigger = flasher_ns.class_(
+    "ErasingDoneTrigger", automation.Trigger
+)
+
+
+InProgressCondition = flasher_ns.class_(
+    "InProgressCondition", automation.Condition
+)
+
+
 
 def _generate_local_file_path(value: dict) -> Path:
     """
@@ -252,6 +264,9 @@ FLASHER_CONFIG_SCHEMA = cv.Schema(
         cv.Optional(CONF_ON_FLASHING_FAILED): automation.validate_automation({
             cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(FlashProgressFailedTrigger),
         }),
+        cv.Optional(CONF_ON_ERASING_DONE): automation.validate_automation({
+            cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(ErasingDoneTrigger),
+        }),
     }
     ).extend(cv.COMPONENT_SCHEMA)
 
@@ -280,6 +295,9 @@ def _version_to_bytes(vers:str) -> tuple[int]:
 
 
 
+
+
+
 async def register_memory_flasher(var, flasher_config):
     http_comp = await cg.get_variable(flasher_config[CONF_HTTP_REQUEST_ID])
     cg.add( var.set_http_request_component(http_comp))
@@ -305,7 +323,10 @@ async def register_memory_flasher(var, flasher_config):
     for conf in flasher_config.get(CONF_ON_FLASHING_FAILED, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var )
         await automation.build_automation(trigger, [], conf)
-
+    
+    for conf in flasher_config.get(CONF_ON_ERASING_DONE, []):
+        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var )
+        await automation.build_automation(trigger, [], conf)
 
 FLASH_ACTION_SCHEMA = cv.All(
     FLASH_IMAGE_SCHEMA.extend(
@@ -368,3 +389,19 @@ async def erase_memory_action_to_code(config, action_id, template_arg, args):
     var = cg.new_Pvariable(action_id, template_arg)
     await cg.register_parented(var, config[CONF_FLASHER_ID])
     return var
+
+
+
+CONDITION_SCHEMA = automation.maybe_simple_id(
+    {
+        cv.GenerateID(CONF_FLASHER_ID): cv.use_id(MemoryFlasher)
+    }
+)
+
+@automation.register_condition("memory_flasher.in_progress", InProgressCondition, CONDITION_SCHEMA)
+async def wifi_connected_to_code(config, condition_id, template_arg, args):
+    var = cg.new_Pvariable(condition_id, template_arg)
+    await cg.register_parented(var, config[CONF_FLASHER_ID])
+    return var
+
+
