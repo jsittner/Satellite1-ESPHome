@@ -260,7 +260,13 @@ binary_sensor:
               condition:
                 lambda: return !id(action_button_touched);
               then:
-                - lambda: id(factory_reset_requested) = true;
-                - memory_flasher.erase:
+                - if:
+                    condition:
+                      - lambda: return id(xflash).flash_accessible();
+                    then:
+                      - lambda: id(factory_reset_requested) = true;
+                      - memory_flasher.erase:
+                    else:
+                      - button.press: factory_reset_button
                 
 
