@@ -17,6 +17,10 @@ packages:
         - wait_until:
             not: memory_flasher.in_progress
         - delay: 2s
+        - script.execute:
+            id: play_sound
+            priority: true
+            sound_file: !lambda return id(welcome_to_satellite1);
     wifi:
       on_disconnect:
         - ble.enable:

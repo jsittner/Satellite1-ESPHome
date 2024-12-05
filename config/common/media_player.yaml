@@ -65,6 +65,8 @@ media_player:
               duration: 1.0s
 
     files:
+      - id: welcome_to_satellite1
+        file: https://github.com/FutureProofHomes/Satellite1-ESPHome/raw/develop/sounds/welcome_to_satellite1.mp3
       - id: center_button_press_sound
         file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/center_button_press.flac
       - id: center_button_double_press_sound
