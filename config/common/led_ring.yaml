@@ -270,6 +270,32 @@ light:
               brightness_decreasing = !brightness_decreasing;
             }
       - addressable_lambda:
+          name: "Success"
+          update_interval: 10ms
+          lambda: |-
+            static uint8_t brightness_step = 0;
+            static bool brightness_decreasing = true;
+            static uint8_t brightness_step_number = 10;
+            static uint8_t counter = 0;
+            if (initial_run) {
+              brightness_step = 0;
+              brightness_decreasing = true;
+              counter = 0;
+            }
+            Color error_color(0, 255, 0);
+            for (int i = 0; i < 24; i++) {
+              it[i] = error_color * uint8_t(255/brightness_step_number*(brightness_step_number-brightness_step));
+            }
+            if (brightness_decreasing) {
+              brightness_step++;
+            } else {
+              brightness_step--;
+            }
+            if (brightness_step == 0 || brightness_step == brightness_step_number) {
+              brightness_decreasing = !brightness_decreasing;
+            }
+      
+      - addressable_lambda:
           name: "Warning"
           update_interval: 10ms
           lambda: |-
@@ -389,6 +415,23 @@ light:
             }
             index = (index + 1) % 24;
       - addressable_lambda:
+          name: "Flashing XMOS"
+          update_interval: 333ms
+          lambda: |-
+            static uint8_t index = 0;
+            Color color(0, 0, 255);
+            if (initial_run) {
+              index = 0;
+            }
+            for (int i = 0; i < 24; i++) {
+              if (i <= index ) {
+                it[i] = Color::BLACK;
+              } else {
+                it[i] = color;
+              }
+            }
+            index = id(global_led_animation_index) % 24;
+      - addressable_lambda:
           name: "Factory Reset Coming Up"
           update_interval: 500ms
           lambda: |-
@@ -465,7 +508,9 @@ script:
           if (id(is_timer_active)){
             id(fetch_first_active_timer).execute();
           }
-          if (id(improv_ble_in_progress)) {
+          if (id(xmos_flashing_state) > 0) {
+            id(control_leds_xmos_flasher_state_update).execute();
+          } else if (id(improv_ble_in_progress)) {
             id(control_leds_improv_ble_state).execute();
           } else if (id(init_in_progress)) {
             id(control_leds_init_state).execute();
@@ -700,4 +745,26 @@ script:
           id: voice_assistant_leds
           effect: "Timer tick"
 
-  
+  # Script executed when the timer is ticking, to control the LEDs
+  # The LEDs shows the remaining time as a fraction of the full ring.
+  - id: control_leds_xmos_flasher_state_update
+    then:
+      - if:
+          condition: 
+            lambda: 'return id(xmos_flashing_state) == 1;'
+          then:
+            - light.turn_on:
+                brightness: !lambda return .6f ;
+                id: voice_assistant_leds
+                effect: "Flashing XMOS"
+          else:
+            - light.turn_on:
+                brightness: !lambda return .6f ;
+                id: voice_assistant_leds
+                effect: !lambda 'return id(xmos_flashing_state) == 3 ? "Error" : "Success" ;'
+            - delay: 1s
+            - light.turn_off:
+                id: voice_assistant_leds
+                  
+      
+          

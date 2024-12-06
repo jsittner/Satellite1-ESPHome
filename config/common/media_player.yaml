@@ -2,6 +2,8 @@
 audio_dac:
   - platform: pcm5122
     address: 0x4D
+  - platform: tas2780
+    address: 0x3F
 
 fusb302b:
   id: pd_fusb302b
@@ -16,10 +18,12 @@ fusb302b:
       - text_sensor.template.publish:
           id: pd_state_text
           state: !lambda 'return id(pd_fusb302b).contract;'
-  on_disconnect:
-      - text_sensor.template.publish:
-          id: pd_state_text
-          state: "Disconnected"
+      - if:
+          condition:
+            lambda: |-
+              return id(pd_fusb302b).contract_voltage >= 9;
+          then:
+            - tas2780.activate:
 
 
 media_player:

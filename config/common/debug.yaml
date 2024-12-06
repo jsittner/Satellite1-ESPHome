@@ -17,18 +17,6 @@ text_sensor:
       name: "Reset Reason"
       entity_category: "diagnostic"
 
-  - platform: version
-    name: Satellite1 Firmware Build
-    entity_category: "diagnostic"
-    hide_timestamp: true
-
-  - platform: template
-    name: "Current XMOS fw"
-    entity_category: "diagnostic"
-    icon: "mdi:code-braces"
-    lambda: |-
-      return std::string("${xmos_fw_version}");
-
   - platform: template
     name: "Compat. w/ CORE hw"
     entity_category: "diagnostic"
@@ -62,3 +50,38 @@ sensor:
     entity_category: "diagnostic"
     update_interval: 60s
 
+button:
+  # Restarts Sat1 to safe mode
+  - platform: safe_mode
+    name: "Restart Sat1 (Safe Mode)"
+    entity_category: diagnostic
+
+  # Flashes Sat1 HAT with specific XMOS firmware
+  - platform: template
+    id: flash_satellite
+    name: "XMOS Flash ${xmos_fw_version}"
+    entity_category: diagnostic
+    on_press:
+      then:
+        - memory_flasher.write_image:
+            image_version: ${xmos_fw_version}
+            image_file: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_fixed_delay.factory.bin
+            md5_url: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/${xmos_fw_version}/satellite1_firmware_fixed_delay.factory.md5
+
+  # Flashes Sat1 HAT with XMOS firmware embedded in the ESP32
+  - platform: template
+    id: flash_embedded
+    name: "XMOS Flash Embedded FW"
+    entity_category: diagnostic
+    on_press:
+      then:
+        - memory_flasher.write_embedded_image:
+
+  # Wipes the Satellite1 HAT XMOS Chip
+  - platform: template
+    id: erase_xmos_flash
+    name: "XMOS Erase Chip"
+    entity_category: diagnostic
+    on_press:
+      then:
+        - memory_flasher.erase:
