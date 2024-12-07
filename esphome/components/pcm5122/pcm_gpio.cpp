@@ -30,8 +30,7 @@ void PCMGPIOPin::digital_write(bool value) {
 
 bool PCMGPIOPin::digital_read() {
     uint8_t reg_val = this->parent_->reg(0x77).get();
-    //ESP_LOGD(TAG, "Current value for reg 0x77: %d", reg_val);
-    return !!(reg_val & (1 << this->pin_)) != this->inverted_;
+    return !!(reg_val & (1 << (this->pin_ - 1))) != this->inverted_;
 
 }
 

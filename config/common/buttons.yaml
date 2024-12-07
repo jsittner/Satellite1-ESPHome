@@ -36,7 +36,7 @@ binary_sensor:
     id: line_out_sensor
     pin:
       pcm5122: 
-      pin: 3
+      pin: 4
       inverted: false
     name: "line-out jack"
     icon: "mdi:audio-input-stereo-minijack"

@@ -50,7 +50,7 @@ PIN_SCHEMA = cv.All(
     {
         cv.GenerateID(): cv.declare_id(PCMGPIOPin),
         cv.Required(CONF_PCM5122): cv.use_id(PCM5122),
-        cv.Required(CONF_PIN): cv.int_range(min=1, max=5),
+        cv.Required(CONF_PIN): cv.int_range(min=3, max=6),
         cv.Optional(CONF_MODE, default=CONF_OUTPUT): cv.All(
             {
                 cv.Optional(CONF_INPUT, default=False): cv.boolean,
