@@ -54,14 +54,9 @@ public:
   bool enable_auto_crc();
   bool disable_auto_crc();
 
-  
-
 public:
- 
-  
   bool cc_line_selection_();
   void fusb_reset_();
-  void fusb_hard_reset_();
   
   void check_status_();
   

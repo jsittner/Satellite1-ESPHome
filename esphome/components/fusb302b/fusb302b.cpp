@@ -56,13 +56,13 @@ static void msg_reader_task(void *params){
   PDEventInfo event_info;
   PDMsg &msg = event_info.msg;
   
+  printf("MSG READER TASK STARTED \n");
   fusb302b->enable_auto_crc();
   fusb302b->fusb_reset_();
   
   while(true){
     xTaskNotifyWait(0x00, 0xFFFFFFFF, &ulNotificationValue, portMAX_DELAY); //500  / portTICK_PERIOD_MS portMAX_DELAY
     fusb302b->read_status(regs);
-   
     if( regs.interruptb & FUSB_INTERRUPTB_I_GCRCSENT ){
         event_info.event = PD_EVENT_RECEIVED_MSG;
         while( !(regs.status1 & FUSB_STATUS1_RX_EMPTY) ){
@@ -77,37 +77,16 @@ static void msg_reader_task(void *params){
     
     if ( regs.interrupta &  FUSB_INTERRUPTA_I_HARDRST){
         event_info.event = PD_EVENT_HARD_RESET;
-        ESP_LOGE(TAG, "FUSB_STATUS0A_HARDRST");
+        printf(">>>FUSB_STATUS0A_HARDRST<<<\n");
     } else if ( regs.interrupta &  FUSB_INTERRUPTA_I_SOFTRST)
     {
-      ESP_LOGW(TAG, "SOFT_RESET_REQUEST");
+      printf(">>>SOFT_RESET_REQUEST<<<\n");
       event_info.event = PD_EVENT_SOFT_RESET;
-      fusb302b->send_message_(PDMsg(pd_control_msg_type::PD_CNTRL_ACCEPT));
     } else if ( regs.interrupta &  FUSB_INTERRUPTA_I_RETRYFAIL)
     {
       event_info.event = PD_EVENT_SENDING_MSG_FAILED;
-      printf("Sending message failed\n");
+      printf("Message did not get acknowledged.\n");
     } 
-
-#if 0    
-    else if ( regs.interrupta &  FUSB_INTERRUPTA_I_TXSENT) {
-      printf("Sending message successful\n");
-    }  
-    if ( regs.interrupt & FUSB_INTERRUPT_I_ALERT ) {
-       printf( "interrupt: %d\n", regs.interrupt );
-       printf( "Status0: %d\n", regs.status0 );
-       printf( "Status1: %d\n", regs.status1 );
-       printf("RxBuffer Full: %d\n", !!(regs.status1 & FUSB_STATUS1_RX_FULL) );
-       printf("TxBuffer Full: %d\n", !!(regs.status1 & FUSB_STATUS1_TX_FULL) );
-    } 
-
-      printf("interrupt: %d\n", regs.interrupt );
-      printf("interrupta: %d\n", regs.interrupta );
-      printf("interruptb: %d\n", regs.interruptb );
-      printf( "Status0: %d\n", regs.status0 );
-      printf( "Status1: %d\n", regs.status1 );
-
-#endif
   }
   fusb302b->disable_auto_crc();
 
@@ -121,23 +100,21 @@ static void trigger_task(void *params){
   pd_message_queue = xQueueCreate( 5, sizeof(PDEventInfo));
   
   // Create the task that will wait for notifications
-  xTaskCreatePinnedToCore( msg_reader_task, "fusb3202b_read_task", 4096, fusb302b, configMAX_PRIORITIES, &xReaderTaskHandle, 0 );
-  uint32_t last_call = millis();
+  xTaskCreatePinnedToCore( msg_reader_task, "fusb3202b_read_task", 4096, fusb302b, configMAX_PRIORITIES/2, &xReaderTaskHandle, 1 );
   PDEventInfo event_info;
   
   while(true){
     if( xQueueReceive(pd_message_queue, &event_info, portMAX_DELAY) == pdTRUE ){
+       //delay needed for getting fusb302b ready for receiving i2c again, is this the right place though?
+       vTaskDelay(pdMS_TO_TICKS(1));
+       void taskENTER_CRITICAL( void );
        PDMsg &msg = event_info.msg;
-       ESP_LOGD(TAG, "PD-Received new message (%d, %d) %d ms.", msg.type, msg.num_of_obj, millis() - last_call);
+       //printf( "PD-Received new message with id: %d (%d, %d) [%u].\n", msg.id, msg.type, msg.num_of_obj, millis());
        fusb302b->handle_message_(msg);
-       last_call = millis();
+       void taskEXIT_CRITICAL( void );
     }
   }
 }
-
-
-
-
 
 
 
@@ -165,7 +142,6 @@ void FUSB302B::setup(){
     this->mark_failed();
     return;
   }
-
   this->startup_delay_ = millis();
 }
 
@@ -175,6 +151,10 @@ void FUSB302B::dump_config(){
 
 void FUSB302B::loop(){
   this->check_status_();
+  if( this->contract_timer_ && millis() - this->contract_timer_ > 1000 ){
+    this->publish_();
+    this->contract_timer_ = 0;
+  }
 }
 
 
@@ -248,17 +228,9 @@ void FUSB302B::fusb_reset_(){
   this->reg(FUSB_RESET) = FUSB_RESET_PD_RESET;
   
   xSemaphoreGive(this->i2c_lock_);
-  
+  this->last_received_msg_id_ = 255;
   PDMsg::msg_cnter_ = 0;
   return;
-}
-
-void FUSB302B::fusb_hard_reset_(){
-  uint8_t cntrl3 = this->reg(FUSB_CONTROL3).get();
-  this->reg(FUSB_CONTROL3) = cntrl3 | FUSB_CONTROL3_SEND_HARD_RESET;
-  delay(5);
-  /* Reset the PD logic */
-  this->reg(FUSB_RESET) = FUSB_RESET_PD_RESET;
 }
 
 
@@ -273,11 +245,9 @@ bool FUSB302B::read_status( fusb_status &status ){
 
 
 
-
-
 void FUSB302B::check_status_(){
   static uint32_t last_check = millis();
-  if( millis() - last_check < 2000 ){
+  if( millis() - last_check < 1000 ){
     return;
   }
   last_check = millis();
@@ -286,7 +256,7 @@ void FUSB302B::check_status_(){
   switch( this->state_){
   case FUSB302_STATE_UNATTACHED:
   {    
-      if( this->startup_delay_ && millis() - this->startup_delay_ < 3000) {
+      if( this->startup_delay_ && millis() - this->startup_delay_ < 2000) {
           return; 
       }
       
@@ -325,12 +295,13 @@ void FUSB302B::check_status_(){
         gpio_isr_handler_add( irq_gpio_pin, fusb302b_isr_handler, NULL);
 
         // Create the task that will wait for notifications
-        xTaskCreatePinnedToCore(trigger_task, "fusb3202b_task", 4096, this , configMAX_PRIORITIES / 2  , &xProcessTaskHandle, 0);
+        xTaskCreatePinnedToCore(trigger_task, "fusb3202b_task", 4096, this , configMAX_PRIORITIES, &xProcessTaskHandle, 0);
         delay(1);
+      } else {
+        this->enable_auto_crc();
+        this->fusb_reset_();
       }
       
-      this->enable_auto_crc();
-      this->fusb_reset_();
       this->get_src_cap_time_stamp_ = millis();
       this->get_src_cap_retry_count_ = 0;
       this->wait_src_cap_ = true;
@@ -346,43 +317,6 @@ void FUSB302B::check_status_(){
         return;
       }
 
-      if (xSemaphoreTake( this->i2c_lock_, pdMS_TO_TICKS(100)) != pdTRUE ) {
-         return;
-      }
-      
-      uint8_t status0 = this->reg(FUSB_STATUS0).get();
-      if( !(status0 & FUSB_STATUS0_ACTIVITY) && ((status0 & FUSB_STATUS0_BC_LVL) == 0) ){
-          for(int cnt=0; cnt < 5; cnt++ ){
-            status0 = this->reg(FUSB_STATUS0).get();
-            if( !(status0 & FUSB_STATUS0_ACTIVITY) && ((status0 & FUSB_STATUS0_BC_LVL) > 0))
-            {
-              xSemaphoreGive(this->i2c_lock_);
-              return;
-            }
-          }
-          /* Reset the PD logic */
-          this->reg(FUSB_RESET) = FUSB_RESET_PD_RESET;
-
-          //reset cc pins to pull down only (disable cc measuring)
-          this->reg(FUSB_SWITCHES0) = FUSB_SWITCHES0_PDWN_1 | FUSB_SWITCHES0_PDWN_2;
-          this->reg(FUSB_SWITCHES1) = 0x01 << FUSB_SWITCHES1_SPECREV_SHIFT;  
-          this->reg(FUSB_MEASURE) = 49;
-          
-          /* turn off internal oscillator */
-          //this->reg(FUSB_POWER) = PWR_BANDGAP | PWR_RECEIVER | PWR_MEASURE;
-
-          /* turn off auto_crc responses */
-          //uint8_t sw1 = this->reg(FUSB_SWITCHES1).get();
-          //this->reg(FUSB_SWITCHES1) = sw1;
-          
-          this->state_ = FUSB302_STATE_UNATTACHED;
-          this->get_src_cap_retry_count_ = 0;
-          this->wait_src_cap_ = true;
-          this->set_state_(PD_STATE_DISCONNECTED);
-          ESP_LOGD(TAG, "USB-C unattached.");
-      }
-      xSemaphoreGive(this->i2c_lock_);
-    
       if( this->wait_src_cap_ ){
         if( get_src_cap_retry_count_ && millis() - get_src_cap_time_stamp_ < 5000 ){
           return;
@@ -395,17 +329,21 @@ void FUSB302B::check_status_(){
         get_src_cap_retry_count_++;
         get_src_cap_time_stamp_ = millis();
         if( get_src_cap_retry_count_ < 4){
-          ///* Flush the RX buffer */
-          //this->reg(FUSB_CONTROL1) = FUSB_CONTROL1_RX_FLUSH;
           /* clear interrupts */
           this->read_status();
           this->send_message_(PDMsg( pd_control_msg_type::PD_CNTRL_GET_SOURCE_CAP));
         } else {
           ESP_LOGD(TAG, "send get_source_cap reached max count.");
-          this->fusb_reset_();
-          this->send_message_(PDMsg( pd_control_msg_type::PD_CNTRL_SOFT_RESET));
-          this->get_src_cap_retry_count_ = 3;
-          this->wait_src_cap_ = true;
+          if( !this->tried_soft_reset_ ){
+            this->fusb_reset_();
+            this->send_message_(PDMsg( pd_control_msg_type::PD_CNTRL_SOFT_RESET));
+            this->get_src_cap_retry_count_ = 2;
+            this->tried_soft_reset_ = true;
+          } else {
+            ESP_LOGD(TAG, "PD-Negotiaton failed. Staying with default 5V supply.");
+            this->wait_src_cap_ = false;
+            this->active_ams_ = false;
+          }
         } 
       }
     break;
@@ -488,23 +426,22 @@ bool FUSB302B::init_fusb_settings_(){
   
   this->reg(FUSB_POWER) = 0x0F;
   this->fusb_reset_();
-  
   xSemaphoreGive(this->i2c_lock_);
   return true;
 }
 
 
 bool FUSB302B::read_message_(PDMsg &msg){
+  
   if (xSemaphoreTake( this->i2c_lock_, pdMS_TO_TICKS(100)) != pdTRUE ) {
     return false;
   }
-
+  
   uint8_t fifo_byte = this->reg(FUSB_FIFOS).get(); 
   uint8_t ret = 0;
   
   if( ( fifo_byte & FUSB_FIFO_RX_TOKEN_BITS) != FUSB_FIFO_RX_SOP )
   {
-    //ESP_LOGD(TAG, "Non SOP packet: %d", fifo_byte);
     ret = 1;
   }
   
@@ -513,7 +450,7 @@ bool FUSB302B::read_message_(PDMsg &msg){
   msg.set_header( header );
     
   if (msg.num_of_obj > 7 ){
-    //ESP_LOGE(TAG, "Parsing error, num of objects can't exceed 7.");
+    xSemaphoreGive(this->i2c_lock_);  
     return false;
   } else if ( msg.num_of_obj > 0){
     ret |= this->read_register(FUSB_FIFOS, (uint8_t*) msg.data_objects, msg.num_of_obj * sizeof(uint32_t) );
@@ -521,12 +458,7 @@ bool FUSB302B::read_message_(PDMsg &msg){
   
   /* Read CRC32 only, the PHY already checked it. */
   uint8_t dummy[4];
-  ret |= this->read_register(FUSB_FIFOS, dummy, 4);
-  
-  if( ret == 0 ){
-    //ESP_LOGD(TAG, "PD-Received new message (%d, %d).", msg.type, msg.num_of_obj);
-    //msg.debug_log();
-  }
+  ret |= this->read_register(FUSB_FIFOS, dummy, 4);  
   
   xSemaphoreGive(this->i2c_lock_);
   return (ret == 0);
@@ -562,15 +494,16 @@ bool FUSB302B::send_message_(const PDMsg &msg){
   *pbuf++ = (uint8_t)TX_TOKEN_TXOFF;
   *pbuf++ = (uint8_t)TX_TOKEN_TXON;
   
-  static uint32_t last_call = millis();
-  if( this->write_register( FUSB_FIFOS, buf, pbuf - buf) != i2c::ERROR_OK ){
-    ESP_LOGE(TAG, "Sending Message (%d) failed.", (int) msg.type );
-  } else {
-    ESP_LOGD(TAG, "Sent Message (%d) id: %d. (%d)ms", (int) msg.type, msg.id, millis() - last_call );
-  }
-  last_call = millis();
-  //msg.debug_log();
   
+  int err = this->write_register( FUSB_FIFOS, buf, pbuf - buf);
+  if( err != i2c::ERROR_OK ){
+    printf("Sending Message (%d) failed err: %d.\n", (int) msg.type, err );
+  } 
+  // else {
+  //    printf("Sent Message (%d) id: %d. [%d] \n", (int) msg.type, msg.id, millis() );
+  // }
+  
+  //msg.debug_log();  
   xSemaphoreGive(this->i2c_lock_);
 	return true;
 }
