@@ -204,7 +204,7 @@ void TAS2780::loop() {
     this->reg(0x5c) = 0x19 | (1 << 2);
 
     // Activate
-    this->reg(0x02) = 0x80 | (1 << 4) | (1 << 3) | 4 ;
+    this->activate();
   }
 }
 
