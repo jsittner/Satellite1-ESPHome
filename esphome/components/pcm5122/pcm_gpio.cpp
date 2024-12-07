@@ -15,6 +15,13 @@ void PCMGPIOPin::setup(){
         this->parent_->reg(0x08) = curr | (1 << (this->pin_ - 1));
         // set pin to be used as GPIO
         this->parent_->reg(0x50 + (this->pin_ - 1)) = 0x02;  
+        // set / clear inversion bit
+        curr = this->parent_->reg(0x57).get();
+        if( this->inverted_ ){
+            this->parent_->reg(0x57) = curr | (1 << (this->pin_ - 1)); 
+        } else {
+            this->parent_->reg(0x57) = curr & ~(1 << (this->pin_ - 1)); 
+        }
     }
 
 }
