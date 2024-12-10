@@ -81,7 +81,7 @@ esp_err_t AudioReader::start(const std::string &uri, media_player::MediaFileType
   client_config.max_redirection_count = 10;
   client_config.buffer_size = 512;
   client_config.keep_alive_enable = true;
-  client_config.timeout_ms = 500;  // Doesn't raise an error if exceeded in esp-idf v4.4, it just prevents the
+  client_config.timeout_ms = 5000;  // Doesn't raise an error if exceeded in esp-idf v4.4, it just prevents the
                                     // http_client_read command from blocking for too long
 
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
@@ -124,7 +124,7 @@ esp_err_t AudioReader::start(const std::string &uri, media_player::MediaFileType
     return ESP_ERR_NOT_SUPPORTED;
   }
 
-  err = esp_http_client_set_timeout_ms(this->client_, 10);
+  err = esp_http_client_set_timeout_ms(this->client_, 4);
   if ( err != ESP_OK ){
     this->cleanup_connection_();
     return err;
@@ -191,8 +191,8 @@ AudioReaderState AudioReader::http_read_() {
     } else {
       if (bytes_to_read > 0) {
         // Read timed out
-#if 0        
         printf( "http_read_: transfer_buffer_length_ %d ring_buffer_free: %d [%d]\n", this->transfer_buffer_length_, this->output_ring_buffer_->free() ,millis() );
+#if 0 
         ++this->no_data_read_count_;
         if (this->no_data_read_count_ >= ERROR_COUNT_NO_DATA_READ_TIMEOUT) {
           // Timed out with no data read too many times, so the http read has failed
