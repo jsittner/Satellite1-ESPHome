@@ -13,7 +13,7 @@ substitutions:
   component_name: Core
   
   esp32_fw_version: "v2.0.0-alpha.8"
-  xmos_fw_version: "v1.0.1-alpha.40"
+  xmos_fw_version: "v1.0.1-alpha.33"
   built_for_core_hw_version: "v1.0.0-beta.1"
   built_for_hat_hw_version: "v1.0.0-beta.1"
 
@@ -71,20 +71,27 @@ logger:
 
 
 dashboard_import:
-  package_import_url: github://futureproofhomes/satellite1-esphome/config/satellite1.dashboard.yaml@175-bug-finalize-esphome-dashboard-import-url
+  package_import_url: github://futureproofhomes/satellite1-esphome/config/satellite1.yaml
 
 
 external_components:
   - source:
-      type: local
-      path: ../esphome/components
-    components: [ i2s_audio, satellite1, memory_flasher, tas2780, pcm5122, fusb302b, nabu ]
+      type: git
+      url: https://github.com/gnumpi/nabu-voice-kit
+      ref: dev
+    components: [ audio_dac, media_player ]
+
+  - source:
+      type: git
+      url: https://github.com/FutureProofHomes/Satellite1-ESPHome
+      ref: develop
+    components: [ i2s_audio, satellite1, memory_flasher, tas2780, pcm5122, fusb302b ]
   
   - source:
       type: git
       url: https://github.com/esphome/voice-kit
-      ref: 24.12.3
-    components: [ microphone, micro_wake_word, voice_assistant, media_player ]
+      ref: 24.10.17
+    components: [ microphone, micro_wake_word, voice_assistant, nabu ]
 
 
 packages:

@@ -64,10 +64,6 @@ update:
     # source: https://firmware.esphome.io/home-assistant-voice-pe/home-assistant-voice/manifest.json
     source: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/manifest.json
 
-dashboard_import:
-  # package_import_url: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml
-  package_import_url: github://FutureProofHomes/Satellite1-ESPHome/config/satellite1.yaml
-
 wifi:
   enable_on_boot: true
   on_connect:
