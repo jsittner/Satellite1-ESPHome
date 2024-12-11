@@ -42,10 +42,6 @@ esphome:
   friendly_name: ${friendly_name}
   min_version: 2024.11.2
   
-  project:
-    name: ${company_name}.${project_name}
-    version: dev
-  
   on_boot:
     - priority: 375
       then:
@@ -62,16 +58,6 @@ esphome:
             then:
               - lambda: id(init_in_progress) = false;
               - script.execute: control_leds
-    
-
-logger:
-  deassert_rts_dtr: true
-  hardware_uart : USB_SERIAL_JTAG
-  level: debug
-
-
-dashboard_import:
-  package_import_url: github://futureproofhomes/satellite1-esphome/config/satellite1.yaml
 
 
 external_components:
@@ -83,15 +69,13 @@ external_components:
 
   - source:
       type: git
-      url: https://github.com/FutureProofHomes/Satellite1-ESPHome
-      ref: develop
-    components: [ i2s_audio, satellite1, memory_flasher, tas2780, pcm5122, fusb302b ]
-  
-  - source:
-      type: git
       url: https://github.com/esphome/voice-kit
       ref: 24.10.17
     components: [ microphone, micro_wake_word, voice_assistant, nabu ]
+
+
+dashboard_import:
+  package_import_url: github://futureproofhomes/satellite1-esphome/config/satellite1.yaml@175-bug-finalize-esphome-dashboard-import-url
 
 
 packages:
@@ -105,13 +89,7 @@ packages:
   timer: !include common/timer.yaml
   led_ring: !include common/led_ring.yaml 
     
-  #OPTIONAL COMPONENTS 
-  # mmwave_ld2410: !include common/mmwave_ld2410.yaml
-  # debug: !include common/debug.yaml
-
-ota:
-  - platform: esphome
-    id: ota_esphome
+  
 
 http_request:
 
