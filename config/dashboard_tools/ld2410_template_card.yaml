@@ -1,0 +1,612 @@
+#1. Install Mushroom, Decluttering card and Bar Card from HACS
+#2. Put this card to section/layout (replace "device" with your satellite name, as it appears in entities IDs, like satellite1_92fb28). Do it for each satellite:
+type: custom:decluttering-card
+template: ld2410
+variables:
+    - device: satellite1_927228
+#2. Put this to the very bottom of dashboard YAML in raw edit mode (this should be done once per dashboard):
+decluttering_templates:
+  ld2410:
+    card:
+      type: horizontal-stack
+      cards:
+        - type: custom:vertical-stack-in-card
+          cards:
+            - type: custom:mushroom-entity-card
+              entity: switch.[[device]]_engineering_mode
+              name: Preset edit mode
+              icon_color: pink
+              layout: horizontal
+              tap_action:
+                action: toggle
+              hold_action:
+                action: more-info
+              double_tap_action:
+                action: none
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_timeout
+              name: Detection cooldown
+              layout: horizontal
+              display_mode: buttons
+            - type: custom:mushroom-select-card
+              entity: select.[[device]]_distance_resolution
+              name: Gate resolution
+              icon_color: green
+              layout: horizontal
+            - type: custom:mushroom-entity-card
+              entity: switch.[[device]]_control_bluetooth
+              icon_color: indigo
+              name: Bluetooth
+              tap_action:
+                action: toggle
+              hold_action:
+                action: more-info
+              double_tap_action:
+                action: none
+          title: Settings
+        - type: custom:vertical-stack-in-card
+          title: Movement
+          cards:
+            - type: custom:mushroom-template-card
+              primary: >-
+                {{ iif(is_state(entity, 'on'), 'Detected, ' +
+                states('sensor.[[device]]_moving_distance') + ' cm', 'Not
+                detected') }}
+              secondary: ''
+              icon: mdi:motion-sensor
+              entity: binary_sensor.[[device]]_moving_target
+              icon_color: '{% if(is_state(entity, ''on'')) %} red {% endif %}'
+              layout: horizontal
+              multiline_secondary: false
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_max_move_distance_gate
+              name: Max detection gate
+              display_mode: buttons
+              icon: mdi:tape-measure
+              layout: horizontal
+              secondary_info: none
+              icon_color: green
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g0_move_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 0
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g0_move_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g1_move_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 1
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g1_move_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g2_move_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 2
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g2_move_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g3_move_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 3
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g3_move_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g4_move_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 4
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g4_move_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g5_move_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 5
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g5_move_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g6_move_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 6
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g6_move_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g7_move_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 7
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g7_move_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g8_move_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 8
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g8_move_energy
+                  color: orange
+        - type: custom:vertical-stack-in-card
+          title: Still
+          cards:
+            - type: custom:mushroom-template-card
+              primary: >-
+                {{ iif(is_state(entity, 'on'), 'Detected, ' +
+                states('sensor.[[device]]_still_distance') + ' cm', 'Not
+                detected') }}
+              secondary: ''
+              icon: mdi:motion-sensor
+              entity: binary_sensor.[[device]]_still_target
+              icon_color: '{% if(is_state(entity, ''on'')) %} red {% endif %}'
+              layout: horizontal
+              multiline_secondary: false
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_max_still_distance_gate
+              name: Max detection gate
+              display_mode: buttons
+              icon: mdi:tape-measure
+              layout: horizontal
+              secondary_info: none
+              icon_color: green
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g0_still_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 0
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g0_still_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g1_still_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 1
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g1_still_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g2_still_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 2
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g2_still_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g3_still_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 3
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g3_still_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g4_still_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 4
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g4_still_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g5_still_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 5
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g5_still_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g6_still_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 6
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g6_still_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g7_still_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 7
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g7_still_energy
+                  color: orange
+            - type: custom:mushroom-number-card
+              entity: number.[[device]]_g8_still_threshold
+              display_mode: slider
+              icon_type: none
+              primary_info: name
+              secondary_info: state
+              name: Gate 8
+              card_mod:
+                style:
+                  mushroom-number-value-control$:
+                    mushroom-slider$: |
+                      .slider {
+                        height: 24px !important;
+                      }
+                  .: |
+                    mushroom-number-value-control {
+                      height: 24px;
+                    }
+            - type: custom:bar-card
+              direction: right
+              columns: 1
+              height: 16
+              positions:
+                indicator: 'off'
+                icon: 'off'
+                name: 'off'
+              entities:
+                - entity: sensor.[[device]]_g8_still_energy
+                  color: orange
