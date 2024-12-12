@@ -73,6 +73,9 @@ external_components:
       ref: 24.10.17
     components: [ microphone, micro_wake_word, voice_assistant, nabu ]
 
+ota:
+  - platform: esphome
+    id: ota_esphome
 
 dashboard_import:
   package_import_url: github://futureproofhomes/satellite1-esphome/config/satellite1.yaml@175-bug-finalize-esphome-dashboard-import-url
