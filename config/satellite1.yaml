@@ -22,7 +22,7 @@ external_components:
       type: git
       url: https://github.com/FutureProofHomes/Satellite1-ESPHome
       ref: develop
-    components: [ i2s_audio, satellite1, memory_flasher, tas2780, pcm5122, fusb302b, nabu ]
+    components: [ i2s_audio, satellite1, memory_flasher, tas2780, pcm5122, fusb302b ]
   
 logger:
   deassert_rts_dtr: true

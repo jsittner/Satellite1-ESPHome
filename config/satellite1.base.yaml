@@ -62,22 +62,16 @@ esphome:
 external_components:
   - source:
       type: git
-      url: https://github.com/gnumpi/nabu-voice-kit
-      ref: dev
-    components: [ audio_dac, media_player ]
-
-  - source:
-      type: git
-      url: https://github.com/esphome/voice-kit
-      ref: 24.10.17
-    components: [ microphone, micro_wake_word, voice_assistant ]
+      url: https://github.com/FutureProofHomes/home-assistant-voice-pe
+      ref: satellite1
+    components: [ microphone, voice_assistant, audio_dac, media_player, nabu, micro_wake_word ]
 
 ota:
   - platform: esphome
     id: ota_esphome
 
 dashboard_import:
-  package_import_url: github://futureproofhomes/satellite1-esphome/config/satellite1.yaml@175-bug-finalize-esphome-dashboard-import-url
+  package_import_url: github://futureproofhomes/satellite1-esphome/config/satellite1.yaml@develop
 
 
 packages:
