@@ -60,6 +60,7 @@ static std::string prerelease_str(uint8_t pre_idx ){
         case 1: return "alpha";
         case 2: return "beta";
         case 3: return "rc";
+        case 4: return "dev";
         case 0: // fallthrough
         default: return "";
     }
@@ -71,7 +72,7 @@ std::string Satellite1::status_string(){
       return "XMOS not responding";
     
     case SAT_XMOS_CONNECTED_STATE:
-      return  (   "v" + std::to_string(this->xmos_fw_version[0])
+      return  (    "v" + std::to_string(this->xmos_fw_version[0])
                 +  "." + std::to_string(this->xmos_fw_version[1]) 
                 +  "." + std::to_string(this->xmos_fw_version[2])
                 +  ( this->xmos_fw_version[3] ? "-" + prerelease_str(this->xmos_fw_version[3]) : "")
@@ -163,15 +164,15 @@ void Satellite1::set_spi_flash_direct_access_mode(bool enable){
 }
 
 bool Satellite1::dfu_get_fw_version_(){
-  uint8_t version_resp[3];
-  if( !this->transfer(DC_RESOURCE::DFU_CONTROLLER, DC_DFU_CMD::GET_VERSION, version_resp, 3 ) ){
+  uint8_t version_resp[5];
+  if( !this->transfer(DC_RESOURCE::DFU_CONTROLLER, DC_DFU_CMD::GET_VERSION, version_resp, 5 ) ){
     ESP_LOGW(TAG, "Requesting XMOS version failed");
     return false;    
   }
-
-  ESP_LOGI(TAG, "XMOS Firmware Version: %u.%u.%u", version_resp[0], version_resp[1], version_resp[2]);
-  memcpy( this->xmos_fw_version, version_resp, 3);
-
+  
+  memcpy( this->xmos_fw_version, version_resp, 5);
+  ESP_LOGI(TAG, "XMOS Firmware Version: %s ", this->status_string().c_str() );
+  
   return true;
 }
 
