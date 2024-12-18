@@ -46,6 +46,8 @@ void PCM5122::setup(){
   pll_ref &= ~(7 << 4); 
   pll_ref |=  (1 << 4);
   this->reg(0x0D) = pll_ref;
+
+  this->set_mute_on();
 }
 
 void PCM5122::dump_config(){
@@ -76,7 +78,6 @@ float PCM5122::volume() {
 }
 
 bool PCM5122::write_mute_() {
-  ESP_LOGD(TAG, "DEBUG TEST is_muted_ is %d", is_muted());
   uint8_t mute_byte = this->is_muted() ? 0x11 : 0x00;
   if (!this->write_byte(PCM5122_REG00_PAGE_SELECT, 0x00) ||
       !this->write_byte(0x03, mute_byte)) {
