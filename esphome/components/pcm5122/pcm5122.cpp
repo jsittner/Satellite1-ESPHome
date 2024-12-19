@@ -88,13 +88,10 @@ bool PCM5122::write_mute_() {
 }
 
 bool PCM5122::write_volume_() {
-  const uint8_t dvc_min_byte = 0x00; // check for pcm5122
-  const uint8_t dvc_max_byte = 0xFF;
-
-  // uint8_t volume_byte =
-  // dvc_min_byte + (this->volume_ * (dvc_max_byte - dvc_min_byte));
-  // volume_byte = clamp<uint8_t>(volume_byte, dvc_min_byte, dvc_max_byte);
-  uint8_t volume_byte = 0xFF - this->volume_ * 0xFF;
+  const uint8_t dvc_min_byte = 0x30;  //   0x00: 24 dB ; 0x30:   0dB 
+  const uint8_t dvc_max_byte = 0x94;  //   0xFF:  mute ; 0x94: -50dB
+  
+  const uint8_t volume_byte = dvc_min_byte + ((1. - this->volume_) * (dvc_max_byte - dvc_min_byte) + 0.5);
 
   ESP_LOGD(TAG, "Setting volume to 0x%.2x", volume_byte & 0xFF);
 
