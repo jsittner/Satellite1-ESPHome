@@ -28,6 +28,18 @@ static const uint8_t TAS2780_CHNL_0_AMP_LEVEL_MASK = (0x1F) << TAS2780_CHNL_0_AM
 static const uint8_t TAS2780_DC_BLK0 = 0x04;
 static const uint8_t TAS2780_DC_BLK0_VBAT1S_MODE_SHIFT  = 7;
 
+static const uint8_t TAS2780_TDM_CFG2 = 0x0a;
+static const uint8_t TAS2780_TDM_CFG2_RX_SCFG_SHIFT = 4;
+static const uint8_t TAS2780_TDM_CFG2_RX_SCFG_MASK = (3 << TAS2780_TDM_CFG2_RX_SCFG_SHIFT);
+static const uint8_t TAS2780_TDM_CFG2_RX_SCFG__STEREO_DWN_MIX = (3 << TAS2780_TDM_CFG2_RX_SCFG_SHIFT);
+static const uint8_t TAS2780_TDM_CFG2_RX_WLEN_SHIFT = 2;
+static const uint8_t TAS2780_TDM_CFG2_RX_WLEN_MASK = (3 << TAS2780_TDM_CFG2_RX_WLEN_SHIFT);
+static const uint8_t TAS2780_TDM_CFG2_RX_WLEN__16BIT = (0 << TAS2780_TDM_CFG2_RX_WLEN_SHIFT);
+static const uint8_t TAS2780_TDM_CFG2_RX_WLEN__24BIT = (2 << TAS2780_TDM_CFG2_RX_WLEN_SHIFT);
+static const uint8_t TAS2780_TDM_CFG2_RX_WLEN__32BIT = (3 << TAS2780_TDM_CFG2_RX_WLEN_SHIFT);
+static const uint8_t TAS2780_TDM_CFG2_RX_SLEN_MASK = (3 << 0);
+static const uint8_t TAS2780_TDM_CFG2_RX_SLEN__32BIT = 2;
+
 static const uint8_t TAS2780_DVC = 0x1a;
 
 static const uint8_t TAS2780_INT_MASK0 = 0x3b;
@@ -76,7 +88,12 @@ void TAS2780::setup(){
   this->reg(0x0e) = 0x44;
   this->reg(0x0f) = 0x40;
 
-  this->reg(0x0a) = (2 << 4) | (3 << 2) | 2 ;
+  this->reg(TAS2780_TDM_CFG2) = (
+      TAS2780_TDM_CFG2_RX_SCFG__STEREO_DWN_MIX |
+      TAS2780_TDM_CFG2_RX_WLEN__32BIT |
+      TAS2780_TDM_CFG2_RX_SLEN__32BIT
+  );  
+
 
   this->reg(TAS2780_PAGE_SELECT) = 0x01;
   this->reg(0x17) = 0xc0;
@@ -160,7 +177,12 @@ void TAS2780::reset(){
   this->reg(TAS2780_PAGE_SELECT) = 0x00;
   this->reg(0x0e) = 0x44;
   this->reg(0x0f) = 0x40;
-  this->reg(0x0a) = (2 << 4) | (3 << 2) | 2 ;
+  
+  this->reg(TAS2780_TDM_CFG2) = (
+      TAS2780_TDM_CFG2_RX_SCFG__STEREO_DWN_MIX |
+      TAS2780_TDM_CFG2_RX_WLEN__32BIT |
+      TAS2780_TDM_CFG2_RX_SLEN__32BIT
+  );  
 
   this->reg(TAS2780_PAGE_SELECT) = 0x01;
   this->reg(0x17) = 0xc0;
