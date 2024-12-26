@@ -52,7 +52,7 @@ bool I2SAudioComponent::claim_access_(uint8_t access){
   }
   this->unlock();
   return success;
-  }
+}
 
 bool I2SAudioComponent::release_access_(uint8_t access){
   this->lock();
@@ -166,8 +166,8 @@ i2s_driver_config_t I2SSettings::get_i2s_cfg() const {
       .channel_format = this->channel_fmt_,
       .communication_format = I2S_COMM_FORMAT_STAND_I2S,
       .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
-      .dma_buf_count = 6,
-      .dma_buf_len = 512,
+      .dma_buf_count = 4,
+      .dma_buf_len = 480,
       .use_apll = false,
       .tx_desc_auto_clear = true,
       .fixed_mclk = I2S_PIN_NO_CHANGE,
