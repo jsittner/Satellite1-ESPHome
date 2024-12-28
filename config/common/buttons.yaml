@@ -87,18 +87,26 @@ binary_sensor:
           condition:
             binary_sensor.is_off: btn_left
           then:
-            - script.execute:
-                id: play_sound
-                priority: false
-                sound_file: !lambda return id(mute_switch_off_sound);
+            - if:
+                condition:
+                  switch.is_on: mute_sound
+                then:
+                  - script.execute:
+                      id: play_sound
+                      priority: false
+                      sound_file: !lambda return id(mute_switch_off_sound);
             - switch.template.publish:
                 id: master_mute_switch
                 state: OFF
           else:
-            - script.execute:
-                id: play_sound
-                priority: false
-                sound_file: !lambda return id(mute_switch_on_sound);
+            - if:
+                condition:
+                  switch.is_on: mute_sound
+                then:
+                  - script.execute:
+                      id: play_sound
+                      priority: false
+                      sound_file: !lambda return id(mute_switch_on_sound);
             - switch.template.publish:
                 id: master_mute_switch
                 state: ON
@@ -173,11 +181,15 @@ binary_sensor:
                                                 - not:
                                                     voice_assistant.is_running
                                             then:
-                                              - script.execute:
-                                                  id: play_sound
-                                                  priority: true
-                                                  sound_file: !lambda return id(center_button_press_sound);
-                                              - delay: 300ms
+                                              - if:
+                                                  condition:
+                                                    switch.is_on: button_sound
+                                                  then:
+                                                    - script.execute:
+                                                        id: play_sound
+                                                        priority: true
+                                                        sound_file: !lambda return id(center_button_press_sound);
+                                                    - delay: 300ms
                                               - voice_assistant.start:
       # Double Click
       #  . Exposed as an event entity. To be used in automations inside Home Assistant
@@ -191,10 +203,14 @@ binary_sensor:
               condition:
                 lambda: return !id(init_in_progress);
               then:
-                - script.execute:
-                    id: play_sound
-                    priority: false
-                    sound_file: !lambda return id(center_button_double_press_sound);
+                - if:
+                    condition:
+                      switch.is_on: button_sound
+                    then:
+                      - script.execute:
+                          id: play_sound
+                          priority: false
+                          sound_file: !lambda return id(center_button_double_press_sound);
                 - event.trigger:
                     id: action_button_press_event
                     event_type: "double_press"
@@ -212,10 +228,14 @@ binary_sensor:
               condition:
                 lambda: return !id(init_in_progress);
               then:
-                - script.execute:
-                    id: play_sound
-                    priority: false
-                    sound_file: !lambda return id(center_button_triple_press_sound);
+                - if:
+                    condition:
+                      switch.is_on: button_sound
+                    then:
+                      - script.execute:
+                          id: play_sound
+                          priority: false
+                          sound_file: !lambda return id(center_button_triple_press_sound);
                 - event.trigger:
                     id: action_button_press_event
                     event_type: "triple_press"
@@ -228,10 +248,14 @@ binary_sensor:
               condition:
                 lambda: return !id(init_in_progress);
               then:
-                - script.execute:
-                    id: play_sound
-                    priority: false
-                    sound_file: !lambda return id(center_button_long_press_sound);
+                - if:
+                    condition:
+                      switch.is_on: button_sound
+                    then:
+                      - script.execute:
+                          id: play_sound
+                          priority: false
+                          sound_file: !lambda return id(center_button_long_press_sound);
                 - light.turn_off: voice_assistant_leds
                 - event.trigger:
                     id: action_button_press_event
@@ -278,5 +302,3 @@ binary_sensor:
                       - memory_flasher.erase:
                     else:
                       - button.press: factory_reset_button
-                
-
