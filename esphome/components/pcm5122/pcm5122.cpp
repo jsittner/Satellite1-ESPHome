@@ -88,8 +88,8 @@ bool PCM5122::write_mute_() {
 }
 
 bool PCM5122::write_volume_() {
-  const uint8_t dvc_min_byte = 0x30;  //   0x00: 24 dB ; 0x30:   0dB 
-  const uint8_t dvc_max_byte = 0x94;  //   0xFF:  mute ; 0x94: -50dB
+  const uint8_t dvc_min_byte = 0x44;  //   0x00: 24 dB ; 0x30:   0dB 
+  const uint8_t dvc_max_byte = 0x99;  //   0xFF:  mute ; 0x94: -50dB
   
   const uint8_t volume_byte = dvc_min_byte + ((1. - this->volume_) * (dvc_max_byte - dvc_min_byte) + 0.5);
 
