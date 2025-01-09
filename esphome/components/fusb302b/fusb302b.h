@@ -13,7 +13,8 @@ namespace power_delivery {
 
 enum FUSB302_state_t {
     FUSB302_STATE_UNATTACHED = 0,
-    FUSB302_STATE_ATTACHED
+    FUSB302_STATE_ATTACHED,
+    FUSB302_STATE_FAILED
 };
 
 typedef union {
@@ -43,7 +44,7 @@ public:
   bool read_status(){ fusb_status regs; return read_status(regs); }
   bool read_status(fusb_status &status);
   
-  bool read_status_register( uint8_t register, uint8_t &value);
+  bool read_status_register( uint8_t reg, uint8_t &value);
 
   
   void set_irq_pin(int irq_pin){this->irq_pin_ = irq_pin;}
