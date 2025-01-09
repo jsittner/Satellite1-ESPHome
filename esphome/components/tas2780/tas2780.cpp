@@ -275,13 +275,10 @@ bool TAS2780::write_volume_() {
   DVC_LVL[7:0] :            0dB to -100dB [0x00, 0xc8] c8 = 200
   AMP_LEVEL[4:0] : @48ksps 11dBV - 21dBV  [0x00, 0x14]
   */ 
-  float attenuation = (1. - this->volume_) * 120.f + .5f;
+  float attenuation = (1. - this->volume_) * 90.f;
   uint8_t dvc = clamp<uint8_t>(attenuation, 0, 0xc8);
   this->reg(TAS2780_DVC) = dvc; 
-  //60 % to 1 %
-  // try 20% louder
-
-
+  
   uint8_t amp_level = 8; // 7: 15dBV
   uint8_t reg_val = this->reg(TAS2780_CHNL_0).get();
   reg_val &= ~TAS2780_CHNL_0_AMP_LEVEL_MASK;
