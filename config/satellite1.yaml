@@ -6,10 +6,6 @@ substitutions:
 
 packages:
   fph-satellite1: !include satellite1.base.yaml
-  
-  #OPTIONAL COMPONENTS 
-  # mmwave_ld2410: !include common/mmwave_ld2410.yaml
-  # debug: !include common/debug.yaml
 
 esphome:
   project:

@@ -13,10 +13,10 @@
 namespace esphome {
 namespace i2s_audio {
 
-static const uint8_t DMA_BUFFER_DURATION_MS = 15;
+static const uint8_t DMA_BUFFER_DURATION_MS = 10;
 static const size_t DMA_BUFFERS_COUNT = 4;
 
-static const size_t TASK_DELAY_MS = DMA_BUFFER_DURATION_MS * DMA_BUFFERS_COUNT / 2;
+static const size_t TASK_DELAY_MS = DMA_BUFFER_DURATION_MS * DMA_BUFFERS_COUNT ;
 
 static const size_t TASK_STACK_SIZE = 4096;
 static const ssize_t TASK_PRIORITY = 23;
@@ -239,7 +239,7 @@ void I2SAudioSpeaker::speaker_task(void *params) {
   const ssize_t bytes_per_sample = audio_stream_info.get_bytes_per_sample();
   const uint8_t number_of_channels = audio_stream_info.channels;
 
-  const size_t dma_buffers_size = DMA_BUFFERS_COUNT * DMA_BUFFER_DURATION_MS * this_speaker->sample_rate_ / 1000 *
+  const size_t dma_buffers_size = 3 * DMA_BUFFER_DURATION_MS * this_speaker->sample_rate_ / 1000 *
                                   bytes_per_sample * number_of_channels;
   const size_t ring_buffer_size =
       this_speaker->buffer_duration_ms_ * this_speaker->sample_rate_ / 1000 * bytes_per_sample * number_of_channels;
@@ -285,7 +285,7 @@ void I2SAudioSpeaker::speaker_task(void *params) {
       size_t bytes_to_read = dma_buffers_size;
       size_t bytes_read = this_speaker->audio_ring_buffer_->read((void *) this_speaker->data_buffer_, bytes_to_read,
                                                                  pdMS_TO_TICKS(TASK_DELAY_MS));
-
+      
       if (bytes_read > 0) {
         size_t bytes_written = 0;
 

@@ -16,16 +16,16 @@
 namespace esphome {
 namespace nabu_microphone {
 
-static const size_t RING_BUFFER_LENGTH = 64;  // Measured in milliseconds
+static const size_t RING_BUFFER_LENGTH = 60;  // Measured in milliseconds
 static const size_t QUEUE_LENGTH = 10;
 
 static const size_t NUMBER_OF_CHANNELS = 2;
-static const size_t DMA_BUFFER_SIZE = 512;
-static const size_t DMA_BUFFERS_COUNT = 6;
+static const size_t DMA_BUFFER_SIZE = 480; //10 ms chunks
+static const size_t DMA_BUFFERS_COUNT = 4;
 static const size_t FRAMES_IN_ALL_DMA_BUFFERS = DMA_BUFFER_SIZE * DMA_BUFFERS_COUNT;
 static const size_t SAMPLES_IN_ALL_DMA_BUFFERS = FRAMES_IN_ALL_DMA_BUFFERS * NUMBER_OF_CHANNELS;
 
-static const size_t TASK_DELAY_MS = 10;
+static const size_t TASK_DELAY_MS = 5;
 
 // TODO:
 //   - Determine optimal buffer sizes (dma included)
@@ -164,7 +164,7 @@ void NabuMicrophone::read_task_(void *params) {
 
       // Note, if we have 16 bit samples incoming, this requires modification
       ExternalRAMAllocator<int32_t> allocator(ExternalRAMAllocator<int32_t>::ALLOW_FAILURE);
-      int32_t *buffer = allocator.allocate(SAMPLES_IN_ALL_DMA_BUFFERS * 3);
+      int32_t *buffer = allocator.allocate(SAMPLES_IN_ALL_DMA_BUFFERS);
 
       std::vector<int16_t, ExternalRAMAllocator<int16_t>> channel_0_samples;
       std::vector<int16_t, ExternalRAMAllocator<int16_t>> channel_1_samples;
@@ -211,7 +211,7 @@ void NabuMicrophone::read_task_(void *params) {
 
             size_t bytes_read;
             esp_err_t err =
-                i2s_read(this_microphone->parent_->get_port(), buffer, SAMPLES_IN_ALL_DMA_BUFFERS * sizeof(int32_t) * 3,
+                i2s_read(this_microphone->parent_->get_port(), buffer, SAMPLES_IN_ALL_DMA_BUFFERS * sizeof(int32_t),
                          &bytes_read, pdMS_TO_TICKS(TASK_DELAY_MS));
             if (err != ESP_OK) {
               event.type = TaskEventType::WARNING;
