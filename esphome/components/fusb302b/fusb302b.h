@@ -68,7 +68,7 @@ public:
   uint32_t startup_delay_{0};
   
   
-  
+int irq_pin_{0};  
 
 protected:
   void publish_() override {
@@ -79,7 +79,7 @@ protected:
   
   SemaphoreHandle_t i2c_lock_;
 
-  int irq_pin_{0};
+  
 };
 
 }
