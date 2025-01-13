@@ -269,13 +269,7 @@ bool FUSB302B::read_status( fusb_status &status ){
 
 
 void FUSB302B::check_status_(){
-  static uint32_t last_check = millis();
-  if( millis() - last_check < 1000 ){
-    return;
-  }
-  last_check = millis();
-  
-  
+    
   switch( this->state_){
   case FUSB302_STATE_UNATTACHED:
   {    
@@ -293,6 +287,7 @@ void FUSB302B::check_status_(){
       xSemaphoreGive(this->i2c_lock_);
 
       if( !connected ){
+        this->state_ = FUSB302_STATE_FAILED;
         return;
       }
 
@@ -353,6 +348,8 @@ void FUSB302B::check_status_(){
           }
         } 
       }
+    break;
+  case FUSB302_STATE_FAILED:
     break;
   }
 }
