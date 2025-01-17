@@ -1,60 +1,52 @@
 substitutions:
   name: satellite1
   friendly_name: Satellite1
-
   xmos_fw_version: "v1.0.1"
   
-  # set the log level to debug, info, warn, error
+  # OPTIONALLY, set the log level to debug, info, warn, error
   log_level: debug
-
 
 esphome:
   name: ${name}
   name_add_mac_suffix: true
   friendly_name: ${friendly_name}
 
-
 packages:
   FutureProofHomes.Satellite1: 
     url: https://github.com/futureproofhomes/satellite1-esphome
-    ref: dashboard_test  # optional
-    refresh: 1s  # optional  
+    ref: dashboard_test  # OPTIONAL
+    refresh: 1s  # OPTIONAL  
     files: 
-    # main config files, don't remove
+    # Main config files, don't remove
     - config/satellite1.base.yaml
     - config/common/components.external.yaml
-      
-    # mmwave_ld2410
+    
+    ## OPTIONALLY, uncomment if you have the smaller LD2410 mmWave sensor connected to your HAT.
     #- config/common/mmwave_ld2410.yaml    
     
-    # mmwave_ld2450
+    ## OPTIONALLY, uncomment if you have the larger LD2450 mmWave sensor connected to your HAT.
     #- config/common/mmwave_ld2450.yaml
 
-    # add memory usage, wifi signal strength, and xmos flashing options
+    ## OPTIONALLY, uncomment if want extra memory, wifi and xmos control of the device.
     #- config/common/debug.yaml 
       
-  
 logger:
   level: ${log_level}
 
-# Enable transport encryption for the API layer by uncommenting the following lines 
-# and replacing "REPLACE_BY_32_BIT_RANDOM_KEY" with a 32-character random key.
-# For more information, refer to the ESPHome documentation:
-# https://esphome.io/components/api.html
-# Note: The documentation also provides a tool to generate a random key, 
-# which you can copy and paste here.
+## OPTIONALLY, enable transport encryption for the API layer by uncommenting the following lines 
+## and replacing "REPLACE_BY_32_BIT_RANDOM_KEY" with a 32-character random key.
+## For more information, refer to the ESPHome documentation:
+## https://esphome.io/components/api.html
+## Note: The documentation also provides a tool to generate a random key
 
 #api:
 #  encryption:
 #    key: REPLACE_BY_32_BIT_RANDOM_KEY
 
-
-# By default, the Wi-Fi credentials provisioned on the Satellite1 device 
-# during setup will be used. 
-# 
-# To override this and use the Wi-Fi credentials stored in the secrets.yaml 
-# file of the ESPHome dashboard, uncomment the following lines. 
-# This allows you to manage Wi-Fi credentials centrally for all your devices.
+## OPTIONALLY, override the default Wi-Fi credentials provisioned on the Satellite1 device 
+## during setup by using your Wi-Fi credentials stored in the `secrets.yaml` file of the 
+## ESPHome dashboard. Uncomment the below lines to enable this feature, allowing you 
+## to manage Wi-Fi credentials centrally for all your devices.
 
 #wifi:
 #  ssid: !secret wifi_ssid
