@@ -3,8 +3,9 @@
 
 external_components:  
   - source:
-      type: local
-      path: ../esphome/components
+      type: git
+      url: https://github.com/FutureProofHomes/Satellite1-ESPHome
+      ref: develop
     components: [ udp_stream ]
 
 
