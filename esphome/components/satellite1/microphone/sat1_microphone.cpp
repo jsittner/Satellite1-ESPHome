@@ -25,7 +25,7 @@ static const size_t DMA_BUFFERS_COUNT = 4;
 static const size_t FRAMES_IN_ALL_DMA_BUFFERS = DMA_BUFFER_SIZE * DMA_BUFFERS_COUNT;
 static const size_t SAMPLES_IN_ALL_DMA_BUFFERS = FRAMES_IN_ALL_DMA_BUFFERS * NUMBER_OF_CHANNELS;
 
-static const size_t TASK_DELAY_MS = 5;
+static const size_t TASK_DELAY_MS = 15;
 
 // TODO:
 //   - Determine optimal buffer sizes (dma included)
@@ -211,7 +211,7 @@ void NabuMicrophone::read_task_(void *params) {
 
             size_t bytes_read;
             esp_err_t err =
-                i2s_read(this_microphone->parent_->get_port(), buffer, SAMPLES_IN_ALL_DMA_BUFFERS * sizeof(int32_t),
+                i2s_read(this_microphone->parent_->get_port(), buffer, DMA_BUFFER_SIZE * sizeof(int32_t) * 4,
                          &bytes_read, pdMS_TO_TICKS(TASK_DELAY_MS));
             if (err != ESP_OK) {
               event.type = TaskEventType::WARNING;
@@ -292,7 +292,7 @@ void NabuMicrophone::start() {
     return;
 
   if (this->read_task_handle_ == nullptr) {
-    xTaskCreate(NabuMicrophone::read_task_, "microphone_task", 3584, (void *) this, 23, &this->read_task_handle_);
+    xTaskCreate(NabuMicrophone::read_task_, "microphone_task", 3584, (void *) this, 17, &this->read_task_handle_);
   }
 
   // TODO: Should we overwrite? If stop and start are called in quick succession, what behavior do we want
