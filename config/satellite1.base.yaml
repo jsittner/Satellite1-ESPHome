@@ -66,11 +66,9 @@ esphome:
 
 external_components:
   - source:
-      #type: local
-      #path: /Users/mischa/Projects/FutureProofHomes/fph-ha-voice-pe/esphome/components
       type: git
       url: https://github.com/FutureProofHomes/home-assistant-voice-pe
-      ref: satellite1
+      ref: 2024.12.10-fph.2
     components: [ microphone, voice_assistant, audio_dac, media_player, nabu, micro_wake_word ]
 
 ota:
