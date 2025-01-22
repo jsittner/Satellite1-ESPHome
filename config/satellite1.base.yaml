@@ -12,7 +12,6 @@ substitutions:
   project_name: Satellite1
   component_name: Core
   
-  esp32_fw_version: dev
   xmos_fw_version: "v1.0.1"
   built_for_core_hw_version: "v1.0.0-beta.1"
   built_for_hat_hw_version: "v1.0.0-beta.1"
@@ -40,11 +39,7 @@ esphome:
   name: ${node_name}
   name_add_mac_suffix: true
   friendly_name: ${friendly_name}
-  min_version: 2024.12.2
-  
-  project:
-    name: ${company_name}.${project_name}
-    version: ${esp32_fw_version}
+  min_version: 2024.11.2
   
   on_boot:
     - priority: 375
@@ -68,7 +63,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/FutureProofHomes/home-assistant-voice-pe
-      ref: 2024.12.10-fph.1
+      ref: 2024.12.3-fph.0
     components: [ microphone, voice_assistant, audio_dac, media_player, nabu, micro_wake_word ]
 
 ota:
@@ -77,7 +72,6 @@ ota:
 
 dashboard_import:
   package_import_url: github://futureproofhomes/satellite1-esphome/config/satellite1.yaml@develop
-  import_full_config: true
 
 
 packages:
@@ -91,11 +85,7 @@ packages:
   timer: !include common/timer.yaml
   led_ring: !include common/led_ring.yaml 
     
-  ## OPTIONAL COMPONENTS 
-  # mmwave_ld2410: !include common/mmwave_ld2410.yaml
-  # mmwave_ld2450: !include common/mmwave_ld2450.yaml
-  # debug: !include common/debug.yaml
-  # developer: !include common/developer.yaml
+  
 
 http_request:
 
