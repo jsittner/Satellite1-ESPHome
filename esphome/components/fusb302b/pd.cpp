@@ -137,7 +137,7 @@ void PowerDelivery::set_ams(bool ams){
 }
 
 bool PowerDelivery::check_ams(){
-  if( this->active_ams_ && (millis() - this->active_ams_timer_ > 2000) ){
+  if( millis() - this->active_ams_timer_ > 2000 ){
     this->active_ams_ = false;
   }
   return this->active_ams_;

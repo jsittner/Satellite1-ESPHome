@@ -55,10 +55,8 @@ static void msg_reader_task(void *params){
   
   PDEventInfo event_info;
   PDMsg &msg = event_info.msg;
- #if FUSB_DEBUG_PRINT 
-  printf("MSG READER TASK STARTED \n");
- #endif 
   
+  printf("MSG READER TASK STARTED \n");
   fusb302b->enable_auto_crc();
   fusb302b->fusb_reset_();
   
@@ -70,16 +68,13 @@ static void msg_reader_task(void *params){
         while( !(regs.status1 & FUSB_STATUS1_RX_EMPTY) ){
           if( fusb302b->read_message_(msg) ){
             xQueueSend(pd_message_queue, &event_info, 0);
-          } 
-#if FUSB_DEBUG_PRINT           
-          else {
+          } else {
             printf("Reading failed\n");    
           }
-#endif
           fusb302b->read_status_register(FUSB_STATUS1, regs.status1);
         }
     } 
-#if FUSB_DEBUG_PRINT    
+    
     if ( regs.interrupta &  FUSB_INTERRUPTA_I_HARDRST){
         event_info.event = PD_EVENT_HARD_RESET;
         printf(">>>FUSB_STATUS0A_HARDRST<<<\n");
@@ -91,8 +86,7 @@ static void msg_reader_task(void *params){
     {
       event_info.event = PD_EVENT_SENDING_MSG_FAILED;
       printf("Message did not get acknowledged.\n");
-    }
-#endif 
+    } 
   }
   fusb302b->disable_auto_crc();
 
@@ -105,23 +99,6 @@ static void trigger_task(void *params){
 
   pd_message_queue = xQueueCreate( 5, sizeof(PDEventInfo));
   
-  gpio_num_t irq_gpio_pin = static_cast<gpio_num_t>(fusb302b->irq_pin_);
-
-  gpio_config_t io_conf;
-  io_conf.pin_bit_mask = (1ULL << irq_gpio_pin);
-  io_conf.mode = GPIO_MODE_INPUT;
-  io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
-  io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-  io_conf.intr_type = GPIO_INTR_NEGEDGE	;
-
-  gpio_config(&io_conf);
-
-  // Install ISR service and attach the ISR handler
-  gpio_set_intr_type((gpio_num_t) irq_gpio_pin , GPIO_INTR_NEGEDGE	);
-  gpio_install_isr_service(0);
-  gpio_isr_handler_add( irq_gpio_pin, fusb302b_isr_handler, NULL);
-  
-  
   // Create the task that will wait for notifications
   xTaskCreatePinnedToCore( msg_reader_task, "fusb3202b_read_task", 4096, fusb302b, configMAX_PRIORITIES/2, &xReaderTaskHandle, 1 );
   PDEventInfo event_info;
@@ -129,7 +106,7 @@ static void trigger_task(void *params){
   while(true){
     if( xQueueReceive(pd_message_queue, &event_info, portMAX_DELAY) == pdTRUE ){
        //delay needed for getting fusb302b ready for receiving i2c again, is this the right place though?
-       //vTaskDelay(pdMS_TO_TICKS(1));
+       vTaskDelay(pdMS_TO_TICKS(1));
        void taskENTER_CRITICAL( void );
        PDMsg &msg = event_info.msg;
        //printf( "PD-Received new message with id: %d (%d, %d) [%u].\n", msg.id, msg.type, msg.num_of_obj, millis());
@@ -269,7 +246,13 @@ bool FUSB302B::read_status( fusb_status &status ){
 
 
 void FUSB302B::check_status_(){
-    
+  static uint32_t last_check = millis();
+  if( millis() - last_check < 1000 ){
+    return;
+  }
+  last_check = millis();
+  
+  
   switch( this->state_){
   case FUSB302_STATE_UNATTACHED:
   {    
@@ -287,7 +270,6 @@ void FUSB302B::check_status_(){
       xSemaphoreGive(this->i2c_lock_);
 
       if( !connected ){
-        this->state_ = FUSB302_STATE_FAILED;
         return;
       }
 
@@ -296,8 +278,24 @@ void FUSB302B::check_status_(){
         ESP_LOGD(TAG, "Statup delay reached!");
         this->startup_delay_ = 0;
 
+        gpio_num_t irq_gpio_pin = static_cast<gpio_num_t>(this->irq_pin_);
+
+        gpio_config_t io_conf;
+        io_conf.pin_bit_mask = (1ULL << irq_gpio_pin);
+        io_conf.mode = GPIO_MODE_INPUT;
+        io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
+        io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+        io_conf.intr_type = GPIO_INTR_NEGEDGE	;
+
+        gpio_config(&io_conf);
+
+        // Install ISR service and attach the ISR handler
+        gpio_set_intr_type((gpio_num_t) irq_gpio_pin , GPIO_INTR_NEGEDGE	);
+        gpio_install_isr_service(0);
+        gpio_isr_handler_add( irq_gpio_pin, fusb302b_isr_handler, NULL);
+
         // Create the task that will wait for notifications
-        xTaskCreatePinnedToCore(trigger_task, "fusb3202b_task", 4096, this , 18 , &xProcessTaskHandle, 1);
+        xTaskCreatePinnedToCore(trigger_task, "fusb3202b_task", 4096, this , configMAX_PRIORITIES, &xProcessTaskHandle, 0);
         delay(1);
       } else {
         this->enable_auto_crc();
@@ -330,7 +328,7 @@ void FUSB302B::check_status_(){
         }
         get_src_cap_retry_count_++;
         get_src_cap_time_stamp_ = millis();
-        if( get_src_cap_retry_count_ < 2){
+        if( get_src_cap_retry_count_ < 4){
           /* clear interrupts */
           this->read_status();
           this->send_message_(PDMsg( pd_control_msg_type::PD_CNTRL_GET_SOURCE_CAP));
@@ -348,8 +346,6 @@ void FUSB302B::check_status_(){
           }
         } 
       }
-    break;
-  case FUSB302_STATE_FAILED:
     break;
   }
 }
@@ -500,11 +496,9 @@ bool FUSB302B::send_message_(const PDMsg &msg){
   
   
   int err = this->write_register( FUSB_FIFOS, buf, pbuf - buf);
-  #if FUSB_DEBUG_PRINT
   if( err != i2c::ERROR_OK ){
     printf("Sending Message (%d) failed err: %d.\n", (int) msg.type, err );
   } 
-  #endif
   // else {
   //    printf("Sent Message (%d) id: %d. [%d] \n", (int) msg.type, msg.id, millis() );
   // }
