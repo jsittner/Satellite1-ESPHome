@@ -248,8 +248,8 @@ void TAS2780::setup(){
   }
   
   this->reg(TAS2780_PAGE_SELECT) = 0x00;
-  this->reg(TAS2780_TDM_CFG5) = 0x44;
-  this->reg(TAS2780_TDM_CFG6) = 0x40;
+  this->reg(TAS2780_TDM_CFG5) = 0x44; //TDM tx vsns transmit enable with slot 4
+  this->reg(TAS2780_TDM_CFG6) = 0x40; //TDM tx isns transmit enable with slot 0
 
   this->reg(TAS2780_TDM_CFG2) = (
       TAS2780_TDM_CFG2_RX_SCFG__STEREO_DWN_MIX |
@@ -259,23 +259,25 @@ void TAS2780::setup(){
 
 
   this->reg(TAS2780_PAGE_SELECT) = 0x01;
-  this->reg(TAS2780_INIT_0) = 0xc0;
-  this->reg(TAS2780_LSR) = 0x00;
-  this->reg(TAS2780_INIT_1) = 0x00;
-  this->reg(TAS2780_INIT_2) = 0x74;
+  this->reg(TAS2780_INIT_1) = 0x00;  //Disable Comparator Hysterisis
+  // this->reg(TAS2780_INIT_0) = 0xC0; //--Why was this set to C0 instead of C8?
+  this->reg(TAS2780_INIT_0) = 0xC8; //SARBurstMask=0
+  this->reg(TAS2780_LSR) = 0x00; //LSR Mode
+  this->reg(TAS2780_INIT_2) = 0x74; //Noise minimized
 
   this->reg(TAS2780_PAGE_SELECT) = 0xFD;
-  this->reg(0x0d) = 0x0d;
-  this->reg(TAS2780_INIT_3) = 0x4a;
-  this->reg(0x0d) = 0x00;
+  this->reg(0x0D) = 0x0D; //Access Page 0xFD
+  this->reg(TAS2780_INIT_3) = 0x4a; //Optimal Dmin
+  this->reg(0x0D) = 0x00; //Remove access Page 0xFD
 
 
   this->reg(TAS2780_PAGE_SELECT) = 0x00;
   //Power Mode 2 (no external VBAT)
   //this->reg(TAS2780_CHNL_0) = 0xe8;
-  this->reg(TAS2780_CHNL_0) = 0xa8;
-  this->reg(TAS2780_DC_BLK0) = 0xa1;
-  this->reg(TAS2780_PVDD_UVLO) = 0x12; 
+  this->reg(TAS2780_CHNL_0) = 0xA8; //#PWR_MODE0 selected
+  // this->reg(TAS2780_DC_BLK0) = 0xA1;
+  // this->reg(TAS2780_PVDD_UVLO) = 0x12; 
+  this->reg(TAS2780_PVDD_UVLO) = 0x03; //PVDD UVLO set to 2.76V
   
 
   //Set interrupt masks
@@ -320,7 +322,7 @@ void TAS2780::reset(){
    
   // software reset
   this->reg(TAS2780_SW_RESET) = 0x01;
-  
+
   if( this->reg(TAS2780_DC_BLK1).get() == 0x41 ){
     ESP_LOGD(TAG, "TAS2780 chip found.");
     ESP_LOGD(TAG, "Reg CLK_CFG/0x68: %d.", this->reg(TAS2780_CLK_CFG).get() );
@@ -346,8 +348,8 @@ void TAS2780::reset(){
   }
   
   this->reg(TAS2780_PAGE_SELECT) = 0x00;
-  this->reg(TAS2780_TDM_CFG5) = 0x44;
-  this->reg(TAS2780_TDM_CFG6) = 0x40;
+  this->reg(TAS2780_TDM_CFG5) = 0x44; //TDM tx vsns transmit enable with slot 4
+  this->reg(TAS2780_TDM_CFG6) = 0x40; //TDM tx isns transmit enable with slot 0
 
   this->reg(TAS2780_TDM_CFG2) = (
       TAS2780_TDM_CFG2_RX_SCFG__STEREO_DWN_MIX |
@@ -357,23 +359,25 @@ void TAS2780::reset(){
 
 
   this->reg(TAS2780_PAGE_SELECT) = 0x01;
-  this->reg(TAS2780_INIT_0) = 0xc0;
-  this->reg(TAS2780_LSR) = 0x00;
-  this->reg(TAS2780_INIT_1) = 0x00;
-  this->reg(TAS2780_INIT_2) = 0x74;
+  this->reg(TAS2780_INIT_1) = 0x00;  //Disable Comparator Hysterisis
+  // this->reg(TAS2780_INIT_0) = 0xC0; //--Why was this set to C0 instead of C8?
+  this->reg(TAS2780_INIT_0) = 0xC8; //SARBurstMask=0
+  this->reg(TAS2780_LSR) = 0x00; //LSR Mode
+  this->reg(TAS2780_INIT_2) = 0x74; //Noise minimized
 
   this->reg(TAS2780_PAGE_SELECT) = 0xFD;
-  this->reg(0x0d) = 0x0d;
-  this->reg(TAS2780_INIT_3) = 0x4a;
-  this->reg(0x0d) = 0x00;
+  this->reg(0x0D) = 0x0D; //Access Page 0xFD
+  this->reg(TAS2780_INIT_3) = 0x4a; //Optimal Dmin
+  this->reg(0x0D) = 0x00; //Remove access Page 0xFD
 
 
   this->reg(TAS2780_PAGE_SELECT) = 0x00;
   //Power Mode 2 (no external VBAT)
   //this->reg(TAS2780_CHNL_0) = 0xe8;
-  this->reg(TAS2780_CHNL_0) = 0xa8;
-  this->reg(TAS2780_DC_BLK0) = 0xa1;
-  this->reg(TAS2780_PVDD_UVLO) = 0x12; 
+  this->reg(TAS2780_CHNL_0) = 0xA8; //#PWR_MODE0 selected
+  // this->reg(TAS2780_DC_BLK0) = 0xA1;
+  // this->reg(TAS2780_PVDD_UVLO) = 0x12; 
+  this->reg(TAS2780_PVDD_UVLO) = 0x03; //PVDD UVLO set to 2.76V
   
 
   //Set interrupt masks
@@ -430,7 +434,7 @@ float TAS2780::volume() {
 
 bool TAS2780::write_mute_() {
   if( this->is_muted_ ){
-    this->reg(TAS2780_DVC) = 0xc9;  
+    this->reg(TAS2780_DVC) = 0xC9;  
   } else {
     this->write_volume_(); 
   }
@@ -446,11 +450,11 @@ bool TAS2780::write_volume_() {
   A_{DVC}: is the digital volume control setting as a number of dB (default 0 dB)
   A_{AMP}: the amplifier output level setting as a number of dBV
 
-  DVC_LVL[7:0] :            0dB to -100dB [0x00, 0xc8] c8 = 200
+  DVC_LVL[7:0] :            0dB to -100dB [0x00, 0xC8] c8 = 200
   AMP_LEVEL[4:0] : @48ksps 11dBV - 21dBV  [0x00, 0x14]
   */ 
   float attenuation = (1. - this->volume_) * 90.f;
-  uint8_t dvc = clamp<uint8_t>(attenuation, 0, 0xc8);
+  uint8_t dvc = clamp<uint8_t>(attenuation, 0, 0xC8);
   this->reg(TAS2780_DVC) = dvc; 
   
   uint8_t amp_level = 8; // 7: 15dBV
