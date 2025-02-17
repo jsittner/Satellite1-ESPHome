@@ -148,6 +148,7 @@ jobs:
           mkdir -p build
           echo "Copying all files to build directory"
           find files -name "*.bin" -exec cp {} build/ \;
+          find files -name "*.elf" -exec cp {} build/ \;
 
       - name: Create release
         uses: softprops/action-gh-release@v2
