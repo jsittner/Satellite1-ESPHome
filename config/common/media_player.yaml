@@ -14,14 +14,14 @@ audio_dac:
     on_speaker_activated:
       # if speaker was used previously but is not available try line-out
       - lambda: |
-          if( id(line_out_sensor).state && id(pd_fusb302b).contract_voltage < 9 ){
+          if( id(line_out_sensor).state ){
               id(dac_proxy).activate_line_out();
           }
     
     on_line_out_activated:
         # if line_out was used previously but is not available try speaker
         - lambda: |
-            if( !id(line_out_sensor).state && id(pd_fusb302b).contract_voltage >= 9 ){
+            if( !id(line_out_sensor).state ){
               id(dac_proxy).activate_speaker();
             }
     
@@ -80,7 +80,7 @@ binary_sensor:
 fusb302b:
   id: pd_fusb302b
   irq_pin: GPIO1
-  request_voltage: 9
+  request_voltage: 20
   on_power_ready:
     then:
       - logger.log: 
@@ -90,12 +90,12 @@ fusb302b:
       - text_sensor.template.publish:
           id: pd_state_text
           state: !lambda 'return id(pd_fusb302b).contract;'
-      - if:
-          condition:
-            lambda: |-
-              return id(pd_fusb302b).contract_voltage >= 9;
-          then:
-            - tas2780.activate:
+      # - if:
+      #     condition:
+      #       lambda: |-
+      #         return id(pd_fusb302b).contract_voltage >= 9;
+      #     then:
+      #       - tas2780.activate:
 speaker:
   - platform: i2s_audio
     sample_rate: 48000

@@ -296,8 +296,14 @@ void TAS2780::setup(){
   uint8_t reg_0x5c = this->reg(TAS2780_INT_CLK_CFG).get();
   this->reg(TAS2780_INT_CLK_CFG) = (reg_0x5c & ~0x03) | 0x00;   
 
-  //set to software shutdown
-  this->reg(TAS2780_MODE_CTRL) = (TAS2780_MODE_CTRL_BOP_SRC__PVDD_UVLO & ~TAS2780_MODE_CTRL_MODE_MASK) | TAS2780_MODE_CTRL_MODE__SFTW_SHTDWN;
+  // //set to software shutdown
+  // this->reg(TAS2780_MODE_CTRL) = (TAS2780_MODE_CTRL_BOP_SRC__PVDD_UVLO & ~TAS2780_MODE_CTRL_MODE_MASK) | TAS2780_MODE_CTRL_MODE__SFTW_SHTDWN;
+  
+  ESP_LOGD(TAG, "Activating TAS2780 in setup");
+  // clear interrupt latches
+    this->reg(TAS2780_INT_CLK_CFG) = 0x19 | (1 << 2);
+  // activate 
+  this->reg(TAS2780_MODE_CTRL) = (TAS2780_MODE_CTRL_BOP_SRC__PVDD_UVLO & ~TAS2780_MODE_CTRL_MODE_MASK) | TAS2780_MODE_CTRL_MODE__ACTIVE;
   }
 
 
