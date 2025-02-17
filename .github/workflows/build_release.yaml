@@ -5,6 +5,9 @@ on:
     branches:
       - main
       - staging
+  
+  pull_request:
+  
   workflow_dispatch:
     inputs:
       tag:
@@ -149,7 +152,9 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          files: build/*.bin
+          files: |
+            build/*.bin
+            build/*.elf
           generate_release_notes: true
           append_body: true
           body: ${{ needs.push-tag.outputs.changelog }}
