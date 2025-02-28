@@ -5,16 +5,6 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
-  # Global variable tracking if the jack has been plugged touched.
-  - id: jack_plugged_recently
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  # Global variable tracking if the jack has been unplugged touched.
-  - id: jack_unplugged_recently
-    type: bool
-    restore_value: no
-    initial_value: 'false'
 
 light:
   # Hardware LED ring. Not used because remapping needed

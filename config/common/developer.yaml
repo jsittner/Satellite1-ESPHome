@@ -13,7 +13,7 @@ external_components:
 udp_stream:
   id: udp_streamer
   microphone: asr_mic  # Default microphone to prevent validation errors
-
+  ip_address: "192.168.178.101"
 
 # Switches to toggle between ASR and Comm microphones
 switch:

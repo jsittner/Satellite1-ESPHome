@@ -1,3 +1,15 @@
+globals:
+    # Global variable tracking if the jack has been plugged touched.
+  - id: jack_plugged_recently
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  # Global variable tracking if the jack has been unplugged touched.
+  - id: jack_unplugged_recently
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
 
 audio_dac:
   - platform: pcm5122
@@ -25,15 +37,15 @@ audio_dac:
               id(dac_proxy).activate_speaker();
             }
     
-    on_state_change:
-      - media_player.volume_set:
-          volume: !lambda return id(dac_proxy).volume();
-      - lambda: |
-           if( id(dac_proxy).is_muted() ){
-              id(nabu_media_player)->make_call()
-                .set_command(MEDIA_PLAYER_COMMAND_MUTE)
-                .perform();
-           }
+    # on_state_change:
+    #   - media_player.volume_set:
+    #       volume: !lambda return id(dac_proxy).volume();
+    #   - lambda: |
+    #        if( id(dac_proxy).is_muted() ){
+    #           id(nabu_media_player)->make_call()
+    #             .set_command(MEDIA_PLAYER_COMMAND_MUTE)
+    #             .perform();
+    #        }
       
 
 binary_sensor:
@@ -54,10 +66,10 @@ binary_sensor:
       - lambda: id(jack_plugged_recently) = true;
       - script.execute: control_leds
       - delay: 200ms
-      - script.execute:
-          id: play_sound
-          priority: false
-          sound_file: !lambda return id(jack_connected_sound);
+      # - script.execute:
+      #     id: play_sound
+      #     priority: false
+      #     sound_file: !lambda return id(jack_connected_sound);
       - delay: 800ms
       - lambda: id(jack_plugged_recently) = false;
       - script.execute: control_leds
@@ -68,10 +80,10 @@ binary_sensor:
       - lambda: id(jack_unplugged_recently) = true;
       - script.execute: control_leds
       - delay: 200ms
-      - script.execute:
-          id: play_sound
-          priority: false
-          sound_file: !lambda return id(jack_disconnected_sound);
+      # - script.execute:
+      #     id: play_sound
+      #     priority: false
+      #     sound_file: !lambda return id(jack_disconnected_sound);
       - delay: 800ms
       - lambda: id(jack_unplugged_recently) = false;
       - script.execute: control_leds
@@ -96,119 +108,3 @@ fusb302b:
               return id(pd_fusb302b).contract_voltage >= 9;
           then:
             - tas2780.activate:
-speaker:
-  - platform: i2s_audio
-    sample_rate: 48000
-    i2s_clock_mode: external
-    i2s_dout_pin: GPIO9
-    bits_per_sample: 32bit
-    i2s_audio_id: i2s_shared
-    dac_type: external
-    channel: right_left
-    timeout: never
-    #buffer_duration: 100ms
-
-
-media_player:
-  - platform: nabu
-    id: nabu_media_player
-    name: Sat1 Media Player
-    sample_rate: 48000
-    internal: false
-    speaker:
-    audio_dac: dac_proxy
-    volume_increment: 0.05
-    volume_min: 0.1
-    volume_max: 1.
-    on_mute:
-      - script.execute: control_leds
-    on_unmute:
-      - script.execute: control_leds
-    on_volume:
-      - script.execute: control_leds
-    on_announcement:
-      - nabu.set_ducking:
-          decibel_reduction: 20
-          duration: 0.0s
-    on_state:
-      if:
-        condition:
-          and:
-            - switch.is_off: timer_ringing
-            - not:
-                voice_assistant.is_running:
-            - not:
-                lambda: return id(nabu_media_player)->state == media_player::MediaPlayerState::MEDIA_PLAYER_STATE_ANNOUNCING;
-        then:
-          - nabu.set_ducking:
-              decibel_reduction: 0
-              duration: 1.0s
-
-    files:
-      - id: center_button_press_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/center_button_press.flac
-      - id: center_button_double_press_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/center_button_double_press.flac
-      - id: center_button_triple_press_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/center_button_triple_press.flac
-      - id: center_button_long_press_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/center_button_long_press.flac
-      - id: factory_reset_initiated_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/factory_reset_initiated.mp3
-      - id: factory_reset_cancelled_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/factory_reset_cancelled.mp3
-      - id: mute_switch_on_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/mute_switch_on.flac
-      - id: mute_switch_off_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/mute_switch_off.flac
-      - id: timer_finished_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
-      - id: wake_word_triggered_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/wake_word_triggered.flac
-      - id: jack_connected_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/jack_connected.flac
-      - id: jack_disconnected_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/jack_disconnected.flac    
-
-
-script:
-  # Script executed when we want to play sounds on the device.
-  - id: play_sound
-    parameters:
-      priority: bool
-      sound_file: "media_player::MediaFile*"
-    then:
-      - lambda: |-
-          if (priority) {
-            id(nabu_media_player)
-              ->make_call()
-              .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_STOP)
-              .set_announcement(true)
-              .perform();
-          }
-          if ( (id(nabu_media_player).state != media_player::MediaPlayerState::MEDIA_PLAYER_STATE_ANNOUNCING ) || priority) {
-            id(nabu_media_player)
-              ->make_call()
-              .set_announcement(true)
-              .set_local_media_file(sound_file)
-              .perform();
-          }
-  
-  # Script to increased/decreased volume  
-  - id: control_volume
-    mode: restart
-    parameters:
-      increase_volume: bool  # True: Increase volume / False: Decrease volume.
-    then:
-      - delay: 16ms
-      - if:
-          condition:
-            lambda: return increase_volume;
-          then:
-            - media_player.volume_up:
-          else:
-            - media_player.volume_down:
-      - script.execute: control_leds
-      - delay: 2s
-      - lambda: id(volume_buttons_touched) = false;
-      - script.execute: control_leds

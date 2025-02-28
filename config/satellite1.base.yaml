@@ -51,7 +51,7 @@ esphome:
       then:
         - logger.log: "${company_name} ${project_name} ${component_name} version ${built_for_core_hw_version} running ESP firmware: ${esp32_fw_version} and XMOS firmware: ${xmos_fw_version}"
         # Run the script to refresh the LED status
-        - script.execute: control_leds
+        #- script.execute: control_leds
         - delay: 1s
         
         # If after 10 minutes, the device is still initializing (It did not yet connect to Home Assistant), turn off the init_in_progress variable and run the script to refresh the LED status
@@ -61,7 +61,7 @@ esphome:
               lambda: return id(init_in_progress);
             then:
               - lambda: id(init_in_progress) = false;
-              - script.execute: control_leds
+              #- script.execute: control_leds
 
 
 external_components:
@@ -84,17 +84,17 @@ packages:
   core_board: !include common/core_board.yaml
   wifi: !include common/wifi_improv.yaml
   sensors: !include common/hat_sensors.yaml
-  buttons: !include common/buttons.yaml
+  #buttons: !include common/buttons.yaml
   ha: !include common/home_assistant.yaml
   mp: !include common/media_player.yaml
-  va: !include common/voice_assistant.yaml
-  timer: !include common/timer.yaml
-  led_ring: !include common/led_ring.yaml 
+  #va: !include common/voice_assistant.yaml
+  #timer: !include common/timer.yaml
+  #led_ring: !include common/led_ring.yaml 
     
   ## OPTIONAL COMPONENTS 
   # mmwave_ld2410: !include common/mmwave_ld2410.yaml
   # mmwave_ld2450: !include common/mmwave_ld2450.yaml
-  # debug: !include common/debug.yaml
+  debug: !include common/debug.yaml
   # developer: !include common/developer.yaml
 
 http_request:
@@ -139,18 +139,18 @@ memory_flasher:
     on_flashing_start:    
       then:
         - lambda: id(xmos_flashing_state) = 1;
-        - script.execute: control_leds
+        #- script.execute: control_leds
     
-    on_progress_update:
-      then:
-        - lambda: id(global_led_animation_index) = id(xflash).flashing_progress * 24 / 100;
-        - script.execute: control_leds
+    # on_progress_update:
+    #   then:
+    #     - lambda: id(global_led_animation_index) = id(xflash).flashing_progress * 24 / 100;
+    #     #- script.execute: control_leds
     
     on_flashing_success:
       then:
         - logger.log: "success called"
         - lambda: id(xmos_flashing_state) = 2;
-        - script.execute: control_leds
+        #- script.execute: control_leds
         - lambda: id(xmos_flashing_state) = 0;
         - if:
             condition:
@@ -163,14 +163,17 @@ memory_flasher:
       then:
         - logger.log: "failed called"
         - lambda: id(xmos_flashing_state) = 3;
-        - script.execute: control_leds
+        #- script.execute: control_leds
         - lambda: id(xmos_flashing_state) = 0;
     
-    on_erasing_done:
-      then:
-        - if:
-            condition: 
-              lambda: return id(factory_reset_requested);
-            then:
-              - button.press: factory_reset_button
+    # on_erasing_done:
+    #   then:
+    #     - if:
+    #         condition: 
+    #           lambda: return id(factory_reset_requested);
+    #         then:
+    #           #- button.press: factory_reset_button
 
+script:
+  - id: control_leds
+    then:
