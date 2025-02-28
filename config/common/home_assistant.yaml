@@ -20,7 +20,23 @@ button:
     entity_category: diagnostic
     internal: true
   
+  # Flashes Sat1 HAT with XMOS firmware embedded in the ESP32
+  - platform: template
+    id: flash_embedded
+    name: "XMOS Flash Embedded FW"
+    entity_category: diagnostic
+    on_press:
+      then:
+        - memory_flasher.write_embedded_image:
 
+  # Wipes the Satellite1 HAT XMOS Chip
+  - platform: template
+    id: erase_xmos_flash
+    name: "XMOS Erase Chip"
+    entity_category: diagnostic
+    on_press:
+      then:
+        - memory_flasher.erase:
 
 text_sensor:
   - platform: template
@@ -42,5 +58,5 @@ text_sensor:
     icon: "mdi:memory"
     entity_category: "diagnostic"
     update_interval: never
-    lambda: return id(satellite1_id).status_string();
+    lambda: return std::string("Reading FW not supported");
       
