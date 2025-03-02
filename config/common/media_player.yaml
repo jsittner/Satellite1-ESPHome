@@ -37,16 +37,32 @@ audio_dac:
               id(dac_proxy).activate_speaker();
             }
     
-    # on_state_change:
-    #   - media_player.volume_set:
-    #       volume: !lambda return id(dac_proxy).volume();
-    #   - lambda: |
-    #        if( id(dac_proxy).is_muted() ){
-    #           id(nabu_media_player)->make_call()
-    #             .set_command(MEDIA_PLAYER_COMMAND_MUTE)
-    #             .perform();
-    #        }
-      
+    on_state_change:
+      - number.set:
+          id: expl_dac_volume
+          value: !lambda return id(dac_proxy).volume() * 100;
+      - lambda: |
+           if( id(dac_proxy).is_muted() ){
+              auto call = id(expl_dac_volume).make_call();
+              call.set_value(0);
+              call.perform();
+           }
+
+number:
+  - platform: template
+    name: 'DAC Volume'
+    id: expl_dac_volume
+    max_value: 100
+    min_value: 0
+    step: 1
+    mode: slider
+    initial_value: 50
+    optimistic: true
+    on_value: 
+      - audio_dac.set_volume:
+          id: dac_proxy
+          volume: !lambda "return ((float) x) / 100.;"
+
 
 binary_sensor:
   - platform: gpio
@@ -66,10 +82,6 @@ binary_sensor:
       - lambda: id(jack_plugged_recently) = true;
       - script.execute: control_leds
       - delay: 200ms
-      # - script.execute:
-      #     id: play_sound
-      #     priority: false
-      #     sound_file: !lambda return id(jack_connected_sound);
       - delay: 800ms
       - lambda: id(jack_plugged_recently) = false;
       - script.execute: control_leds
@@ -80,10 +92,6 @@ binary_sensor:
       - lambda: id(jack_unplugged_recently) = true;
       - script.execute: control_leds
       - delay: 200ms
-      # - script.execute:
-      #     id: play_sound
-      #     priority: false
-      #     sound_file: !lambda return id(jack_disconnected_sound);
       - delay: 800ms
       - lambda: id(jack_unplugged_recently) = false;
       - script.execute: control_leds
@@ -108,3 +116,6 @@ fusb302b:
               return id(pd_fusb302b).contract_voltage >= 9;
           then:
             - tas2780.activate:
+
+
+
