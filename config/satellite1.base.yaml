@@ -136,8 +136,8 @@ memory_flasher:
     id: xflash
     embed_flash_image:
       image_version: ${xmos_fw_version}
-      image_file: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.2-alpha-usb/nexus_usb_beta.factory.bin
-      md5_file: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.2-alpha-usb/nexus_usb_beta.factory.md5
+      image_file: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.2-alpha-usb/nexus_usb_beta1.factory.bin
+      md5_file: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/assets/firmware/xmos/v1.0.2-alpha-usb/nexus_usb_beta1.factory.md5
 
     on_flashing_start:    
       then:
