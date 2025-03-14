@@ -9,7 +9,7 @@ namespace pcm5122 {
 
 class PCMGPIOPin : public GPIOPin, public Parented<PCM5122> {
 public:
-  void setup() override {};
+  void setup() override;
   void pin_mode(gpio::Flags flags) override {}
   bool digital_read() override;
   void digital_write(bool value) override;
@@ -23,6 +23,7 @@ protected:
   uint8_t pin_;
   bool inverted_;
   gpio::Flags flags_;
+  bool value_{false};
 };
 
 } // namespace pcm5122

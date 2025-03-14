@@ -46,6 +46,8 @@ micro_wake_word:
   models:
     - model: hey_jarvis
       id: hey_jarvis
+    - model: okay_nabu
+      id: okay_nabu    
     - model: https://github.com/kahrendt/microWakeWord/releases/download/stop/stop.json
       id: stop
       internal: true
@@ -101,7 +103,6 @@ voice_assistant:
   auto_gain: 0 dbfs
   volume_multiplier: 1
   on_client_connected:
-    - delay: 2s
     - lambda: id(init_in_progress) = false;
     - micro_wake_word.start:
     - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
@@ -113,7 +114,9 @@ voice_assistant:
   on_error:
     - if:
         condition:
-          lambda: return !id(init_in_progress);
+          and:
+            - lambda: return !id(init_in_progress);
+            - lambda: return code != "duplicate_wake_up_detected";
         then:
           - lambda: id(voice_assistant_phase) = ${voice_assist_error_phase_id};
           - script.execute: control_leds

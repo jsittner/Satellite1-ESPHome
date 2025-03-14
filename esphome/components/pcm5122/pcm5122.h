@@ -12,7 +12,7 @@ namespace pcm5122 {
 class PCM5122 : public audio_dac::AudioDac,
                 public Component,
                 public i2c::I2CDevice {
-public:
+ public:
   void setup() override;
   void dump_config() override;
   float get_setup_priority() const override { return setup_priority::DATA; }
@@ -24,7 +24,7 @@ public:
   bool is_muted() override;
   float volume() override;
 
-protected:
+ protected:
   bool write_mute_();
   bool write_volume_();
 
