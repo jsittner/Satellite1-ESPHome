@@ -30,6 +30,7 @@ event:
       - triple_press
       - long_press
 
+
 binary_sensor:
   - platform: gpio
     id: btn_up
