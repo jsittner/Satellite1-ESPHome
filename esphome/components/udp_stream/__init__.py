@@ -12,6 +12,7 @@ from esphome.components import microphone
 from esphome.components.network import IPAddress
 
 import socket
+from ipaddress import IPv4Address
 
 AUTO_LOAD = ["socket"]
 DEPENDENCIES = ["microphone"]
@@ -47,6 +48,8 @@ def get_local_ip() -> str | None :
 def safe_ip(ip):
     if ip is None:
         return IPAddress(0, 0, 0, 0)
+    elif isinstance(ip, IPv4Address):
+        return IPAddress( *map(int,str(ip).split(".")) )
     return IPAddress(*ip.args)
 
 
@@ -55,7 +58,7 @@ CONFIG_SCHEMA = cv.All(
         {
             cv.GenerateID(): cv.declare_id(UDPStreamer),
             cv.GenerateID(CONF_MICROPHONE): cv.use_id(microphone.Microphone),
-            cv.Optional(CONF_IP_ADDRESS, default=get_local_ip()) : cv.ipv4,
+            cv.Optional(CONF_IP_ADDRESS, default=get_local_ip()) : cv.ipaddress,
             cv.Optional(CONF_ON_START): automation.validate_automation(single=True),
             cv.Optional(CONF_ON_END): automation.validate_automation(single=True),
             cv.Optional(CONF_ON_ERROR): automation.validate_automation(single=True),

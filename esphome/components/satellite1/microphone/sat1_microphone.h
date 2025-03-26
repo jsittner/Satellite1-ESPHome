@@ -94,10 +94,15 @@ class NabuMicrophoneChannel : public microphone::Microphone, public Component {
   size_t read(int16_t *buf, size_t len, TickType_t ticks_to_wait = 0) override {
     return this->ring_buffer_->read((void *) buf, len, ticks_to_wait);
   };
+  size_t read2(int16_t *buf, size_t len, TickType_t ticks_to_wait = 0) {
+    return this->ring_buffer_->read((void *) buf, len, ticks_to_wait);
+  };
   size_t read(int16_t *buf, size_t len) override { return this->ring_buffer_->read((void *) buf, len); };
+  size_t read2(int16_t *buf, size_t len) { return this->ring_buffer2_->read((void *) buf, len); };
   void reset() override { this->ring_buffer_->reset(); }
 
   RingBuffer *get_ring_buffer() { return this->ring_buffer_.get(); }
+  RingBuffer *get_ring_buffer2() { return this->ring_buffer2_.get(); }
 
   void set_amplify_shift(uint8_t amplify_shift) { this->amplify_shift_ = amplify_shift; }
   uint8_t get_amplify_shift() { return this->amplify_shift_; }
@@ -105,6 +110,7 @@ class NabuMicrophoneChannel : public microphone::Microphone, public Component {
  protected:
   NabuMicrophone *parent_;
   std::unique_ptr<RingBuffer> ring_buffer_;
+  std::unique_ptr<RingBuffer> ring_buffer2_;
 
   uint8_t amplify_shift_;
   bool is_muted_;
