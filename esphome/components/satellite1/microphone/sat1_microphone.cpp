@@ -52,6 +52,12 @@ void NabuMicrophoneChannel::setup() {
     this->mark_failed();
     return;
   }
+  this->ring_buffer2_ = RingBuffer::create(ring_buffer_size);
+  if (this->ring_buffer2_ == nullptr) {
+    ESP_LOGE(TAG, "Could not allocate ring buffer");
+    this->mark_failed();
+    return;
+  }
 }
 
 void NabuMicrophoneChannel::loop() {
@@ -195,10 +201,16 @@ void NabuMicrophone::read_task_(void *params) {
           xQueueSend(this_microphone->event_queue_, &event, portMAX_DELAY);
         } else {
           // TODO: Is this the ideal spot to reset the ring buffers?
-          if (this_microphone->channel_0_ != nullptr)
+          if (this_microphone->channel_0_ != nullptr){
             this_microphone->channel_0_->get_ring_buffer()->reset();
-          if (this_microphone->channel_1_ != nullptr)
+            this_microphone->channel_0_->get_ring_buffer2()->reset();
+          }
+            
+          if (this_microphone->channel_1_ != nullptr){
             this_microphone->channel_1_->get_ring_buffer()->reset();
+            this_microphone->channel_1_->get_ring_buffer2()->reset();
+          }
+            
 
           event.type = TaskEventType::STARTED;
           xQueueSend(this_microphone->event_queue_, &event, portMAX_DELAY);
@@ -254,9 +266,13 @@ void NabuMicrophone::read_task_(void *params) {
               if (this_microphone->channel_0_ != nullptr) {
                 this_microphone->channel_0_->get_ring_buffer()->write((void *) channel_0_samples.data(),
                                                                       bytes_to_write);
+                this_microphone->channel_0_->get_ring_buffer2()->write((void *) channel_0_samples.data(),
+                                                                      bytes_to_write);                                                                      
               }
               if (this_microphone->channel_1_ != nullptr) {
                 this_microphone->channel_1_->get_ring_buffer()->write((void *) channel_1_samples.data(),
+                                                                      bytes_to_write);
+                this_microphone->channel_1_->get_ring_buffer2()->write((void *) channel_1_samples.data(),
                                                                       bytes_to_write);
               }
             }

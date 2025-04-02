@@ -88,8 +88,19 @@ micro_wake_word:
                                 priority: true
                                 sound_file: !lambda return id(wake_word_triggered_sound);
                             - delay: 300ms
-                      - voice_assistant.start:
-                          wake_word: !lambda return wake_word;
+                      - binary_sensor.template.publish:
+                          id: wake_word_detected_report
+                          state: ON
+                      
+                      - delay: 1s
+
+                      - binary_sensor.template.publish:
+                          id: wake_word_detected_report
+                          state: OFF
+
+                      
+                      #- voice_assistant.start:
+                      #    wake_word: !lambda return wake_word;
 
 
 
