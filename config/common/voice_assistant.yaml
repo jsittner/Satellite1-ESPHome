@@ -14,13 +14,15 @@ substitutions:
   voice_assist_not_ready_phase_id: '10'
   # The voice assistant encountered an error
   voice_assist_error_phase_id: '11'
+  # The voice assistant is currently disabled
+  voice_assist_disabled_phase_id: '12'
 
 globals:
   # Global variable tracking the phase of the voice assistant (defined above). Initialized to not_ready
   - id: voice_assistant_phase
     type: int
     restore_value: no
-    # initial_value: ${voice_assist_not_ready_phase_id}
+    initial_value: ${voice_assist_disabled_phase_id}
 
 microphone:
   - platform: satellite1
@@ -120,8 +122,8 @@ voice_assistant:
     - script.execute: control_leds
   on_client_disconnected:
     - voice_assistant.stop:
-    - lambda: id(voice_assistant_phase) = ${voice_assist_not_ready_phase_id};
-    - script.execute: control_leds
+    #- lambda: id(voice_assistant_phase) = ${voice_assist_not_ready_phase_id};
+    #- script.execute: control_leds
   on_error:
     - if:
         condition:

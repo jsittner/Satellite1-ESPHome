@@ -77,7 +77,7 @@ class ErasingDoneTrigger : public Trigger<>{
 public:
   explicit ErasingDoneTrigger(MemoryFlasher *xflash) {
     xflash->add_on_state_callback([this, xflash]() {
-      if( xflash->state == FLASHER_SUCCESS_STATE && xflash->requested_action == ACTION_FULL_ERASE ){
+      if( xflash->state == FLASHER_ERASING_SUCCESS_STATE && xflash->requested_action == ACTION_FULL_ERASE ){
         this->trigger();
       } 
     });

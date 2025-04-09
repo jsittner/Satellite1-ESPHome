@@ -13,4 +13,25 @@ wifi:
     - script.execute: control_leds
 
 improv_serial:
+  on_action:
+    then:
+      - if:
+          condition:
+            lambda: return x.get_action() == std::string("RESET_XMOS");
+          then:
+            - satellite1.xmos_hardware_reset:
+      - if:
+          condition:
+            lambda: return x.get_action() == std::string("ERASE_XMOS_FLASH");
+          then:
+            - memory_flasher.erase:
+
+      - if:
+          condition:
+            lambda: return x.get_action() == std::string("FLASH_XMOS_EMBEDDED");
+          then:
+            - memory_flasher.write_embedded_image:
+          
+          
+      
 

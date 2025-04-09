@@ -33,7 +33,7 @@ void XMOSFlasher::loop(){
         this->publish_progress_();
         if( remaining == 0 && this->requested_action == ACTION_FULL_ERASE ){
           this->deinit_flashing_();
-          this->state = FLASHER_SUCCESS_STATE;
+          this->state = FLASHER_ERASING_SUCCESS_STATE;
         } else if( remaining == 0 ) {
           this->state = FLASHER_FLASHING;
         } else if( remaining < 0 ){
@@ -55,6 +55,12 @@ void XMOSFlasher::loop(){
         }
         break;
       }
+    
+    case FLASHER_ERASING_SUCCESS_STATE:
+      this->publish();
+      this->state = FLASHER_IDLE;
+      break;
+    
     
     case FLASHER_SUCCESS_STATE:
       this->publish();

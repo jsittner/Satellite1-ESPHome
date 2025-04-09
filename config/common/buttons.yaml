@@ -43,10 +43,10 @@ binary_sensor:
     icon: "mdi:volume-plus"
     on_press:
       then:
-        - lambda: id(volume_buttons_touched) = true;
-        - script.execute:
-            id: control_volume
-            increase_volume: true
+        # - lambda: id(volume_buttons_touched) = true;
+        # - script.execute:
+        #     id: control_volume
+        #     increase_volume: true
   
   - platform: gpio
     id: btn_down
@@ -59,10 +59,10 @@ binary_sensor:
     icon: "mdi:volume-minus"
     on_press:
       then:
-        - lambda: id(volume_buttons_touched) = true;
-        - script.execute:
-            id: control_volume
-            increase_volume: false
+        # - lambda: id(volume_buttons_touched) = true;
+        # - script.execute:
+        #     id: control_volume
+        #     increase_volume: false
   
   - platform: gpio
     id: btn_left
@@ -74,25 +74,26 @@ binary_sensor:
     name: "Button Left (HW Mute)"
     icon: "mdi:microphone-off"
     on_state:
-      - if:
-          condition:
-            binary_sensor.is_off: btn_left
-          then:
-            - script.execute:
-                id: play_sound
-                priority: false
-                sound_file: !lambda return id(mute_switch_off_sound);
-            - switch.template.publish:
-                id: master_mute_switch
-                state: OFF
-          else:
-            - script.execute:
-                id: play_sound
-                priority: false
-                sound_file: !lambda return id(mute_switch_on_sound);
-            - switch.template.publish:
-                id: master_mute_switch
-                state: ON
+      then:
+      # - if:
+      #     condition:
+      #       binary_sensor.is_off: btn_left
+      #     then:
+      #       - script.execute:
+      #           id: play_sound
+      #           priority: false
+      #           sound_file: !lambda return id(mute_switch_off_sound);
+      #       - switch.template.publish:
+      #           id: master_mute_switch
+      #           state: OFF
+      #     else:
+      #       - script.execute:
+      #           id: play_sound
+      #           priority: false
+      #           sound_file: !lambda return id(mute_switch_on_sound);
+      #       - switch.template.publish:
+      #           id: master_mute_switch
+      #           state: ON
 
   - platform: gpio
     id: btn_action
@@ -105,129 +106,13 @@ binary_sensor:
       ignore_strapping_warning: true
     name: "Button Right (Action)"
     icon: "mdi:gesture-tap"
-    on_press:
-      - script.execute: control_leds
-    on_release:
-      - script.execute: control_leds
-    on_multi_click:
-      # Simple Click:
-      #   - Abort "things" in order
-      #     - Timer
-      #     - Announcements
-      #     - Voice Assistant Pipeline run
-      #     - Music
-      #   - Starts the voice assistant if it is not yet running and if the device is not muted.
-      - timing:
-          - ON for at most 1s
-          - OFF for at least 0.25s
-        then:
-          - if:
-              condition:
-                lambda: return !id(init_in_progress);
-              then:
-                - event.trigger:
-                    id: action_button_press_event
-                    event_type: "single_press"
-                - if:
-                    condition:
-                      switch.is_on: timer_ringing
-                    then:
-                      - switch.turn_off: timer_ringing
-                    else:
-                      - if:
-                          condition:
-                            lambda: return id(nabu_media_player)->state == media_player::MediaPlayerState::MEDIA_PLAYER_STATE_ANNOUNCING;
-                          then:
-                            - lambda: |
-                                id(nabu_media_player)
-                                  ->make_call()
-                                  .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_STOP)
-                                  .set_announcement(true)
-                                  .perform();
-                          else:
-                            - if:
-                                condition:
-                                  voice_assistant.is_running:
-                                then:
-                                  - voice_assistant.stop:
-                                else:
-                                  - if:
-                                      condition:
-                                        media_player.is_playing:
-                                      then:
-                                        - media_player.pause:
-                                      else:
-                                        - if:
-                                            condition:
-                                              and:
-                                                - switch.is_off: master_mute_switch
-                                                - not:
-                                                    voice_assistant.is_running
-                                            then:
-                                              - script.execute:
-                                                  id: play_sound
-                                                  priority: true
-                                                  sound_file: !lambda return id(center_button_press_sound);
-                                              - delay: 300ms
-                                              - voice_assistant.start:
-      # Double Click
-      #  . Exposed as an event entity. To be used in automations inside Home Assistant
-      - timing:
-          - ON for at most 1s
-          - OFF for at most 0.25s
-          - ON for at most 1s
-          - OFF for at least 0.25s
-        then:
-          - if:
-              condition:
-                lambda: return !id(init_in_progress);
-              then:
-                - script.execute:
-                    id: play_sound
-                    priority: false
-                    sound_file: !lambda return id(center_button_double_press_sound);
-                - event.trigger:
-                    id: action_button_press_event
-                    event_type: "double_press"
-      # Triple Click
-      #  . Exposed as an event entity. To be used in automations inside Home Assistant
-      - timing:
-          - ON for at most 1s
-          - OFF for at most 0.25s
-          - ON for at most 1s
-          - OFF for at most 0.25s
-          - ON for at most 1s
-          - OFF for at least 0.25s
-        then:
-          - if:
-              condition:
-                lambda: return !id(init_in_progress);
-              then:
-                - script.execute:
-                    id: play_sound
-                    priority: false
-                    sound_file: !lambda return id(center_button_triple_press_sound);
-                - event.trigger:
-                    id: action_button_press_event
-                    event_type: "triple_press"
-      # Long Press
-      #  . Exposed as an event entity. To be used in automations inside Home Assistant
-      - timing:
-          - ON for at least 1s
-        then:
-          - if:
-              condition:
-                lambda: return !id(init_in_progress);
-              then:
-                - script.execute:
-                    id: play_sound
-                    priority: false
-                    sound_file: !lambda return id(center_button_long_press_sound);
-                - light.turn_off: voice_assistant_leds
-                - event.trigger:
-                    id: action_button_press_event
-                    event_type: "long_press"
+    # on_press:
+    #   #- script.execute: control_leds
+    
+    # on_release:
+    #   - script.execute: control_leds
       
+    on_multi_click:  
       # Factory Reset Warning
       #  . Audible and Visible warning.
       - timing:

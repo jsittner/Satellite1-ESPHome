@@ -106,12 +106,12 @@ external_components:
   - source:
       type: local
       path: ../esphome/components
-    components: [ i2s_audio, satellite1, memory_flasher, tas2780, pcm5122, fusb302b ]
+    components: [ i2s_audio, satellite1, memory_flasher, tas2780, pcm5122, fusb302b, improv_serial ]
 
 
 logger:
   deassert_rts_dtr: true
-  hardware_uart : UART0
+  hardware_uart : USB_SERIAL_JTAG
   level: debug
 
 
