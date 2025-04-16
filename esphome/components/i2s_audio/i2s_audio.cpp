@@ -7,7 +7,15 @@
 namespace esphome {
 namespace i2s_audio {
 
-static const char *const TAG = "i2s_audio";
+  static const char *const TAG = "i2s_audio";
+
+#if defined(USE_ESP_IDF) && (ESP_IDF_VERSION_MAJOR >= 5)
+static const uint8_t I2S_NUM_MAX = SOC_I2S_NUM;  // because IDF 5+ took this away :(
+#endif
+
+static const size_t DMA_BUFFERS_COUNT = 4;
+static const size_t I2S_EVENT_QUEUE_COUNT = DMA_BUFFERS_COUNT + 1;
+
 
 void I2SAudioComponent::setup() {
   static i2s_port_t next_port_num = I2S_NUM_0;
@@ -171,7 +179,7 @@ i2s_driver_config_t I2SSettings::get_i2s_cfg() const {
       .use_apll = false,
       .tx_desc_auto_clear = true,
       .fixed_mclk = I2S_PIN_NO_CHANGE,
-      .mclk_multiple = I2S_MCLK_MULTIPLE_DEFAULT,
+      .mclk_multiple = I2S_MCLK_MULTIPLE_256,
       .bits_per_chan = I2S_BITS_PER_CHAN_DEFAULT,
 #if SOC_I2S_SUPPORTS_TDM
       .chan_mask = I2S_CHANNEL_MONO,
