@@ -94,7 +94,7 @@ packages:
   ## OPTIONAL COMPONENTS 
   # mmwave_ld2410: !include common/mmwave_ld2410.yaml
   # mmwave_ld2450: !include common/mmwave_ld2450.yaml
-  # debug: !include common/debug.yaml
+  debug: !include common/debug.yaml
   # developer: !include common/developer.yaml
 
 http_request:
@@ -122,6 +122,12 @@ satellite1:
           state: !lambda 'return id(satellite1_id).status_string();'
   
   on_xmos_connected:
+    then:
+      - text_sensor.template.publish:
+          id: xmos_firmware_version_text
+          state: !lambda 'return id(satellite1_id).status_string();'
+  
+  on_xmos_version_poll:
     then:
       - text_sensor.template.publish:
           id: xmos_firmware_version_text
