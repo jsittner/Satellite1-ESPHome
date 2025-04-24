@@ -80,7 +80,7 @@ binary_sensor:
 fusb302b:
   id: pd_fusb302b
   irq_pin: GPIO1
-  request_voltage: 9
+  request_voltage: 20
   on_power_ready:
     then:
       - logger.log: 
