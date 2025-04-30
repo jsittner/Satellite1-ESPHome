@@ -80,7 +80,7 @@ binary_sensor:
 fusb302b:
   id: pd_fusb302b
   irq_pin: GPIO1
-  request_voltage: 9
+  request_voltage: 20
   on_power_ready:
     then:
       - logger.log: 
@@ -107,6 +107,7 @@ speaker:
     dac_type: external
     channel: stereo
     timeout: never
+    audio_dac: dac_proxy
     #buffer_duration: 100ms
 
 # Virtual speakers to combine the announcement and media streams together into one output
