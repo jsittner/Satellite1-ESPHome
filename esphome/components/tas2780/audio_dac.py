@@ -17,7 +17,7 @@ RestAction = tas2780_ns.class_(
 )
 
 ActivateAction = tas2780_ns.class_(
-    "ActivateAction", automation.Action, cg.Parented.template(tas2780)
+    "ActivateAction", automation.Action
 )
 
 DeactivateAction = tas2780_ns.class_(
@@ -37,15 +37,30 @@ CONFIG_SCHEMA = (
 )
 
 
-TAS2780_ACTION_SCHEMA = automation.maybe_simple_id({cv.GenerateID(): cv.use_id(tas2780)})
+TAS2780_ACTION_SCHEMA = cv.Schema(
+    {
+        cv.GenerateID(): cv.use_id(tas2780),
+        cv.Optional(CONF_MODE, default=2) : cv.int_range(0,3)
+    }
+)
 
 @automation.register_action("tas2780.deactivate", DeactivateAction, TAS2780_ACTION_SCHEMA)
-@automation.register_action("tas2780.activate", ActivateAction, TAS2780_ACTION_SCHEMA)
 @automation.register_action("tas2780.reset", RestAction, TAS2780_ACTION_SCHEMA)
 async def tas2780_action(config, action_id, template_arg, args):
     var = cg.new_Pvariable(action_id, template_arg)
     await cg.register_parented(var, config[CONF_ID])
     return var
+
+
+@automation.register_action("tas2780.activate", ActivateAction, TAS2780_ACTION_SCHEMA)
+async def tas2780_action(config, action_id, template_arg, args):
+    tas2780 = await cg.get_variable(config[CONF_ID])
+    var = cg.new_Pvariable(action_id, template_arg, tas2780)
+    mode_ = config.get(CONF_MODE)
+    template_ = await cg.templatable(mode_, args, cg.uint8)
+    cg.add(var.set_mode(template_))
+    return var
+
 
 
 async def to_code(config):
