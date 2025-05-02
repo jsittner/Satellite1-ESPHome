@@ -14,9 +14,22 @@ class ResetAction : public Action<Ts...>, public Parented<TAS2780> {
 };
 
 template< typename... Ts>
-class ActivateAction : public Action<Ts...>, public Parented<TAS2780> {
+class ActivateAction : public Action<Ts...> {
  public:
-  void play(Ts... x) override { this->parent_->activate(); }
+  ActivateAction(TAS2780 *parent) : parent_(parent) {}
+  TEMPLATABLE_VALUE(uint8_t, mode)
+  
+  void play(Ts... x) override { 
+    if( this->mode_.has_value() ){
+      this->parent_->activate(this->mode_.value(x...));
+    }
+    else{
+      this->parent_->activate(); 
+    }
+  }
+
+protected:
+ TAS2780 *parent_;  
 };
 
 template< typename... Ts>
