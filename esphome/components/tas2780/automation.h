@@ -33,6 +33,35 @@ protected:
 };
 
 template< typename... Ts>
+class UpdateConfigAction : public Action<Ts...> {
+ public:
+  UpdateConfigAction(TAS2780 *parent) : parent_(parent) {}
+  TEMPLATABLE_VALUE(uint8_t, amp_level)
+  TEMPLATABLE_VALUE(float, vol_range_min)
+  TEMPLATABLE_VALUE(float, vol_range_max)
+  
+  void play(Ts... x) override { 
+    if( this->amp_level_.has_value() ){
+      this->parent_->set_amp_level(this->amp_level_.value(x...));
+      this->parent_->update_register();
+    }
+    if( this->vol_range_min_.has_value() ){
+      this->parent_->set_vol_range_min(this->vol_range_min_.value(x...));
+    }
+    if( this->vol_range_max_.has_value() ){
+      this->parent_->set_vol_range_max(this->vol_range_max_.value(x...));
+    }
+  }
+
+protected:
+ TAS2780 *parent_;  
+};
+
+
+
+
+
+template< typename... Ts>
 class DeactivateAction : public Action<Ts...>, public Parented<TAS2780> {
  public:
   void play(Ts... x) override { this->parent_->deactivate(); }
