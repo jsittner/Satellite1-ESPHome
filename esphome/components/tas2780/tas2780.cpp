@@ -301,7 +301,9 @@ void TAS2780::init(){
   // 0h : On any unmasked live interrupts
   // 3h : 2 - 4 ms every 4 ms on any unmasked latched
   uint8_t reg_0x5c = this->reg(TAS2780_INT_CLK_CFG).get();
-  this->reg(TAS2780_INT_CLK_CFG) = (reg_0x5c & ~0x03) | 0x00;   
+  this->reg(TAS2780_INT_CLK_CFG) = (reg_0x5c & ~0x03) | 0x00;
+  
+  this->update_register();
 }
 
 
@@ -400,19 +402,24 @@ bool TAS2780::write_volume_() {
   DVC_LVL[7:0] :            0dB to -100dB [0x00, 0xC8] c8 = 200
   AMP_LEVEL[4:0] : @48ksps 11dBV - 21dBV  [0x00, 0x14]
   */ 
-  float attenuation = (1. - this->volume_) * 90.f;
+  float range_len = this->vol_range_max_ - this->vol_range_min_;
+  float volume = this->volume_ * range_len + this->vol_range_min_;
+  float attenuation = (1. - volume) * 100.f;
+  ESP_LOGD(TAG, "Setting attenuation to: %4.2f", attenuation);
   uint8_t dvc = clamp<uint8_t>(attenuation, 0, 0xC8);
   this->reg(TAS2780_DVC) = dvc; 
   
-  uint8_t amp_level = 8; // 7: 15dBV
-  uint8_t reg_val = this->reg(TAS2780_CHNL_0).get();
-  reg_val &= ~TAS2780_CHNL_0_AMP_LEVEL_MASK;
-  reg_val |= amp_level << TAS2780_CHNL_0_AMP_LEVEL_SHIFT;
-  this->reg(TAS2780_CHNL_0) = reg_val;
 
   return true;
 }
 
+void TAS2780::update_register(){
+  uint8_t reg_val = this->reg(TAS2780_CHNL_0).get();
+  reg_val &= ~TAS2780_CHNL_0_AMP_LEVEL_MASK;
+  reg_val |= this->amp_level_ << TAS2780_CHNL_0_AMP_LEVEL_SHIFT;
+  this->reg(TAS2780_CHNL_0) = reg_val;
+  ESP_LOGD(TAG, "Update amp to level idx: %d", this->amp_level_);
+}
 
 
 }
