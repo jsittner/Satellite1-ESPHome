@@ -156,7 +156,7 @@ std::string PowerDelivery::get_contract_string(pd_contract_t contract) const{
 void PowerDelivery::set_contract_(pd_contract_t contract){
   this->accepted_contract_ = contract;
   this->contract = this->get_contract_string(contract);
-  this->contract_voltage = contract.max_v;
+  this->contract_voltage = contract.max_v * 5 / 100;
   this->contract_timer_ = millis();
 }
 
