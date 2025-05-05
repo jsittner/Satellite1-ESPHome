@@ -216,6 +216,32 @@ static const uint8_t TAS2780_LDG_RES4 = 0x4F; //Load Diagnostics Resistance Valu
 /* PAGE 0x0FD*/
 static const uint8_t TAS2780_INIT_3 = 0x3E; //Initialization     
 
+static const uint8_t TAS2780_INT_LTCH0_IR_OT =    (1 << 0); // over temp error
+static const uint8_t TAS2780_INT_LTCH0_IR_OC =    (1 << 1); // over current error
+static const uint8_t TAS2780_INT_LTCH0_IR_TDMCE = (1 << 2); // TDM_CLOCK_ERROR
+static const uint8_t TAS2780_INT_LTCH0_IR_LIMA =  (1 << 3); // limiter active
+static const uint8_t TAS2780_INT_LTCH0_IR_PBIP =  (1 << 4); // PVDD below limiter inflection point
+static const uint8_t TAS2780_INT_LTCH0_IR_LIMMA = (1 << 5); // limiter max attenuation
+static const uint8_t TAS2780_INT_LTCH0_IR_BOPIH = (1 << 6); // BOP infinite hold
+static const uint8_t TAS2780_INT_LTCH0_IR_BOPM = (1 << 7); // due to bop mute
+
+static const uint8_t TAS2780_INT_LTCH1_IR_VBATLIM = (1 << 0); // Gain Limiter interrupt
+static const uint8_t TAS2780_INT_LTCH1_IR_LDMODE =  (3 << 3); // Load Diagnostic mode fault status
+static const uint8_t TAS2780_INT_LTCH1_IR_LDC =     (1 << 5); // Load diagnostic completion
+static const uint8_t TAS2780_INT_LTCH1_IR_OTPCRC =  (1 << 6); // OTP CRC error flag
+
+static const uint8_t TAS2780_INT_LTCH1_0_IR_VBAT1S_UVLO  = (1 << 5); // VBAT1S Under Voltage
+static const uint8_t TAS2780_INT_LTCH1_0_IR_PLL_CLK =      (1 << 7); // Internal PLL Clock Error 
+
+static const uint8_t TAS2780_INT_LTCH2_IR_PUVLO  = (1 << 0); // PVDD UVLO
+static const uint8_t TAS2780_INT_LTCH2_IR_LDO_OL = (1 << 1); // Internal VBAT1S LDO Over Load
+static const uint8_t TAS2780_INT_LTCH2_IR_LDO_OV = (1 << 2); // Internal VBAT1S LDO Over Voltage
+static const uint8_t TAS2780_INT_LTCH2_IR_LDO_UV = (1 << 3); // Internal VBAT1S LDO Under Voltage
+
+
+
+
+
 static const uint8_t POWER_MODES[4][2] = {
   {2, 0}, // PWR_MODE0: CDS_MODE=10, VBAT1S_MODE=0
   {0, 0}, // PWR_MODE1: CDS_MODE=00, VBAT1S_MODE=0
@@ -308,7 +334,7 @@ void TAS2780::init(){
 
 
 void TAS2780::activate(uint8_t power_mode){
-  ESP_LOGD(TAG, "Activating TAS2780");
+  ESP_LOGD(TAG, "Activating TAS2780 (PWR_MODE:%d)", power_mode);
   // clear interrupt latches
     this->reg(TAS2780_INT_CLK_CFG) = 0x19 | (1 << 2);
   if (power_mode != this->power_mode_){
@@ -348,8 +374,106 @@ void TAS2780::set_power_mode_(const uint8_t power_mode){
 }
 
 
+void TAS2780::log_error_states(){
+  const uint8_t latched_its = this->reg(TAS2780_INT_LTCH0).get();
+  //Temperature
+  if ( latched_its & TAS2780_INT_LTCH0_IR_OT ){
+    ESP_LOGE(TAG, "Over temperature error!");
+  }
+  //Over Current
+  if ( latched_its & TAS2780_INT_LTCH0_IR_OC ){
+    ESP_LOGE(TAG, "Over current error!");
+  }
+  
+  //TDM CLOCK
+  if ( latched_its & TAS2780_INT_LTCH0_IR_TDMCE ){
+    ESP_LOGE(TAG, "TDM Clock Error!");
+  }
+  
+  if ( latched_its & TAS2780_INT_LTCH0_IR_LIMA ){
+    ESP_LOGE(TAG, " limiter active error!");
+  }
+
+  if ( latched_its & TAS2780_INT_LTCH0_IR_PBIP ){
+    ESP_LOGE(TAG, "PVDD below limiter inflection point!");
+  }
+  
+  if ( latched_its & TAS2780_INT_LTCH0_IR_LIMMA ){
+    ESP_LOGE(TAG, "Limiter max attenuation!");
+  }
+
+  if ( latched_its & TAS2780_INT_LTCH0_IR_BOPIH ){
+    ESP_LOGE(TAG, "BOP infinite hold!");
+  }
+
+  if ( latched_its & TAS2780_INT_LTCH0_IR_BOPM ){
+    ESP_LOGE(TAG, "BOP Mute!");
+  }
+
+  const uint8_t latched1_its = this->reg(TAS2780_INT_LTCH1).get();
+  
+  if( latched1_its & TAS2780_INT_LTCH1_IR_VBATLIM)
+  {
+    ESP_LOGE(TAG, "Gain Limiter interrupt!");
+  }
+  
+  if( latched1_its & TAS2780_INT_LTCH1_IR_LDMODE)
+  {
+    ESP_LOGE(TAG, "Load Diagnostic mode fault status!");
+  }
+  
+  if( latched1_its & TAS2780_INT_LTCH1_IR_LDC)
+  {
+    ESP_LOGE(TAG, "Load diagnostic completion!");
+  }
+  
+  if( latched1_its & TAS2780_INT_LTCH1_IR_OTPCRC)
+  {
+    ESP_LOGE(TAG, "OTP CRC error flag!");
+  }
+  
+  const uint8_t latched1_0_its = this->reg(TAS2780_INT_LTCH1_0).get();
+  if( latched1_0_its & TAS2780_INT_LTCH1_0_IR_VBAT1S_UVLO)
+  {
+    ESP_LOGE(TAG, "VBAT1S Under Voltage!");
+  }
+  
+  if( latched1_0_its & TAS2780_INT_LTCH1_0_IR_PLL_CLK)
+  {
+    ESP_LOGE(TAG, "Internal PLL Clock Error!");
+  }
+  
+  const uint8_t latched2_its = this->reg(TAS2780_INT_LTCH2).get();
+  if( latched2_its & TAS2780_INT_LTCH2_IR_PUVLO)
+  {
+    ESP_LOGE(TAG, "PVDD UVLO!");
+  }
+  if( latched2_its & TAS2780_INT_LTCH2_IR_LDO_OL)
+  {
+    ESP_LOGE(TAG, "Internal VBAT1S LDO Over Load!");
+  }
+  if( latched2_its & TAS2780_INT_LTCH2_IR_LDO_OV)
+  {
+    ESP_LOGE(TAG, "Internal VBAT1S LDO Over Voltage!");
+  }
+  if( latched2_its & TAS2780_INT_LTCH2_IR_LDO_UV)
+  {
+    ESP_LOGE(TAG, "Internal VBAT1S LDO Under Voltage!");
+  }
+  
+
+}
 
 void TAS2780::loop() {
+  static uint32_t last_call = millis();
+  if( millis() - last_call > 1000 ){
+    last_call = millis();
+    uint8_t curr_mode = this->reg(TAS2780_MODE_CTRL).get() & 7;
+    if( curr_mode == 2 ){
+      ESP_LOGD(TAG, "Current Mode: %d (PWR_MODE: %d)", curr_mode, this->power_mode_);
+      this->log_error_states();
+    }
+  }
 }
 
 

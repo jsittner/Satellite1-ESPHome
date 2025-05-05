@@ -9,6 +9,14 @@
 namespace esphome {
 namespace tas2780 {
 
+enum TAS2780State : uint8_t {
+  TAS2780_STATE_HW_SHUTDOWN,
+  TAS2780_STATE_SW_SHUTDOWN,
+  TAS2780_STATE_ACTIVE,
+  TAS2780_STATE_ERROR_STATE
+};
+
+
 class TAS2780 : public audio_dac::AudioDac, public Component, public i2c::I2CDevice {
  public:
   void setup() override;
@@ -21,6 +29,7 @@ class TAS2780 : public audio_dac::AudioDac, public Component, public i2c::I2CDev
   void activate(uint8_t power_mode=2);
   void deactivate();
   void update_register();
+  void log_error_states();
 
   bool set_mute_off() override;
   bool set_mute_on() override;
