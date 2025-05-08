@@ -96,10 +96,6 @@ fusb302b:
               return id(pd_fusb302b).contract_voltage >= 9;
           then:
             - tas2780.activate:
-                mode: 2
-          else:
-            - tas2780.activate:
-                mode: 0
 speaker:
   - platform: i2s_audio
     id: i2s_audio_speaker

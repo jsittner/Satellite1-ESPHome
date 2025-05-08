@@ -164,10 +164,6 @@ memory_flasher:
                 return id(pd_fusb302b).contract_voltage >= 9;
             then:
               - tas2780.activate:
-                  mode: 2
-            else:
-              - tas2780.activate:
-                  mode: 0
 
     on_flashing_failed:
       then:
