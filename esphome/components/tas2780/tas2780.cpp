@@ -470,7 +470,7 @@ void TAS2780::loop() {
     last_call = millis();
     uint8_t curr_mode = this->reg(TAS2780_MODE_CTRL).get() & 7;
     if( curr_mode == 2 ){
-      ESP_LOGD(TAG, "Current Mode: %d (PWR_MODE: %d)", curr_mode, this->power_mode_);
+      ESP_LOGD(TAG, "Current Mode: SOFTWARE_SHUTDOWN (PWR_MODE: %d)", this->power_mode_);
       this->log_error_states();
     }
   }
