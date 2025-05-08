@@ -1,0 +1,3 @@
+<<: !include satellite1.factory.yaml
+
+<<: !include common/mmwave_ld2450.yaml
