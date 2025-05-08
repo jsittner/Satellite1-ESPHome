@@ -116,7 +116,7 @@ number:
     min_value: 0
     max_value: 1.
     step: .05
-    initial_value: .1
+    initial_value: .2
     on_value:
       then:
         - tas2780.update_config:

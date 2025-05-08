@@ -71,7 +71,7 @@ async def tas2780_action(config, action_id, template_arg, args):
 TAS2780_UPDATE_CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(): cv.use_id(tas2780),
-        cv.Optional(CONF_VOL_RNG_MIN, default=.1) : cv.templatable(cv.float_range(0.,1.)),
+        cv.Optional(CONF_VOL_RNG_MIN, default=.2) : cv.templatable(cv.float_range(0.,1.)),
         cv.Optional(CONF_VOL_RNG_MAX, default=1.) : cv.templatable(cv.float_range(0.,1.)),
         cv.Optional(CONF_AMP_LEVEL_IDX) : cv.templatable(cv.int_range(0, 20))
     }
