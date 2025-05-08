@@ -57,7 +57,7 @@ static PDMsg build_source_cap_response( pd_contract_t pwr_info, uint8_t pos )
   constexpr uint32_t templ = ( 
         //((uint32_t)   1 << 22)  |   /* B22 EPR Mode Capable */
         //((uint32_t)   1 << 23)  |   /* B23 Unchunked Extended Messages Supported */                                       
-          ((uint32_t)   1 << 24)  |   /* B24  No USB Suspend */
+          ((uint32_t)   1 << 24)  |   /* B24 No USB Suspend */
           ((uint32_t)   1 << 25)      /* B25 USB Communication Capable */ 
         //((uint32_t)   1 << 26)      /* B26 Capability Mismatch */
         //((uint32_t)   1 << 27)      /* B27 GiveBack flag = 0 (depricated)*/              

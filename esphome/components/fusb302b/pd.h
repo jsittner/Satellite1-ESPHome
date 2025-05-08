@@ -147,8 +147,7 @@ class PowerDelivery {
 public:
   PowerDeliveryState state{PD_STATE_DISCONNECTED};
   int contract_voltage{5};
-  int measured_voltage{0};
-  std::string contract{"0.3A @ 5V"};
+  std::string contract{"0.5A @ 5V"};
   PowerDeliveryState prev_state_{PD_STATE_DISCONNECTED};
   
   bool request_voltage(int voltage);
