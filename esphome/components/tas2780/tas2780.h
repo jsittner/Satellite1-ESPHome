@@ -42,7 +42,7 @@ class TAS2780 : public audio_dac::AudioDac, public Component, public i2c::I2CDev
   float volume_{0};
   uint8_t power_mode_{2};
   uint8_t amp_level_{8};
-  float vol_range_min_{.2};
+  float vol_range_min_{.3};
   float vol_range_max_{1.};
 
 };
