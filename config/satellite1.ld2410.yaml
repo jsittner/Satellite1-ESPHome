@@ -1,3 +1,9 @@
 <<: !include satellite1.yaml
 
-<<: !include common/mmwave_ld2450.yaml
+<<: !include common/mmwave_ld2410.yaml
+
+update:
+  - platform: http_request
+    name: None
+    id: update_http_request
+    source: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/manifest_ld2410.json
