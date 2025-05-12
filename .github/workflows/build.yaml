@@ -96,6 +96,20 @@ jobs:
         run: |
           mkdir -p output/${{ needs.prepare.outputs.version }}
           mv ${{ steps.esphome-build.outputs.name }}/* output/${{ needs.prepare.outputs.version }}/
+      
+      - name: Rename firmware output files
+        run: |
+          NEW_NAME=$(basename ${{ matrix.file }} .yaml)  # Replace with your desired base name
+
+          for ext in ota.bin factory.bin elf; do
+            for f in *.${ext}; do
+              [ -e "$f" ] || continue  # skip if no match
+              mv "$f" "${NEW_NAME}.${ext}"
+            done
+          done
+        shell: bash
+        working-directory: output/${{ needs.prepare.outputs.version }}    
+
       - name: Set artifact name
         id: artifact_name
         run: |
