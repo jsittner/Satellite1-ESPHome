@@ -96,15 +96,11 @@ jobs:
         run: |
           mkdir -p output/${{ needs.prepare.outputs.version }}
           mv ${{ steps.esphome-build.outputs.name }}/* output/${{ needs.prepare.outputs.version }}/
-      - name: Generated random artifact prefix
-        id: artifact-name
-        run: |
-          artifact_prefix=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)
-          echo artifact-prefix=$artifact_prefix >> $GITHUB_OUTPUT
+      
       - name: Upload artifact
         uses: actions/upload-artifact@v4.6.2
         with:
-          name: ${{ inputs.combined-name != '' && format('{0}-{1}', steps.artifact-name.outputs.artifact-prefix, steps.esphome-build.outputs.name) || steps.esphome-build.outputs.original-name }}
+          name: ${{ format('{0}-{1}', matrix.file, steps.esphome-build.outputs.name) || steps.esphome-build.outputs.original-name }}
           path: output
 
   combine:
