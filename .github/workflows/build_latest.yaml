@@ -12,10 +12,12 @@ env:
 jobs:
 
   build-firmware:
-    uses: esphome/workflows/.github/workflows/build.yml@main
+    uses: ./.github/workflows/build.yaml
     with:
       files: |
-        config/satellite1.factory.yaml
+        config/satellite1.yaml
+        config/satellite1.ld2410.yaml
+        config/satellite1.ld2450.yaml
       esphome-version: 2024.12.2
       release-summary: develop-branch
       release-url:

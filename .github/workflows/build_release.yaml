@@ -86,10 +86,12 @@ jobs:
     name: Build Firmware
     needs:
       - prepare
-    uses: esphome/workflows/.github/workflows/build.yml@main
+    uses: ./.github/workflows/build.yaml
     with:
       files: |
-        config/satellite1.factory.yaml
+        config/satellite1.yaml
+        config/satellite1.ld2410.yaml
+        config/satellite1.ld2450.yaml
       esphome-version: 2024.12.2
       release-version: ${{ needs.prepare.outputs.next_tag }}
 
@@ -160,6 +162,7 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.next_tag }}
 
       - name: Update Documentation
+        if: ${{ github.ref_name == 'main' || github.ref_name == 'staging' }}
         run: |
           curl -X POST \
             -H "Accept: application/vnd.github+json" \
