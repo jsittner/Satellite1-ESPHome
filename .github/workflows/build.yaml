@@ -80,6 +80,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.2.2
+        with:
+          ref: ${{ github.ref }}
       - name: Replace project version
         run: |
           sed -i "s/version: dev/version: ${{ needs.prepare.outputs.version }}/g" ${{ matrix.file }}
