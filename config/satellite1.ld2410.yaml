@@ -1,17 +1,22 @@
-<<: !include satellite1.yaml
+packages:
+  base_image: !include satellite1.yaml
+  mmwave_ld2450: !include common/mmwave_ld2410.yaml
 
-<<: !include common/mmwave_ld2410.yaml
+esphome:
+  name: ${node_name}
+  project:
+    name: ${company_name}.${project_name}
+    version: ${esp32_fw_version}
 
 update:
   - platform: http_request
     name: None
-    id: update_http_request
+    id: !extend update_http_request
     source: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/manifest.ld2410.json
-
 
 switch:
   - platform: template
-    id: beta_firmware
+    id: !extend beta_firmware
     name: Beta firmware
     icon: "mdi:test-tube"
     entity_category: diagnostic
