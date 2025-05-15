@@ -80,9 +80,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.2.2
-      - name: Replace project version
+        with:
+          ref: ${{ github.ref }}
+      
+      - name: Update version in satellite1.yaml
         run: |
-          sed -i "s/version: dev/version: ${{ needs.prepare.outputs.version }}/g" ${{ matrix.file }}
+          file=config/satellite1.yaml
+          tag="${{ needs.prepare.outputs.version }}"
+          sed -i "s/^\(\s*esp32_fw_version:\s*\).*/\1\"${tag}\"/" "$file"
+          
+      - name: Check version update
+        run: |
+          grep esp32_fw_version config/satellite1.yaml
       - name: Build Firmware
         uses: esphome/build-action@v7.0.0
         id: esphome-build
