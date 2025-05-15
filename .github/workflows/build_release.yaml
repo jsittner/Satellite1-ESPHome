@@ -74,7 +74,7 @@ jobs:
       - name: Update version in satellite1.yaml
         run: |
           file=config/satellite1.yaml
-          tag="${{ steps.set_release_tag.outputs.release_tag }}"
+          tag="v0.1.1"
           sed -i "s/^\(\s*esp32_fw_version:\s*\).*/\1\"${tag}\"/" "$file"
           
       - name: Check version update

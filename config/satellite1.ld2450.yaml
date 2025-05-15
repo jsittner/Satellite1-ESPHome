@@ -6,7 +6,7 @@ esphome:
   name: ${node_name}
   project:
     name: ${company_name}.${project_name}
-    version: ${esp32_fw_version}
+    version: ${esp32_fw_version}+ld2450
 
 update:
   - platform: http_request
