@@ -82,9 +82,17 @@ jobs:
         uses: actions/checkout@v4.2.2
         with:
           ref: ${{ github.ref }}
-      - name: Replace project version
+      
+      - name: Update version in satellite1.yaml
         run: |
-          sed -i "s/version: dev/version: ${{ needs.prepare.outputs.version }}/g" ${{ matrix.file }}
+          file=config/satellite1.yaml
+          tag="v0.1.1"
+          sed -i "s/^\(\s*esp32_fw_version:\s*\).*/\1\"${tag}\"/" "$file"
+          
+      - name: Check version update
+        run: |
+          grep esp32_fw_version config/satellite1.yaml
+      
       - name: Build Firmware
         uses: esphome/build-action@v7.0.0
         id: esphome-build
@@ -94,6 +102,7 @@ jobs:
           complete-manifest: true
           release-summary: ${{ inputs.release-summary }}
           release-url: ${{ inputs.release-url }}
+      
       - name: Move files for versioning
         run: |
           mkdir -p output/${{ needs.prepare.outputs.version }}
