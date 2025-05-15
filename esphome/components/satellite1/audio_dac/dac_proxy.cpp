@@ -38,6 +38,12 @@ void DACProxy::setup(){
     this->restore_state_.speaker_is_muted = false;
     this->restore_state_.line_out_volume = .5;
     this->restore_state_.line_out_is_muted = false;
+    if( this->pcm5122_ ){
+        this->pcm5122_->set_volume( this->restore_state_.line_out_volume);
+    }
+    if( this->tas2780_ ){
+        this->tas2780_->set_volume( this->restore_state_.speaker_volume);
+    }
   }
   this->setup_was_called_ = true;
   this->defer([this]() { this->state_callback_.call(); });
