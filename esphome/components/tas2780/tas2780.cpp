@@ -340,6 +340,7 @@ void TAS2780::activate(uint8_t power_mode){
   if (power_mode != this->power_mode_){
     this->power_mode_ = power_mode;
     this->init();
+    this->write_mute_();
   }
   // activate 
   this->reg(TAS2780_MODE_CTRL) = (TAS2780_MODE_CTRL_BOP_SRC__PVDD_UVLO & ~TAS2780_MODE_CTRL_MODE_MASK) | TAS2780_MODE_CTRL_MODE__ACTIVE;
