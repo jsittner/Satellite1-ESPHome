@@ -2,7 +2,8 @@
 
 #ifdef USE_ESP32
 #include "esphome/core/defines.h"
-#include "esphome/core/ring_buffer.h"
+
+#include "timed_ring_buffer.h"
 
 #ifdef USE_SPEAKER
 #include "esphome/components/speaker/speaker.h"
@@ -23,6 +24,8 @@ class AudioTransferBuffer {
    *   - The ring buffer is stored in a shared_ptr, so destroying the transfer buffer object will release ownership.
    */
  public:
+  AudioTransferBuffer() = default;
+  AudioTransferBuffer(std::string name) : name_(name) {}
   /// @brief Destructor that deallocates the transfer buffer
   ~AudioTransferBuffer();
 
@@ -52,7 +55,7 @@ class AudioTransferBuffer {
   /// @brief Clears data in the transfer buffer and, if possible, the source/sink.
   virtual void clear_buffered_data();
 
-  /// @brief Tests if there is any data in the tranfer buffer or the source/sink.
+  /// @brief Tests if there is any data in the transfer buffer or the source/sink.
   /// @return True if there is data, false otherwise.
   virtual bool has_buffered_data() const;
 
@@ -68,13 +71,14 @@ class AudioTransferBuffer {
   void deallocate_buffer_();
 
   // A possible source or sink for the transfer buffer
-  std::shared_ptr<RingBuffer> ring_buffer_;
+  std::shared_ptr<TimedRingBuffer> ring_buffer_;
 
   uint8_t *buffer_{nullptr};
   uint8_t *data_start_{nullptr};
 
   size_t buffer_size_{0};
   size_t buffer_length_{0};
+  std::string name_;
 };
 
 class AudioSinkTransferBuffer : public AudioTransferBuffer {
@@ -97,7 +101,7 @@ class AudioSinkTransferBuffer : public AudioTransferBuffer {
 
   /// @brief Adds a ring buffer as the transfer buffer's sink.
   /// @param ring_buffer weak_ptr to the allocated ring buffer
-  void set_sink(const std::weak_ptr<RingBuffer> &ring_buffer) { this->ring_buffer_ = ring_buffer.lock(); }
+  void set_sink(const std::weak_ptr<TimedRingBuffer> &ring_buffer) { this->ring_buffer_ = ring_buffer.lock(); }
 
 #ifdef USE_SPEAKER
   /// @brief Adds a speaker as the transfer buffer's sink.
@@ -135,7 +139,7 @@ class AudioSourceTransferBuffer : public AudioTransferBuffer {
 
   /// @brief Adds a ring buffer as the transfer buffer's source.
   /// @param ring_buffer weak_ptr to the allocated ring buffer
-  void set_source(const std::weak_ptr<RingBuffer> &ring_buffer) { this->ring_buffer_ = ring_buffer.lock(); };
+  void set_source(const std::weak_ptr<TimedRingBuffer> &ring_buffer) { this->ring_buffer_ = ring_buffer.lock(); };
 };
 
 }  // namespace audio

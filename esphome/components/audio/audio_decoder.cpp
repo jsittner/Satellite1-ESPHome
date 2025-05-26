@@ -25,7 +25,7 @@ AudioDecoder::~AudioDecoder() {
 #endif
 }
 
-esp_err_t AudioDecoder::add_source(std::weak_ptr<RingBuffer> &input_ring_buffer) {
+esp_err_t AudioDecoder::add_source(std::weak_ptr<TimedRingBuffer> &input_ring_buffer) {
   if (this->input_transfer_buffer_ != nullptr) {
     this->input_transfer_buffer_->set_source(input_ring_buffer);
     return ESP_OK;
@@ -33,7 +33,7 @@ esp_err_t AudioDecoder::add_source(std::weak_ptr<RingBuffer> &input_ring_buffer)
   return ESP_ERR_NO_MEM;
 }
 
-esp_err_t AudioDecoder::add_sink(std::weak_ptr<RingBuffer> &output_ring_buffer) {
+esp_err_t AudioDecoder::add_sink(std::weak_ptr<TimedRingBuffer> &output_ring_buffer) {
   if (this->output_transfer_buffer_ != nullptr) {
     this->output_transfer_buffer_->set_sink(output_ring_buffer);
     return ESP_OK;
@@ -133,6 +133,15 @@ AudioDecoderState AudioDecoder::decode(bool stop_gracefully) {
   size_t bytes_available_before_processing = 0;
 
   while (state == FileDecoderState::MORE_TO_PROCESS) {
+#if 0     
+    size_t bytes_read_2 = this->input_transfer_buffer_->transfer_data_from_source(pdMS_TO_TICKS(READ_WRITE_TIMEOUT_MS),false);
+     delay(READ_WRITE_TIMEOUT_MS);
+     this->input_transfer_buffer_->decrease_buffer_length( this->input_transfer_buffer_->available() );
+     this->output_transfer_buffer_->clear_buffered_data();
+     return AudioDecoderState::DECODING;
+#endif
+    
+#if 1
     // Transfer decoded out
     if (!this->pause_output_) {
       // Never shift the data in the output transfer buffer to avoid unnecessary, slow data moves
@@ -148,7 +157,7 @@ AudioDecoderState AudioDecoder::decode(bool stop_gracefully) {
       // If paused, block to avoid wasting CPU resources
       delay(READ_WRITE_TIMEOUT_MS);
     }
-
+#endif
     // Verify there is enough space to store more decoded audio and that the function hasn't been running too long
     if ((this->output_transfer_buffer_->free() < this->free_buffer_required_) ||
         (millis() - decoding_start > DECODING_TIMEOUT_MS)) {
@@ -217,6 +226,7 @@ AudioDecoderState AudioDecoder::decode(bool stop_gracefully) {
       return AudioDecoderState::FAILED;
     } else if (state == FileDecoderState::MORE_TO_PROCESS) {
       this->potentially_failed_count_ = 0;
+      return AudioDecoderState::DECODING;    
     }
   }
   return AudioDecoderState::DECODING;
@@ -256,6 +266,7 @@ FileDecoderState AudioDecoder::decode_flac_() {
   }
 
   uint32_t output_samples = 0;
+  // CAUTION: free space in buffer in output buffer is not checked while writing, call only if enough space is available
   auto result = this->flac_decoder_->decode_frame(
       this->input_transfer_buffer_->get_buffer_start(), this->input_transfer_buffer_->available(),
       reinterpret_cast<int16_t *>(this->output_transfer_buffer_->get_buffer_end()), &output_samples);

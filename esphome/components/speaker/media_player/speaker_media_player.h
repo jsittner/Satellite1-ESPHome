@@ -72,6 +72,7 @@ class SpeakerMediaPlayer : public Component, public media_player::MediaPlayer {
   Trigger<float> *get_volume_trigger() const { return this->volume_trigger_; }
 
   void play_file(audio::AudioFile *media_file, bool announcement, bool enqueue);
+  void play_snapcast_stream(const std::string &server_uri);
 
   uint32_t get_playback_ms() const { return this->playback_ms_; }
   uint32_t get_playback_us() const { return this->playback_us_; }

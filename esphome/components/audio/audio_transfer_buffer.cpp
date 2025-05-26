@@ -7,6 +7,8 @@
 namespace esphome {
 namespace audio {
 
+static constexpr uint32_t MAX_CHUNK_SIZE = 9200;   
+
 AudioTransferBuffer::~AudioTransferBuffer() { this->deallocate_buffer_(); };
 
 std::unique_ptr<AudioSinkTransferBuffer> AudioSinkTransferBuffer::create(size_t buffer_size) {
@@ -69,7 +71,7 @@ void AudioSinkTransferBuffer::clear_buffered_data() {
 
 bool AudioTransferBuffer::has_buffered_data() const {
   if (this->ring_buffer_.use_count() > 0) {
-    return ((this->ring_buffer_->available() > 0) || (this->available() > 0));
+    return ((this->ring_buffer_->chunks_available() > 0) || (this->available() > 0));
   }
   return (this->available() > 0);
 }
@@ -121,12 +123,17 @@ size_t AudioSourceTransferBuffer::transfer_data_from_source(TickType_t ticks_to_
   }
 
   size_t bytes_to_read = this->free();
-  size_t bytes_read = 0;
+  int32_t bytes_read = 0;
   if (bytes_to_read > 0) {
     if (this->ring_buffer_.use_count() > 0) {
       bytes_read = this->ring_buffer_->read((void *) this->get_buffer_end(), bytes_to_read, ticks_to_wait);
+      //printf( "TransferBuffer: free %d, read %d\n", bytes_to_read, bytes_read );
+    } else {
+      printf( "use-count is zero!!\n");
     }
-
+    if( bytes_read <= 0 ){
+      return 0;
+    }
     this->increase_buffer_length(bytes_read);
   }
   return bytes_read;
@@ -140,12 +147,18 @@ size_t AudioSinkTransferBuffer::transfer_data_to_sink(TickType_t ticks_to_wait, 
       bytes_written = this->speaker_->play(this->data_start_, this->available(), ticks_to_wait);
     } else
 #endif
-        if (this->ring_buffer_.use_count() > 0) {
+    if (this->ring_buffer_.use_count() > 0) {
+      uint32_t to_write = this->available() > MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : this->available();
       bytes_written =
-          this->ring_buffer_->write_without_replacement((void *) this->data_start_, this->available(), ticks_to_wait);
+          this->ring_buffer_->write_without_replacement((void *) this->data_start_, to_write, ticks_to_wait);
+      //printf("trying to write %d, wrote: %d\n", to_write, bytes_written);
+    } else {
+      printf("no ring buffer available to write to\n");
+      return 0;
     }
-
     this->decrease_buffer_length(bytes_written);
+  } else {
+    //printf( "no data available\n");
   }
 
   if (post_shift) {
@@ -164,7 +177,7 @@ bool AudioSinkTransferBuffer::has_buffered_data() const {
   }
 #endif
   if (this->ring_buffer_.use_count() > 0) {
-    return ((this->ring_buffer_->available() > 0) || (this->available() > 0));
+    return ((this->ring_buffer_->chunks_available() > 0) || (this->available() > 0));
   }
   return (this->available() > 0);
 }

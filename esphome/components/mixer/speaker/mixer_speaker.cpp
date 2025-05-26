@@ -15,7 +15,7 @@ namespace mixer_speaker {
 static const UBaseType_t MIXER_TASK_PRIORITY = 10;
 
 static const uint32_t TRANSFER_BUFFER_DURATION_MS = 50;
-static const uint32_t TASK_DELAY_MS = 25;
+static const uint32_t TASK_DELAY_MS = 20;
 
 static const size_t TASK_STACK_SIZE = 4096;
 
@@ -119,8 +119,11 @@ size_t SourceSpeaker::play(const uint8_t *data, size_t length, TickType_t ticks_
   }
   size_t bytes_written = 0;
   if (this->ring_buffer_.use_count() == 1) {
-    std::shared_ptr<RingBuffer> temp_ring_buffer = this->ring_buffer_.lock();
-    bytes_written = temp_ring_buffer->write_without_replacement(data, length, ticks_to_wait);
+    constexpr size_t MAX_CHUNK_SIZE = 9200;  // Maximum chunk size to write to the ring buffer
+    uint32_t to_write = length > MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : length;
+    std::shared_ptr<TimedRingBuffer> temp_ring_buffer = this->ring_buffer_.lock();
+    bytes_written = temp_ring_buffer->write_without_replacement(data, to_write, ticks_to_wait);
+    //printf("mixer: writing to ring buffer, bytes written: %d\n", bytes_written);
     if (bytes_written > 0) {
       this->last_seen_data_ms_ = millis();
     }
@@ -139,10 +142,10 @@ esp_err_t SourceSpeaker::start_() {
     if (this->transfer_buffer_ == nullptr) {
       return ESP_ERR_NO_MEM;
     }
-    std::shared_ptr<RingBuffer> temp_ring_buffer;
+    std::shared_ptr<TimedRingBuffer> temp_ring_buffer;
 
     if (!this->ring_buffer_.use_count()) {
-      temp_ring_buffer = RingBuffer::create(ring_buffer_size);
+      temp_ring_buffer = TimedRingBuffer::create(ring_buffer_size);
       this->ring_buffer_ = temp_ring_buffer;
     }
 

@@ -445,6 +445,18 @@ void SpeakerMediaPlayer::play_file(audio::AudioFile *media_file, bool announceme
   xQueueSend(this->media_control_command_queue_, &media_command, portMAX_DELAY);
 }
 
+void SpeakerMediaPlayer::play_snapcast_stream(const std::string &server_uri) {
+  ESP_LOGD(TAG, "Starting snapcast stream %s", server_uri.c_str());
+  if (!this->is_ready()) {
+    // Ignore any commands sent before the media player is setup
+    ESP_LOGE(TAG, "The media player is not ready, cannot start snapcast stream");
+    return;
+  }
+  this->media_pipeline_->start_snapcast(server_uri);
+  
+}
+
+
 void SpeakerMediaPlayer::control(const media_player::MediaPlayerCall &call) {
   if (!this->is_ready()) {
     // Ignore any commands sent before the media player is setup

@@ -71,6 +71,11 @@ PlayOnDeviceMediaAction = speaker_ns.class_(
     automation.Action,
     cg.Parented.template(SpeakerMediaPlayer),
 )
+PlaySnapcastStreamAction = speaker_ns.class_(
+    "PlaySnapcastStreamAction",
+    automation.Action,
+    cg.Parented.template(SpeakerMediaPlayer),
+)
 StopStreamAction = speaker_ns.class_(
     "StopStreamAction", automation.Action, cg.Parented.template(SpeakerMediaPlayer)
 )
@@ -455,4 +460,24 @@ async def play_on_device_media_media_action(config, action_id, template_arg, arg
     cg.add(var.set_audio_file(media_file))
     cg.add(var.set_announcement(announcement))
     cg.add(var.set_enqueue(enqueue))
+    return var
+
+
+
+@automation.register_action(
+    "media_player.speaker.play_snapcast_stream",
+    PlaySnapcastStreamAction,
+    cv.maybe_simple_value(
+        {
+            cv.GenerateID(): cv.use_id(SpeakerMediaPlayer),
+            cv.Required(CONF_URL): cv.use_id(audio.AudioFile),
+        },
+        key=CONF_URL,
+    ),
+)
+async def play_snapcast_stream_action(config, action_id, template_arg, args):
+    var = cg.new_Pvariable(action_id, template_arg)
+    await cg.register_parented(var, config[CONF_ID])
+    server_url = await cg.get_variable(config[CONF_URL])
+    cg.add(var.set_snapcast_server(server_url))
     return var
