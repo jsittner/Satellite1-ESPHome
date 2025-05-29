@@ -61,6 +61,8 @@ class I2SAudioSpeaker : public I2SWriter, public speaker::Speaker, public Compon
   /// Q15 fixed-point factor.
   /// @param mute_state true for muting, false for unmuting
   void set_mute_state(bool mute_state) override;
+  
+  uint32_t get_unwritten_audio_ms() const override;
 
  protected:
   /// @brief Function for the FreeRTOS task handling audio output.

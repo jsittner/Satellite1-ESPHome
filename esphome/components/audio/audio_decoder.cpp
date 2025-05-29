@@ -145,9 +145,10 @@ AudioDecoderState AudioDecoder::decode(bool stop_gracefully) {
     // Transfer decoded out
     if (!this->pause_output_) {
       // Never shift the data in the output transfer buffer to avoid unnecessary, slow data moves
+      //uint32_t pre_writing = millis();
       size_t bytes_written =
           this->output_transfer_buffer_->transfer_data_to_sink(pdMS_TO_TICKS(READ_WRITE_TIMEOUT_MS), false);
-
+      //printf( "Writing took, %d ms\n", millis() - pre_writing );
       if (this->audio_stream_info_.has_value()) {
         this->accumulated_frames_written_ += this->audio_stream_info_.value().bytes_to_frames(bytes_written);
         this->playback_ms_ +=
@@ -157,19 +158,25 @@ AudioDecoderState AudioDecoder::decode(bool stop_gracefully) {
       // If paused, block to avoid wasting CPU resources
       delay(READ_WRITE_TIMEOUT_MS);
     }
+#else
+    this->output_transfer_buffer_->clear_buffered_data();
 #endif
     // Verify there is enough space to store more decoded audio and that the function hasn't been running too long
     if ((this->output_transfer_buffer_->free() < this->free_buffer_required_) ||
         (millis() - decoding_start > DECODING_TIMEOUT_MS)) {
       return AudioDecoderState::DECODING;
     }
-
+    
     // Decode more audio
-
+    //printf( "pre-reading: %d\n", millis() - decoding_start );
     // Only shift data on the first loop iteration to avoid unnecessary, slow moves
     size_t bytes_read = this->input_transfer_buffer_->transfer_data_from_source(pdMS_TO_TICKS(READ_WRITE_TIMEOUT_MS),
                                                                                 first_loop_iteration);
 
+    static uint32_t last_call = millis();
+    //printf( "Decoder Loop Time: %d, bytes_read: %d, potential_failed:%d\n", millis() - last_call, bytes_read, this->potentially_failed_count_);
+    last_call = millis();
+    
     if (!first_loop_iteration && (this->input_transfer_buffer_->available() < bytes_processed)) {
       // Less data is available than what was processed in last iteration, so don't attempt to decode.
       // This attempts to avoid the decoder from consistently trying to decode an incomplete frame. The transfer buffer
@@ -197,7 +204,9 @@ AudioDecoderState AudioDecoder::decode(bool stop_gracefully) {
       switch (this->audio_file_type_) {
 #ifdef USE_AUDIO_FLAC_SUPPORT
         case AudioFileType::FLAC:
+          //printf( "pre decoding %d\n", millis() - decoding_start);
           state = this->decode_flac_();
+          //printf( "post decoding %d\n", millis() - decoding_start);
           break;
 #endif
 #ifdef USE_AUDIO_MP3_SUPPORT
@@ -257,7 +266,8 @@ FileDecoderState AudioDecoder::decode_flac_() {
       // Couldn't reallocate output buffer
       return FileDecoderState::FAILED;
     }
-
+    this->output_transfer_buffer_->increase_buffer_length(this->free_buffer_required_);
+    
     this->audio_stream_info_ =
         audio::AudioStreamInfo(this->flac_decoder_->get_sample_depth(), this->flac_decoder_->get_num_channels(),
                                this->flac_decoder_->get_sample_rate());
@@ -267,10 +277,13 @@ FileDecoderState AudioDecoder::decode_flac_() {
 
   uint32_t output_samples = 0;
   // CAUTION: free space in buffer in output buffer is not checked while writing, call only if enough space is available
+  uint32_t curr = millis();
   auto result = this->flac_decoder_->decode_frame(
       this->input_transfer_buffer_->get_buffer_start(), this->input_transfer_buffer_->available(),
       reinterpret_cast<int16_t *>(this->output_transfer_buffer_->get_buffer_end()), &output_samples);
+  //printf( "Decoding time: %d\n", millis() - curr );
 
+  this->output_transfer_buffer_->set_current_time_stamp( this->input_transfer_buffer_->get_current_time_stamp());
   if (result == esp_audio_libs::flac::FLAC_DECODER_ERROR_OUT_OF_DATA) {
     // Not an issue, just needs more data that we'll get next time.
     return FileDecoderState::POTENTIALLY_FAILED;

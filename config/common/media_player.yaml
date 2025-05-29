@@ -27,7 +27,26 @@ audio_dac:
                 .set_command(MEDIA_PLAYER_COMMAND_MUTE)
                 .perform();
            }
-      
+
+select:
+  - platform: template
+    name: TAS2780 Mode Select
+    id: tas_mode_select
+    options:
+     - "Mono"
+     - "Left"
+     - "Right"
+    initial_option: "Mono"
+    optimistic: true
+    on_value:
+      - tas2780.update_config:
+          channel: !lambda |-
+            auto index = id(tas_mode_select).active_index();
+            if (index.has_value()){
+              return index.value();
+            }
+            ESP_LOGI("main", "No channel selected");
+
 
 binary_sensor:
   - platform: gpio
@@ -146,7 +165,7 @@ media_player:
       num_channels: 1  # Stereo audio is unnecessary for announcements
       sample_rate: 48000
     media_pipeline:
-      speaker: media_mixing_input
+      speaker: i2s_audio_speaker
       format: FLAC     # FLAC is the least processor intensive codec
       num_channels: 2
       sample_rate: 48000

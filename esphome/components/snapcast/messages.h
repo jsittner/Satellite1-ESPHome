@@ -29,66 +29,6 @@ enum class message_type : uint8_t
 };
 
 #pragma pack(push, 1)  // Prevent padding
-/// Time value
-struct tv
-{
-    /// seconds
-    int32_t sec;
-    /// micro seconds
-    int32_t usec;
-    
-    /// c'tor
-    tv() : sec(0), usec(0) {}
-    /// C'tor, construct from timeval @p tv
-    explicit tv(timeval tv) : sec(tv.tv_sec), usec(tv.tv_usec){};
-    /// C'tor, construct from @p _sec and @p _usec
-    tv(int32_t _sec, int32_t _usec) : sec(_sec), usec(_usec){};
-    
-    static tv now()
-    {
-        tv result;
-        uint32_t usec_now = micros();
-        result.sec = usec_now / 1000000;
-        result.usec = usec_now % 1000000;
-        return result;
-    }
-    
-    /// add another tv
-    tv operator+(const tv& other) const
-    {
-        tv result(*this);
-        result.sec += other.sec;
-        result.usec += other.usec;
-        if (result.usec > 1000000)
-        {
-            result.sec += result.usec / 1000000;
-            result.usec %= 1000000;
-        }
-        return result;
-    }
-
-    /// subtract another tv
-    tv operator-(const tv& other) const
-    {
-        tv result(*this);
-        result.sec -= other.sec;
-        result.usec -= other.usec;
-        while (result.usec < 0)
-        {
-            result.sec -= 1;
-            result.usec += 1000000;
-        }
-        return result;
-    }
-    tv operator/(int32_t div) const
-    {
-        tv result(*this);
-        result.sec /= div;
-        result.usec /= div;
-        return result;
-    }
-};
-
 
 /*
 | Field                 | Type   | Description                                                                                       |
@@ -343,7 +283,7 @@ protected:
 */
 class HelloMessage : public JsonMessage {
 public:
-    HelloMessage() : JsonMessage(message_type::kHello) {
+    HelloMessage() : JsonMessage(message_type::kHello){
         this->set_json(
             this->build_json() 
         );
@@ -352,9 +292,9 @@ public:
         root["Arch"] = "xtensa";
         root["ClientName"] = "Satellite1";
         root["HostName"] = network::get_use_address();
-        root["ID"] = "E4:B0:63:92:A5:64";
+        root["ID"] = get_mac_address_pretty();
         root["Instance"] = 1;
-        root["MAC"] = "E4:B0:63:92:A5:64";
+        root["MAC"] = get_mac_address_pretty();
         root["OS"] = "ESPHome";
         root["SnapStreamProtocolVersion"] = 2;
         root["Version"] = "0.17.1";

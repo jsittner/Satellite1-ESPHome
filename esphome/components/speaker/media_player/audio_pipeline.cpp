@@ -493,6 +493,14 @@ void AudioPipeline::decode_task(void *params) {
           break;
         }
 
+        if( !started_playback){
+          std::shared_ptr<TimedRingBuffer> temp_ring_buffer = this_pipeline->raw_file_ring_buffer_.lock();
+          if (temp_ring_buffer->chunks_available() < 3) {
+            continue;
+          }
+        }
+        
+        
         // Update pause state
         if (!started_playback) {
           if (!(event_bits & EventGroupBits::READER_MESSAGE_FINISHED)) {
@@ -503,10 +511,10 @@ void AudioPipeline::decode_task(void *params) {
         } else {
           decoder->set_pause_output_state(this_pipeline->pause_state_);
         }
-
+        //uint32_t curr = millis();
         // Stop gracefully if the reader has finished
         audio::AudioDecoderState decoder_state = decoder->decode(event_bits & EventGroupBits::READER_MESSAGE_FINISHED);
-
+        //printf( "Outer-loop decoder timing: %d\n", millis() - curr );
         if ((decoder_state == audio::AudioDecoderState::DECODING) ||
             (decoder_state == audio::AudioDecoderState::FINISHED)) {
           this_pipeline->playback_ms_ = decoder->get_playback_ms();
@@ -571,7 +579,7 @@ void AudioPipeline::decode_task(void *params) {
         if (!started_playback && has_stream_info) {
           // Verify enough data is available before starting playback
           std::shared_ptr<TimedRingBuffer> temp_ring_buffer = this_pipeline->raw_file_ring_buffer_.lock();
-          if (temp_ring_buffer->chunks_available() >= 1) {
+          if (temp_ring_buffer->chunks_available() >= 3) {
             started_playback = true;
           }
         }

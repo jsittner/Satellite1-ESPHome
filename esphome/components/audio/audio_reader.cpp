@@ -316,12 +316,16 @@ AudioReaderState AudioReader::http_read_() {
 
 AudioReaderState AudioReader::snapcast_read_() {
 #if 1
-  if( this->snapcast_stream_.read_next_data_chunk(this->output_ring_buffer_, 100) != ESP_OK ){
+static uint32_t last_call = millis();
+if( this->snapcast_stream_.read_next_data_chunk(this->output_ring_buffer_, 100) != ESP_OK ){
     // Read error
     //this->snapcast_stream_.disconnect();
     //delay(READ_WRITE_TIMEOUT_MS);
   }
-  delay(READ_WRITE_TIMEOUT_MS);
+  this->snapcast_stream_.trigger_time_sync();
+  //delay(5);
+  // printf( "Loop time: %d\n", millis() - last_call);
+  // last_call = millis();
   return AudioReaderState::READING;
 #else 
   this->output_transfer_buffer_->transfer_data_to_sink(pdMS_TO_TICKS(READ_WRITE_TIMEOUT_MS), false);

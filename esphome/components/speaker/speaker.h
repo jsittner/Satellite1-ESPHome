@@ -112,12 +112,14 @@ class Speaker {
   void add_audio_output_callback(std::function<void(uint32_t, uint32_t, uint32_t, uint32_t)> &&callback) {
     this->audio_output_callback_.add(std::move(callback));
   }
-
- protected:
+  virtual uint32_t get_unwritten_audio_ms() const {return 0; }
+ 
+  protected:
   State state_{STATE_STOPPED};
   audio::AudioStreamInfo audio_stream_info_;
   float volume_{1.0f};
   bool mute_state_{false};
+ 
 
 #ifdef USE_AUDIO_DAC
   audio_dac::AudioDac *audio_dac_{nullptr};

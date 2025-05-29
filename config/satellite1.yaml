@@ -110,6 +110,15 @@ external_components:
 
 snapcast:
 
+button:
+  - platform: template
+    id: play_snapcast_button
+    name: "Play Snapcast"
+    entity_category: diagnostic
+    on_press:
+      then:
+        - lambda: id(external_media_player).play_snapcast_stream("some_server");
+
 logger:
   deassert_rts_dtr: true
   hardware_uart : USB_SERIAL_JTAG

@@ -61,6 +61,10 @@ class AudioTransferBuffer {
 
   bool reallocate(size_t new_buffer_size);
 
+  tv_t get_current_time_stamp() const { return this->current_time_stamp_; }
+  void set_current_time_stamp(tv_t time_stamp) { this->current_time_stamp_ = time_stamp; }
+
+
  protected:
   /// @brief Allocates the transfer buffer in external memory, if available.
   /// @param buffer_size The number of bytes to allocate
@@ -79,6 +83,7 @@ class AudioTransferBuffer {
   size_t buffer_size_{0};
   size_t buffer_length_{0};
   std::string name_;
+  tv current_time_stamp_{0, 0};  // Current timestamp in seconds and microseconds
 };
 
 class AudioSinkTransferBuffer : public AudioTransferBuffer {

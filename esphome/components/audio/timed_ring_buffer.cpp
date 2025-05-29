@@ -37,9 +37,16 @@ std::unique_ptr<TimedRingBuffer> TimedRingBuffer::create(size_t len) {
 }
 
 int32_t TimedRingBuffer::read(void *data, size_t max_len, TickType_t ticks_to_wait) {
+ tv stamp;
+ return this->read(data, max_len, stamp, ticks_to_wait);
+}
+
+
+int32_t TimedRingBuffer::read(void *data, size_t max_len, tv &stamp, TickType_t ticks_to_wait) {
   if( this->curr_chunk != nullptr ){
     if( max_len >= this->bytes_waiting_in_chunk ){
       std::memcpy(data, this->curr_chunk->data, this->bytes_waiting_in_chunk);
+      stamp = this->curr_chunk->stamp;  // Copy the timestamp from the current chunk
       vRingbufferReturnItem(this->handle_, this->curr_chunk);
       this->curr_chunk = nullptr;    
       return this->bytes_waiting_in_chunk;
@@ -49,7 +56,6 @@ int32_t TimedRingBuffer::read(void *data, size_t max_len, TickType_t ticks_to_wa
     }
   }
   
-  
   this->curr_chunk = (timed_chunk_t*) xRingbufferReceive(this->handle_, &this->bytes_waiting_in_chunk, ticks_to_wait);
   if (curr_chunk == nullptr) {
     return 0;
@@ -58,7 +64,8 @@ int32_t TimedRingBuffer::read(void *data, size_t max_len, TickType_t ticks_to_wa
   if( max_len >= this->bytes_waiting_in_chunk){
       std::memcpy(data, this->curr_chunk->data, this->bytes_waiting_in_chunk);
       vRingbufferReturnItem(this->handle_, this->curr_chunk);
-      this->curr_chunk = nullptr;    
+      stamp = this->curr_chunk->stamp;  // Copy the timestamp from the current chunk
+      this->curr_chunk = nullptr;
       return this->bytes_waiting_in_chunk;
   }
   return -1;

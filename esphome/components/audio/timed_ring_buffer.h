@@ -8,9 +8,12 @@
 #include <cinttypes>
 #include <memory>
 
+#include "esphome/core/hal.h"
+
 namespace esphome {
 
 #pragma pack(push, 1)  // Prevent padding
+/// Time value
 /// Time value
 typedef struct tv
 {
@@ -18,7 +21,72 @@ typedef struct tv
     int32_t sec;
     /// micro seconds
     int32_t usec;
+    
+    /// c'tor
+    tv() : sec(0), usec(0) {}
+    /// C'tor, construct from timeval @p tv
+    explicit tv(timeval tv) : sec(tv.tv_sec), usec(tv.tv_usec){};
+    /// C'tor, construct from @p _sec and @p _usec
+    tv(int32_t _sec, int32_t _usec) : sec(_sec), usec(_usec){};
+
+    static tv from_millis(int32_t millis)
+    {
+        tv result;
+        result.sec = millis / 1000;
+        result.usec = (millis % 1000) * 1000;
+        return result;
+    }
+    
+    static tv now()
+    {
+        tv result;
+        uint32_t usec_now = micros();
+        result.sec = usec_now / 1000000;
+        result.usec = usec_now % 1000000;
+        return result;
+    }
+    
+    int32_t to_millis() const
+    {
+        return (sec * 1000) + (usec / 1000);
+    }
+
+    /// add another tv
+    tv operator+(const tv& other) const
+    {
+        tv result(*this);
+        result.sec += other.sec;
+        result.usec += other.usec;
+        if (result.usec > 1000000)
+        {
+            result.sec += result.usec / 1000000;
+            result.usec %= 1000000;
+        }
+        return result;
+    }
+
+    /// subtract another tv
+    tv operator-(const tv& other) const
+    {
+        tv result(*this);
+        result.sec -= other.sec;
+        result.usec -= other.usec;
+        while (result.usec < 0)
+        {
+            result.sec -= 1;
+            result.usec += 1000000;
+        }
+        return result;
+    }
+    tv operator/(int32_t div) const
+    {
+        tv result(*this);
+        result.sec /= div;
+        result.usec /= div;
+        return result;
+    }
 } tv_t;
+
 typedef struct timed_chunk
 {
     tv_t stamp;
@@ -44,6 +112,19 @@ class TimedRingBuffer {
    * @return Number of bytes read
    */
   int32_t read(void *data, size_t max_len, TickType_t ticks_to_wait = 0);
+
+  /**
+   * @brief Reads from the ring buffer, waiting up to a specified number of ticks if necessary.
+   *
+   * Available bytes are read into the provided data pointer. If not enough bytes are available,
+   * the function will wait up to `ticks_to_wait` FreeRTOS ticks before reading what is available.
+   *
+   * @param data Pointer to copy read data into
+   * @param max_len Number of bytes to read
+   * @param ticks_to_wait Maximum number of FreeRTOS ticks to wait (default: 0)
+   * @return Number of bytes read
+   */
+  int32_t read(void *data, size_t max_len, tv &stamp, TickType_t ticks_to_wait = 0);
 
   /**
    * @brief Writes to the ring buffer without overwriting oldest data.
