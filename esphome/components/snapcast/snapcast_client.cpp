@@ -106,41 +106,28 @@ static int compare_int32(const void* a, const void* b) {
     return 0;
 }
 
+bool compare_tv_t(const tv_t& a, const tv_t& b) {
+    if (a.sec < b.sec) return true;
+    if (a.sec > b.sec) return false;
+    return a.usec < b.usec;
+}
+
 void SnapcastStream::on_time_msg(MessageHeader msg, tv_t latency_c2s){
     //latency_c2s = t_server-recv - t_client-sent + t_network-latency
     //latency_s2c = t_client-recv - t_server-sent + t_network_latency
     //time diff between server and client as (latency_c2s - latency_s2c) / 2
     tv_t latency_s2c = tv_t::now() - msg.sent;
-    this->est_time_diff_ = (latency_c2s - latency_s2c) / 2;
     //printf("Snapcast: Estimated time diff: %d.%06d sec\n", this->est_time_diff_.sec, this->est_time_diff_.usec);
-    TimeStats &stats = this->time_stats_;
-    if( this->time_stats_.count < MAX_TIMES){
-        this->time_stats_.count++;
-    }
-    this->time_stats_.times[this->time_stats_.next_insert] = ((latency_c2s - latency_s2c) / 2).to_millis();
-    this->time_stats_.next_insert++;
-    this->time_stats_.next_insert %= MAX_TIMES;
     
-    int32_t sorted[MAX_TIMES];
-    for (size_t i = 0; i < stats.count; i++) {
-        sorted[i] = stats.times[i];
-    }
-    qsort(sorted, stats.count, sizeof(int32_t), compare_int32);
-    printf("Snapcast: Estimated time diff: %d.%06d sec; difference to prev value: %dms, counts: %d\n", 
-        this->est_time_diff_.sec, 
-        this->est_time_diff_.usec,
-        sorted[stats.count / 2] - this->est_time_diff_ms,
-        stats.count
-    );
-    this->est_time_diff_ms = sorted[stats.count / 2];
-    
-    // if (stats.count % 2 == 0) {
-    //     this->est_time_diff_ms = (sorted[stats.count / 2 - 1] + sorted[stats.count / 2]) / 2;
-    // } else {
-        
-    // }
-
+    time_stats_.add( (latency_c2s - latency_s2c) / 2 );
+    this->est_time_diff_ = time_stats_.get_median();
 }
+
+void SnapcastStream::on_server_settings_msg(const ServerSettingsMessage &msg){
+    this->server_buffer_size_ = msg.buffer_ms_; 
+}
+
+
 
 
 esp_err_t SnapcastStream::read_next_data_chunk(std::shared_ptr<esphome::TimedRingBuffer> ring_buffer, uint32_t timeout_ms){
@@ -243,6 +230,7 @@ esp_err_t SnapcastStream::read_next_data_chunk(std::shared_ptr<esphome::TimedRin
             case message_type::kServerSettings:
                 {
                     ServerSettingsMessage server_settings_msg(*msg, payload, payload_len);
+                    this->on_server_settings_msg(server_settings_msg);
                     server_settings_msg.print();
                 }
                 break;

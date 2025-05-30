@@ -128,6 +128,7 @@ class I2SAudioSpeaker : public I2SWriter, public speaker::Speaker, public Compon
   
   size_t bytes_written_{0};
   uint32_t accumulated_frames_written_{0};
+  uint8_t curr_dma_buffer_{0};
 };
 
 }  // namespace i2s_audio

@@ -13,12 +13,33 @@ namespace snapcast {
 
 #define MAX_TIMES 100
 
-typedef struct {
-    int32_t times[MAX_TIMES] = {0};
-    size_t count{0};
-    size_t next_insert{0};
-} TimeStats;
+// typedef struct {
+//     int32_t times[MAX_TIMES] = {0};
+//     size_t count{0};
+//     size_t next_insert{0};
+// } TimeStats;
 
+class TimeStats {
+public:
+    void add(tv_t val) {
+        times[next_insert] = val;
+        next_insert = (next_insert + 1) % MAX_TIMES;
+        if (count < MAX_TIMES)
+            ++count;
+    }
+
+    tv_t get_median() const {
+        std::array<tv_t, MAX_TIMES> sorted{};
+        std::copy(times.begin(), times.begin() + count, sorted.begin());
+        std::sort(sorted.begin(), sorted.begin() + count);
+        return sorted[count / 2];
+    }
+
+private:
+    std::array<tv_t, MAX_TIMES> times{};
+    size_t count = 0;
+    size_t next_insert = 0;
+};
 
 class SnapcastStream {
 public:
@@ -40,10 +61,10 @@ protected:
     void send_hello_();
     void send_time_sync_();
     tv_t to_local_time(tv_t server_time) {
-        return server_time - tv_t::from_millis(this->est_time_diff_ms);
+        return server_time - this->est_time_diff_ + tv_t::from_millis(this->server_buffer_size_);
     }
 
-    void on_server_settings_msg(ServerSettingsMessage *msg);
+    void on_server_settings_msg(const ServerSettingsMessage &msg);
     void on_time_msg(MessageHeader msg, tv_t time);
 
     
@@ -51,8 +72,8 @@ protected:
     uint32_t last_time_sync_{0};
     esp_transport_handle_t transport_{NULL};
     tv_t est_time_diff_{0, 0};
-    int32_t est_time_diff_ms = 0;
     TimeStats time_stats_;
+    uint32_t server_buffer_size_{0};
 };
 
 

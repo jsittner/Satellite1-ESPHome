@@ -80,10 +80,14 @@ typedef struct tv
     }
     tv operator/(int32_t div) const
     {
-        tv result(*this);
-        result.sec /= div;
-        result.usec /= div;
-        return result;
+        int64_t total_usec = static_cast<int64_t>(sec) * 1000000 + usec;
+        total_usec /= div;
+        return tv(total_usec / 1000000, total_usec % 1000000);
+    }
+    
+    // Compare two tv_t values
+    bool operator<(const tv& other) const {
+        return (sec < other.sec) || (sec == other.sec && usec < other.usec);
     }
 } tv_t;
 
