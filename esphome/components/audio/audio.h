@@ -76,7 +76,7 @@ class AudioStreamInfo {
 
   /// @brief Computes the duration, in microseconds, the given amount of frames represents.
   /// @param frames Number of audio frames
-  /// @return Duration in microseconds `frames` respresents. May be slightly inaccurate due to integer divison rounding
+  /// @return Duration in microseconds `frames` respresents. May be slightly inaccurate due to integer division rounding
   ///         for certain sample rates.
   uint32_t frames_to_microseconds(uint32_t frames) const;
 

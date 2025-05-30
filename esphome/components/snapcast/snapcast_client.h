@@ -13,12 +13,6 @@ namespace snapcast {
 
 #define MAX_TIMES 100
 
-// typedef struct {
-//     int32_t times[MAX_TIMES] = {0};
-//     size_t count{0};
-//     size_t next_insert{0};
-// } TimeStats;
-
 class TimeStats {
 public:
     void add(tv_t val) {
@@ -66,8 +60,6 @@ protected:
 
     void on_server_settings_msg(const ServerSettingsMessage &msg);
     void on_time_msg(MessageHeader msg, tv_t time);
-
-    
 
     uint32_t last_time_sync_{0};
     esp_transport_handle_t transport_{NULL};

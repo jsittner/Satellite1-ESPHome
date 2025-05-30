@@ -147,48 +147,15 @@ size_t AudioSinkTransferBuffer::transfer_data_to_sink(TickType_t ticks_to_wait, 
 #ifdef USE_SPEAKER
     if (this->speaker_ != nullptr) {
 #if 1
-      int32_t delta_ms = 0;
       if( this->current_time_stamp_.sec != 0 || this->current_time_stamp_.usec != 0 ){
-        uint32_t speaker_queue = this->speaker_->get_unwritten_audio_ms();
-        delta_ms = this->current_time_stamp_.to_millis() - (millis() + speaker_queue);
+        //uint32_t speaker_queue = this->speaker_->get_unwritten_audio_ms();
+        //int32_t delta_ms = this->current_time_stamp_.to_millis() - (millis() + speaker_queue);
         //printf("AudioSinkTransferBuffer: playout: %d ,  delta: %d , speaker_queue: %d ms\n", this->current_time_stamp_.to_millis(), delta_ms, speaker_queue);
+        uint32_t desired_playout_ms = this->current_time_stamp_.to_millis();
+        bytes_written = this->speaker_->sync_play(this->data_start_, this->available(), desired_playout_ms, ticks_to_wait);
+      } else {
+        bytes_written = this->speaker_->play(this->data_start_, this->available(), ticks_to_wait);  
       }
-      if( delta_ms < - 10 ){
-        uint8_t drop_frames = 1;
-        if( delta_ms < -15 ){
-            drop_frames = this->speaker_->get_audio_stream_info().ms_to_frames( -1 * delta_ms );
-        } 
-        size_t one_frame_bytes = this->speaker_->get_audio_stream_info().frames_to_bytes(drop_frames);
-        size_t samples = this->available() / one_frame_bytes;
-        if( samples > 0){
-            bytes_written = this->speaker_->play(this->data_start_, this->available() - one_frame_bytes, ticks_to_wait);
-            bytes_written += one_frame_bytes;
-        } else {
-          bytes_written = this->available();
-        }
-      }
-      else if( delta_ms > 10 ){
-        uint8_t pad_frames = this->speaker_->get_audio_stream_info().ms_to_frames( delta_ms );
-        // if( delta_ms > 100 ){
-        //   pad_frames = this->speaker_->get_audio_stream_info().ms_to_frames( delta_ms );
-        // }
-        size_t one_frame_bytes = this->speaker_->get_audio_stream_info().frames_to_bytes(pad_frames);
-        //one_frame_bytes = one_frame_bytes > this->available() ? this->available() : one_frame_bytes;
-        uint8_t* zero_buffer = (uint8_t*)calloc( one_frame_bytes, sizeof(uint8_t));
-        if( zero_buffer == nullptr ){
-          printf("AudioSinkTransferBuffer: failed to allocate zero buffer\n");
-          return 0;
-        }
-        size_t filling = this->speaker_->play(zero_buffer, one_frame_bytes, ticks_to_wait);
-        std::free(zero_buffer);
-        bytes_written = this->speaker_->play(this->data_start_, this->available(), ticks_to_wait);
-      }
-      else {
-        // No time delta, so write immediately
-        bytes_written = this->speaker_->play(this->data_start_, this->available(), ticks_to_wait);
-      }
-#else
-    bytes_written = this->speaker_->play(this->data_start_, this->available(), ticks_to_wait);
 #endif
     } else
 #endif

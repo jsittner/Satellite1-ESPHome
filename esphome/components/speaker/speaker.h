@@ -38,6 +38,9 @@ class Speaker {
   virtual size_t play(const uint8_t *data, size_t length, TickType_t ticks_to_wait) {
     return this->play(data, length);
   };
+  virtual size_t sync_play(const uint8_t *data, size_t length, uint32_t playout_time_ms, TickType_t ticks_to_wait){
+    return this->play(data, length, ticks_to_wait);
+  };
 #endif
 
   /// @brief Plays the provided audio data.

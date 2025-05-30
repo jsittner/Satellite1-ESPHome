@@ -47,7 +47,8 @@ class I2SAudioSpeaker : public I2SWriter, public speaker::Speaker, public Compon
   /// @return The number of bytes that were actually written to the ring buffer.
   size_t play(const uint8_t *data, size_t length, TickType_t ticks_to_wait) override;
   size_t play(const uint8_t *data, size_t length) override { return play(data, length, 0); }
-
+  size_t sync_play(const uint8_t *data, size_t length, uint32_t playout_time_ms, TickType_t ticks_to_wait) override;
+  
   bool has_buffered_data() const override;
 
   /// @brief Sets the volume of the speaker. Uses the speaker's configured audio dac component. If unavailble, it is
@@ -129,6 +130,8 @@ class I2SAudioSpeaker : public I2SWriter, public speaker::Speaker, public Compon
   size_t bytes_written_{0};
   uint32_t accumulated_frames_written_{0};
   uint8_t curr_dma_buffer_{0};
+  size_t padded_zero_frames_{0};
+  SemaphoreHandle_t lock_;
 };
 
 }  // namespace i2s_audio
