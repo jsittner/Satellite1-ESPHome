@@ -102,11 +102,11 @@ switch:
       - component.update: update_http_request
 
 
-external_components:
-  - source:
-      type: local
-      path: ../esphome/components
-    components: [ audio, i2s_audio, satellite1, memory_flasher, tas2780, pcm5122, fusb302b ]
+#external_components:
+#  - source:
+#      type: local
+#      path: ../esphome/components
+#    components: [ audio, i2s_audio, satellite1, memory_flasher, tas2780, pcm5122, fusb302b ]
 
 
 logger:
