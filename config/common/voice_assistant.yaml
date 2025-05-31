@@ -43,7 +43,21 @@ microphone:
 
 micro_wake_word:
   id: mww
+  microphone:
+    microphone: comm_mic
+    channels: 1
+    gain_factor: 4
+  stop_after_detection: false
   models:
+    - model: http://192.168.10.200:8123/local/micro-wake-word/hey_nexus.json
+      id: hey_nexus
+      internal: false
+    - model: http://192.168.10.200:8123/local/micro-wake-word/colonel_sanders.json
+      id: colonel_sanders
+      internal: false
+    - model: http://192.168.10.200:8123/local/micro-wake-word/hey_kira.json
+      id: hey_kira
+      internal: false  
     - model: hey_jarvis
       id: hey_jarvis
     - model: okay_nabu
