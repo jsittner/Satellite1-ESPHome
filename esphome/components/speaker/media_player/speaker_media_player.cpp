@@ -452,7 +452,7 @@ void SpeakerMediaPlayer::play_snapcast_stream(const std::string &server_uri) {
     ESP_LOGE(TAG, "The media player is not ready, cannot start snapcast stream");
     return;
   }
-  this->media_pipeline_->start_snapcast(server_uri);
+  this->media_pipeline_->start_snapcast( this->snapcast_client_->get_stream() );
   
 }
 

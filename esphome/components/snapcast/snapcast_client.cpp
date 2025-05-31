@@ -7,6 +7,8 @@
 #include "esp_transport_tcp.h"
 
 #include "esp_mac.h"
+#include "mdns.h"
+#include <cstring> 
 
 namespace esphome {
 namespace snapcast {
@@ -33,8 +35,7 @@ static tv_t get_est_server_time()
 
 
 
-esp_err_t SnapcastStream::connect(){
-    char host_ip[] = TARGET_ADDR;
+esp_err_t SnapcastStream::connect(std::string server, uint32_t port){
     
     if( this->transport_ == NULL ){
         this->transport_ = esp_transport_tcp_init();
@@ -44,7 +45,7 @@ esp_err_t SnapcastStream::connect(){
         }
     }
     
-    error_t err = esp_transport_connect(this->transport_, TARGET_ADDR, TARGET_PORT, -1);
+    error_t err = esp_transport_connect(this->transport_, server.c_str(), port, -1);
     if (err != 0) {
         ESP_LOGE(TAG, "Client unable to connect: errno %d", errno);
         return ESP_FAIL;
@@ -62,7 +63,13 @@ esp_err_t SnapcastStream::disconnect(){
     return ESP_OK;
 }
 
-
+esp_err_t SnapcastStream::init_streaming(){ 
+    if( this->transport_ == NULL ){
+        return ESP_FAIL;
+    }
+    this->codec_header_sent_=false;
+    this->send_hello_();
+}
 
 
 
@@ -189,12 +196,16 @@ esp_err_t SnapcastStream::read_next_data_chunk(std::shared_ptr<esphome::TimedRin
                         return ESP_FAIL;
                     }
                     ring_buffer->release_write_chunk(timed_chunk);
+                    this->codec_header_sent_ = true;
                     codec_header_payload.print();
                     return codec_header_payload.payload_size;
                 }
                 break;
             case message_type::kWireChunk:
                 {
+                    if( !this->codec_header_sent_ ){
+                        continue;
+                    }
                     WireChunkMessageView wire_chunk_msg;
                     if( !wire_chunk_msg.bind(payload, payload_len) ){
                         ESP_LOGE(TAG, "Error binding wire chunk payload");
@@ -241,6 +252,97 @@ esp_err_t SnapcastStream::read_next_data_chunk(std::shared_ptr<esphome::TimedRin
     } // while loop
     return ERR_TIMEOUT;
 }
+
+void SnapcastClient::setup(){
+    this->connect_via_mdns();
+
+}
+
+
+error_t SnapcastClient::connect_to_server(std::string url, uint32_t port){
+    return ESP_OK;
+}
+
+static const char * if_str[] = {"STA", "AP", "ETH", "MAX"};
+static const char * ip_protocol_str[] = {"V4", "V6", "MAX"};
+
+static void mdns_print_results(mdns_result_t *results)
+{
+    mdns_result_t *r = results;
+    mdns_ip_addr_t *a = NULL;
+    int i = 1, t;
+    while (r) {
+        if (r->esp_netif) {
+            printf("%d: Interface: %s, Type: %s, TTL: %" PRIu32 "\n", i++, esp_netif_get_ifkey(r->esp_netif),
+                   ip_protocol_str[r->ip_protocol], r->ttl);
+        }
+        if (r->instance_name) {
+            printf("  PTR : %s.%s.%s\n", r->instance_name, r->service_type, r->proto);
+        }
+        if (r->hostname) {
+            printf("  SRV : %s.local:%u\n", r->hostname, r->port);
+        }
+        if (r->txt_count) {
+            printf("  TXT : [%zu] ", r->txt_count);
+            for (t = 0; t < r->txt_count; t++) {
+                printf("%s=%s(%d); ", r->txt[t].key, r->txt[t].value ? r->txt[t].value : "NULL", r->txt_value_len[t]);
+            }
+            printf("\n");
+        }
+        a = r->addr;
+        while (a) {
+            if (a->addr.type == ESP_IPADDR_TYPE_V6) {
+                printf("  AAAA: " IPV6STR "\n", IPV62STR(a->addr.u_addr.ip6));
+            } else {
+                printf("  A   : " IPSTR "\n", IP2STR(&(a->addr.u_addr.ip4)));
+            }
+            a = a->next;
+        }
+        r = r->next;
+    }
+}
+
+
+
+error_t SnapcastClient::connect_via_mdns(){
+    
+    mdns_result_t * results = NULL;
+    esp_err_t err = mdns_query_ptr( "_snapcast", "_tcp", 3000, 20,  &results);
+    if(err){
+        ESP_LOGE(TAG, "Query Failed");
+        return ESP_OK;
+    }
+    if(!results){
+        ESP_LOGW(TAG, "No results found!");
+        return ESP_OK;
+    }
+    
+    mdns_print_results(results);
+    
+    std::string ma_snapcast_hostname;
+    uint32_t port = 0;
+    mdns_result_t *r = results;
+    while(r){
+        if (r->txt_count) {
+            for (int t = 0; t < r->txt_count; t++) {
+                if( strcmp(r->txt[t].key, "is_mass") == 0){
+                    ma_snapcast_hostname = std::string(r->hostname) + ".local";
+                    port = r->port;
+                    ESP_LOGI(TAG, "MA-Snapcast server found: %s:%d", ma_snapcast_hostname.c_str(), port );
+                }
+            }
+        }
+        r = r->next;
+    }
+    mdns_query_results_free(results);
+
+    if( !ma_snapcast_hostname.empty() ){
+        this->stream_.connect( ma_snapcast_hostname, port );
+    }
+    
+    return ESP_OK;
+}
+
 
 }
 }

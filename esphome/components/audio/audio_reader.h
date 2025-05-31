@@ -58,7 +58,15 @@ class AudioReader {
   /// @param file_type AudioFileType variable passed-by-reference indicating the type of file being read.
   /// @return ESP_OK
   esp_err_t connect_to_snapcast(const std::string &server_uri, const uint32_t server_port, AudioFileType &file_type);
-                                
+  
+  
+  /// @brief Starts reading an audio file from flash. No transfer buffer is allocated.
+  /// @param stream Pointer to a snapcast stream
+  /// @param file_type AudioFileType variable passed-by-reference indicating the type of file being read.
+  /// @return ESP_OK
+  esp_err_t connect_to_snapcast(SnapcastStream* stream, AudioFileType &file_type);
+  
+
 
   /// @brief Reads new file data from the source and sends to the ring buffer sink.
   /// @return AudioReaderState
@@ -91,7 +99,7 @@ class AudioReader {
   AudioFileType audio_file_type_{AudioFileType::NONE};
   const uint8_t *file_current_{nullptr};
 
-  SnapcastStream snapcast_stream_;
+  SnapcastStream* snapcast_stream_{nullptr};
 };
 }  // namespace audio
 }  // namespace esphome

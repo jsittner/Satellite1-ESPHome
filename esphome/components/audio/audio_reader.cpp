@@ -202,18 +202,27 @@ esp_err_t AudioReader::start(const std::string &uri, AudioFileType &file_type) {
   return ESP_OK;
 }
 
-esp_err_t AudioReader::connect_to_snapcast(const std::string &server_uri, const uint32_t server_port, AudioFileType &file_type){
-  this->snapcast_stream_.disconnect();
-  if( this->snapcast_stream_.connect() != ESP_OK ){
-    printf("Unable to connect to snapcast server %s:%d\n", server_uri.c_str(), server_port);
+esp_err_t AudioReader::connect_to_snapcast(SnapcastStream* stream, AudioFileType &file_type){
+  if( this->snapcast_stream_ != nullptr  ){
+    printf( "Snapcast stream already set\n" );
     return ESP_FAIL;
   }
+  if( stream == nullptr ){
+    printf( "Received stream is nullptr\n" );
+    return ESP_FAIL;
+  }
+  
+  this->snapcast_stream_ = stream;
   this->audio_file_type_ = AudioFileType::FLAC;
   file_type = AudioFileType::FLAC;
+  
   this->output_transfer_buffer_ = AudioSinkTransferBuffer::create(this->buffer_size_);
   if (this->output_transfer_buffer_ == nullptr) {
     return ESP_ERR_NO_MEM;
   }
+
+  this->snapcast_stream_->init_streaming();
+  
   return ESP_OK;
 }
 
@@ -223,7 +232,7 @@ AudioReaderState AudioReader::read() {
     return this->http_read_();
   } else if (this->current_audio_file_ != nullptr) {
     return this->file_read_();
-  } else if (this->snapcast_stream_.is_connected()) {
+  } else if (this->snapcast_stream_->is_connected()) {
     return this->snapcast_read_();
   }
 
@@ -315,52 +324,16 @@ AudioReaderState AudioReader::http_read_() {
 
 
 AudioReaderState AudioReader::snapcast_read_() {
-#if 1
-this->snapcast_stream_.trigger_time_sync();
+this->snapcast_stream_->trigger_time_sync();
 static uint32_t last_call = millis();
-if( this->snapcast_stream_.read_next_data_chunk(this->output_ring_buffer_, 100) != ESP_OK ){
+if( this->snapcast_stream_->read_next_data_chunk(this->output_ring_buffer_, 100) != ESP_OK ){
     // Read error
     //this->snapcast_stream_.disconnect();
     //delay(READ_WRITE_TIMEOUT_MS);
   }
-  
   //delay(5);
   // printf( "Loop time: %d\n", millis() - last_call);
   // last_call = millis();
-  return AudioReaderState::READING;
-#else 
-  this->output_transfer_buffer_->transfer_data_to_sink(pdMS_TO_TICKS(READ_WRITE_TIMEOUT_MS), false);
-
-  if (this->output_transfer_buffer_->free() > 0) {
-    
-    size_t bytes_to_read = this->output_transfer_buffer_->free();
-    int received_len = this->snapcast_stream_.read_next_data_chunk(
-        this->output_transfer_buffer_->get_buffer_end(), 
-        bytes_to_read, 
-        60000
-    );
-
-    printf( "reader read: %d\n", received_len);
-    if (received_len > 0) {
-      this->output_transfer_buffer_->increase_buffer_length(received_len);
-      this->last_data_read_ms_ = millis();
-    } else if (received_len < 0) {
-      // HTTP read error
-      this->snapcast_stream_.disconnect();
-      return AudioReaderState::FAILED;
-    } else {
-      if (bytes_to_read > 0) {
-        // Read timed out
-        if ((millis() - this->last_data_read_ms_) > CONNECTION_TIMEOUT_MS) {
-          this->snapcast_stream_.disconnect();
-          return AudioReaderState::FAILED;
-        }
-
-        delay(READ_WRITE_TIMEOUT_MS);
-      }
-    }
-  }
-#endif
   return AudioReaderState::READING;
 }
 

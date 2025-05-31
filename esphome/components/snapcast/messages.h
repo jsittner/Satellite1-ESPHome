@@ -5,6 +5,7 @@
 #include "esphome/components/json/json_util.h"
 #include "esphome/components/network/util.h"
 #include "esphome/core/hal.h"
+#include "esphome/core/application.h"
 
 #include <cstdint>
 #include <cstring>
@@ -289,13 +290,13 @@ public:
         );
     }
     void construct_json_(JsonObject root) const override {
-        root["Arch"] = "xtensa";
-        root["ClientName"] = "Satellite1";
-        root["HostName"] = network::get_use_address();
+        root["Arch"] = "ESP32-S3";
+        root["ClientName"] = App.get_friendly_name();
+        root["HostName"] = App.get_name(); //network::get_use_address();
         root["ID"] = get_mac_address_pretty();
         root["Instance"] = 1;
         root["MAC"] = get_mac_address_pretty();
-        root["OS"] = "ESPHome";
+        root["OS"] = "FutureProofHomes";
         root["SnapStreamProtocolVersion"] = 2;
         root["Version"] = "0.17.1";
     }

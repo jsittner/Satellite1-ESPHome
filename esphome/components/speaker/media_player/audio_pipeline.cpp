@@ -72,11 +72,11 @@ void AudioPipeline::start_file(audio::AudioFile *audio_file) {
   this->pending_file_ = true;
 }
 
-void AudioPipeline::start_snapcast(const std::string &server_uri) {
+void AudioPipeline::start_snapcast(SnapcastStream* stream) {
   if (this->is_playing_) {
     xEventGroupSetBits(this->event_group_, PIPELINE_COMMAND_STOP);
   }
-  this->current_snapcast_server_ = server_uri;
+  this->snapcast_stream_ = stream;
   this->pending_snapcast_ = true;
 }
 
@@ -382,7 +382,7 @@ void AudioPipeline::read_task(void *params) {
       } else if (event_bits & EventGroupBits::READER_COMMAND_INIT_HTTP) {
         err = reader->start(this_pipeline->current_uri_, this_pipeline->current_audio_file_type_);
       } else if (event_bits & EventGroupBits::READER_COMMAND_INIT_SNAPCAST) {
-        err = reader->connect_to_snapcast(this_pipeline->current_snapcast_server_, 0, this_pipeline->current_audio_file_type_);
+        err = reader->connect_to_snapcast(this_pipeline->snapcast_stream_, this_pipeline->current_audio_file_type_);
       }
 
       if (err == ESP_OK) {

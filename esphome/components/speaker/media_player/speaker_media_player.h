@@ -8,6 +8,7 @@
 
 #include "esphome/components/media_player/media_player.h"
 #include "esphome/components/speaker/speaker.h"
+#include "esphome/components/snapcast/snapcast_client.h"
 
 #include "esphome/core/automation.h"
 #include "esphome/core/component.h"
@@ -67,6 +68,9 @@ class SpeakerMediaPlayer : public Component, public media_player::MediaPlayer {
     this->media_format_ = media_format;
   }
 
+  void set_snapcast_client(SnapcastClient* snapcast_client){ this->snapcast_client_ = snapcast_client; }
+
+
   Trigger<> *get_mute_trigger() const { return this->mute_trigger_; }
   Trigger<> *get_unmute_trigger() const { return this->unmute_trigger_; }
   Trigger<float> *get_volume_trigger() const { return this->volume_trigger_; }
@@ -107,6 +111,7 @@ class SpeakerMediaPlayer : public Component, public media_player::MediaPlayer {
   std::unique_ptr<AudioPipeline> media_pipeline_;
   Speaker *media_speaker_{nullptr};
   Speaker *announcement_speaker_{nullptr};
+  SnapcastClient *snapcast_client_{nullptr};
 
   optional<media_player::MediaPlayerSupportedFormat> media_format_;
   AudioPipelineState media_pipeline_state_{AudioPipelineState::STOPPED};

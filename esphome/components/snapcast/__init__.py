@@ -20,5 +20,5 @@ CONFIG_SCHEMA = cv.Schema({
 
 async def to_code(config):
     pass
-    #var = cg.new_Pvariable(config[CONF_ID])
-    #await cg.register_component(var, config)    
+    var = cg.new_Pvariable(config[CONF_ID])
+    await cg.register_component(var, config)    
