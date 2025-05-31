@@ -109,7 +109,9 @@ micro_wake_word:
 
 voice_assistant:
   id: va
-  microphone: asr_mic
+  microphone:
+    microphone: asr_mic
+    channels: 0
   media_player: external_media_player
   micro_wake_word: mww
   use_wake_word: false
