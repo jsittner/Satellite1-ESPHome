@@ -28,7 +28,7 @@ microphone:
     i2s_din_pin: GPIO15
     bits_per_sample: 32bit
     i2s_clock_mode: external
-    channel: right_left
+    channel: stereo
     pdm: false
     
     i2s_audio_id: i2s_shared
@@ -38,8 +38,6 @@ microphone:
     channel_1:
       id: comm_mic
       amplify_shift: 6
-
-
 
 micro_wake_word:
   id: mww
